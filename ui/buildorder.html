@@ -148,7 +148,7 @@ function imgFallback(img, token) {
 function rgb(c) { return `rgb(${c[0]},${c[1]},${c[2]})`; }
 
 function esc(s) {
-  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 function applyStyle() {
@@ -215,18 +215,18 @@ function render() {
     const res = [];
     for (const k of ['food', 'wood', 'gold', 'stone']) {
       if ((r[k] ?? -1) >= 0)
-        res.push(`<span class="res ${k}${delta(r[k], pr[k])}"><img src="${RES_ICONS[k]}">${r[k]}</span>`);
+        res.push(`<span class="res ${k}${delta(r[k], pr[k])}"><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
     }
     if (s.villager_count >= 0)
-      res.push(`<span class="res${delta(s.villager_count, prev.villager_count)}"><img src="${RES_ICONS.villager}">${s.villager_count}</span>`);
+      res.push(`<span class="res${delta(s.villager_count, prev.villager_count)}"><img src="${RES_ICONS.villager}">${esc(s.villager_count)}</span>`);
     if (s.population_count >= 0)
-      res.push(`<span class="res${delta(s.population_count, prev.population_count)}"><img src="${RES_ICONS.population}">${s.population_count}</span>`);
+      res.push(`<span class="res${delta(s.population_count, prev.population_count)}"><img src="${RES_ICONS.population}">${esc(s.population_count)}</span>`);
     if (s.age >= 1 && s.age <= 4) {
       const ageUp = step > 0 && prev.age >= 1 && s.age > prev.age;
       res.push(`<span class="res${ageUp ? ' age-up' : ''}"><img src="${AGE_ICONS[s.age]}">${ageUp ? 'Age up!' : ''}</span>`);
     }
     if (s.time)
-      res.push(`<span class="res"><img src="${RES_ICONS.time}">${s.time}</span>`);
+      res.push(`<span class="res"><img src="${RES_ICONS.time}">${esc(s.time)}</span>`);
     resEl.innerHTML = res.join('');
     notesEl.innerHTML = (s.notes || []).map(n => `<div>${renderLine(n)}</div>`).join('');
     const nx = steps[step + 1];
