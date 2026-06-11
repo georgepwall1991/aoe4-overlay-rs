@@ -88,6 +88,54 @@
   .civ-row .bar { flex: 1; height: 6px; background: #1a1a20; border-radius: 3px; overflow: hidden; }
   .civ-row .bar i { display: block; height: 100%; background: linear-gradient(to right, #2d5f8a, #6fb4e0); }
   .civ-row .pct { width: 64px; text-align: right; color: #aaa; }
+
+  /* ---- settings tab ---- */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { background: #25252d; border: 1px solid #32323c; border-radius: 12px; padding: 14px 16px; }
+  .card h3 { margin: 0 0 12px; font-size: 13px; color: #9bd; letter-spacing: .02em; }
+  .field { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; }
+  .field label { min-width: 0; flex: 1; color: #ccc; }
+  .field label b { color: #7ab6ff; font-weight: 600; margin-left: 4px; }
+  .field input[type=range] { flex: 1; max-width: 180px; accent-color: #3d7fb0; }
+  .btn-row { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .searchbar { display: flex; gap: 8px; }
+  .searchbar input { flex: 1; }
+  #results { position: relative; }
+  #results .result-list { position: absolute; z-index: 5; left: 0; right: 0; background: #2c2c36;
+    border: 1px solid #444; border-radius: 8px; margin-top: 4px; max-height: 220px; overflow: auto;
+    box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+  .tracked { display: flex; align-items: center; gap: 10px; margin-top: 12px; background: #1e1e26;
+    border-radius: 8px; padding: 10px 12px; }
+  .tracked-name { font-weight: 700; color: #fff; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: #555; flex: none; transition: background .3s; }
+  .dot.ok { background: #48bd21; box-shadow: 0 0 6px #48bd21aa; }
+  .dot.err { background: #e0452f; box-shadow: 0 0 6px #e0452faa; }
+  .dot.live { background: #ffb300; box-shadow: 0 0 6px #ffb300aa; animation: pulse 1.6s infinite; }
+  .hotkey-input { text-align: center; cursor: pointer; caret-color: transparent; width: 150px; }
+  .hotkey-input:focus { border-color: #ffb300; background: #34301f; outline: none; }
+  .field label.switch { flex: 0 0 40px; }
+  .switch { position: relative; width: 40px; height: 22px; flex: none; }
+  .switch input { display: none; }
+  .switch span { position: absolute; inset: 0; background: #3a3a44; border-radius: 11px; transition: .2s; cursor: pointer; }
+  .switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+    background: #aaa; border-radius: 50%; transition: .2s; }
+  .switch input:checked + span { background: #2d5f8a; }
+  .switch input:checked + span::after { left: 21px; background: #fff; }
+  .color-set { display: flex; gap: 6px; }
+  .appearance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .preview-wrap { align-self: center; }
+  #ov-preview { background: #000 url() center/cover; border-radius: 8px; padding: 10px 6px; overflow: hidden; }
+  #ov-preview table { border-collapse: collapse; margin: 0 auto; width: auto; }
+  #ov-preview td { padding: 1px 7px; white-space: nowrap; border: none; color: #fff;
+    text-shadow: 0 0 3px #000; }
+  #ov-preview img { height: 16px; vertical-align: middle; border-radius: 2px; }
+  .savebar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin: 14px 0 4px; }
+  code { background: #1a1a20; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+  #toast { position: fixed; right: 18px; bottom: 44px; background: #2d5f8a; color: #fff; padding: 10px 18px;
+    border-radius: 8px; font-size: 13px; box-shadow: 0 6px 18px rgba(0,0,0,.5); opacity: 0; transform: translateY(8px);
+    transition: .25s; pointer-events: none; z-index: 50; }
+  #toast.show { opacity: 1; transform: none; }
+  #toast.err { background: #a33b2a; }
 </style>
 </head>
 <body>
@@ -101,32 +149,91 @@
 
   <!-- ============ SETTINGS ============ -->
   <div class="tab active" id="tab-settings">
-    <h2>Player</h2>
-    <div class="row">
-      <input id="search" placeholder="Search player name or profile ID…" style="flex:1">
-      <button id="search-btn" class="primary">Search</button>
-    </div>
-    <div id="results"></div>
-    <div class="row">Tracking: <span id="current-player">none</span>&nbsp;<a id="profile-link" href="#" target="_blank" style="display:none">aoe4world profile</a></div>
+    <div class="cards">
 
-    <h2>Overlay</h2>
-    <div class="row">
-      <button id="toggle-btn">Show / Hide overlay</button>
-      <button id="edit-btn">Reposition overlay</button>
-      <button id="refresh-btn">Refresh now</button>
+      <div class="card" style="grid-column: span 2">
+        <h3>👤 Player</h3>
+        <div class="searchbar">
+          <input id="search" placeholder="Search aoe4world by name or profile ID…" autocomplete="off">
+          <button id="search-btn" class="primary">Search</button>
+        </div>
+        <div id="results"></div>
+        <div class="tracked" id="tracked-box">
+          <span class="dot" id="poll-dot"></span>
+          <div class="tracked-info">
+            <div id="current-player" class="tracked-name">No player tracked</div>
+            <div class="muted" id="tracked-sub">Search for your profile to start polling</div>
+          </div>
+          <a id="profile-link" href="#" target="_blank" style="display:none">aoe4world ↗</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>🖥️ Overlay</h3>
+        <div class="btn-row">
+          <button id="toggle-btn">Show / Hide</button>
+          <button id="edit-btn">Reposition</button>
+          <button id="refresh-btn">Refresh now</button>
+        </div>
+        <div class="field">
+          <label>Show / hide hotkey</label>
+          <input id="hotkey" class="hotkey-input" readonly placeholder="Click, then press keys">
+        </div>
+        <div class="field">
+          <label>Show overlay on new game</label>
+          <label class="switch"><input id="autoshow" type="checkbox"><span></span></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>📡 Polling & streaming</h3>
+        <div class="field">
+          <label>Poll interval <b id="interval-val"></b></label>
+          <input id="interval" type="range" min="5" max="60" step="1">
+        </div>
+        <div class="field">
+          <label>OBS websocket port</label>
+          <input id="wsport" type="number" min="1024" max="65535" style="width:90px">
+        </div>
+        <div class="muted">Add <code>obs-html\overlay.html</code> as an OBS browser source. Restart the app after changing the port.</div>
+      </div>
+
+      <div class="card" style="grid-column: span 2">
+        <h3>🎨 Appearance</h3>
+        <div class="appearance-grid">
+          <div>
+            <div class="field">
+              <label>Team colors</label>
+              <span class="color-set">
+                <input id="tc1" type="color" title="Team 1"><input id="tc2" type="color" title="Team 2"><input id="tc3" type="color" title="Team 3">
+              </span>
+            </div>
+            <div class="field">
+              <label>Color opacity <b id="alpha-val"></b></label>
+              <input id="tcalpha" type="range" min="0" max="100">
+            </div>
+            <div class="field">
+              <label>Civ stats color</label>
+              <input id="civstatcolor" type="color">
+            </div>
+            <div class="field">
+              <label>Overlay font scale <b id="fontscale-val"></b></label>
+              <input id="fontscale" type="range" min="50" max="200" step="5">
+            </div>
+          </div>
+          <div class="preview-wrap">
+            <div class="muted" style="margin-bottom:6px">Live preview</div>
+            <div id="ov-preview"></div>
+          </div>
+        </div>
+      </div>
+
     </div>
-    <div class="row"><label>Hotkey: show/hide overlay</label><input id="hotkey" class="hotkey-input" placeholder="e.g. Alt+O"></div>
-    <div class="row"><label>Poll interval (seconds)</label><input id="interval" type="number" min="5" style="width:80px"></div>
-    <div class="row"><label>Show overlay on new game</label><input id="autoshow" type="checkbox"></div>
-    <div class="row"><label>Overlay font scale (%)</label><input id="fontscale" type="number" min="50" max="300" style="width:80px"></div>
-    <div class="row"><label>Team 1 / 2 / 3 colors</label>
-      <input id="tc1" type="color"><input id="tc2" type="color"><input id="tc3" type="color">
-      <span class="muted">opacity</span><input id="tcalpha" type="range" min="0" max="100" style="width:100px">
+
+    <div class="savebar">
+      <span class="muted">Ctrl+S to save</span>
+      <button id="save-btn" class="primary">Save settings</button>
     </div>
-    <div class="row"><label>Civ stats color</label><input id="civstatcolor" type="color"></div>
-    <div class="row"><label>OBS websocket port</label><input id="wsport" type="number" style="width:90px">
-      <span class="muted">browser-source: obs-html\overlay.html (restart app after change)</span></div>
-    <div class="row"><button id="save-btn" class="primary">Save settings</button></div>
 
     <h2>Last match</h2>
     <div id="match-info" class="muted">No match data yet.</div>
@@ -246,6 +353,7 @@
     </div>
   </div>
 
+  <div id="toast"></div>
   <div id="status">Idle</div>
 
 <script>
@@ -260,6 +368,59 @@ const MAPS = ["Altai", "Ancient Spires", "Archipelago", "Black Forest", "Boulder
 
 const $ = id => document.getElementById(id);
 const setStatus = t => $('status').textContent = t;
+
+let toastTimer = null;
+function toast(msg, err = false) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = (err ? 'err ' : '') + 'show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// Click a hotkey field, press a combo; Esc cancels, Backspace/Delete clears.
+function makeHotkeyRecorder(el) {
+  el.addEventListener('focus', () => { el.dataset.prev = el.value; el.value = ''; el.placeholder = 'Press keys… (Esc = cancel)'; });
+  el.addEventListener('blur', () => { if (!el.value) el.value = el.dataset.prev ?? ''; el.placeholder = 'Click, then press keys'; });
+  el.addEventListener('keydown', e => {
+    e.preventDefault();
+    if (e.key === 'Escape') { el.value = el.dataset.prev ?? ''; el.blur(); return; }
+    if (e.key === 'Backspace' || e.key === 'Delete') { el.value = ''; el.dataset.prev = ''; el.blur(); return; }
+    if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
+    const mods = [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift', e.metaKey && 'Super'].filter(Boolean);
+    let key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+    if (key === ' ') key = 'Space';
+    el.value = [...mods, key].join('+');
+    el.dataset.prev = el.value;
+    el.blur();
+  });
+}
+
+function updatePreview() {
+  const a = ($('tcalpha').value | 0) / 100;
+  const t1 = fromHex($('tc1').value), t2 = fromHex($('tc2').value);
+  const civc = $('civstatcolor').value;
+  const fs = Math.round(12 * ($('fontscale').value | 0) / 100);
+  const row = (civ, name, rating, wr, w, l, cw, c, dir) => {
+    let cells = [
+      `<td><img src="flags/${civ}.webp"></td>`,
+      `<td style="font-weight:600">${name}</td>`,
+      `<td style="color:#7ab6ff">${rating}</td>`,
+      `<td style="color:#fffb78">${wr}</td>`,
+      `<td><span style="color:#48bd21">${w}</span>/<span style="color:#ff6060">${l}</span></td>`,
+      `<td style="color:${civc}">${cw}</td>`,
+    ];
+    if (dir === 'right') cells = cells.reverse();
+    return `<tr style="background:linear-gradient(to ${dir}, rgba(0,0,0,0), rgba(${c[0]},${c[1]},${c[2]},${a}))">${cells.join('')}</tr>`;
+  };
+  $('ov-preview').innerHTML = `<table style="font-size:${fs}px">
+    ${row('English', 'You', '1244', '54%', '120', '101', '61% (33)', t1, 'right')}
+    ${row('Mongols', 'Opponent', '1198', '51%', '98', '95', '48% (21)', t2, 'left')}
+  </table>`;
+  $('interval-val').textContent = $('interval').value + 's';
+  $('alpha-val').textContent = $('tcalpha').value + '%';
+  $('fontscale-val').textContent = $('fontscale').value + '%';
+}
 
 // ---------- tabs ----------
 document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
@@ -286,12 +447,16 @@ async function loadSettings() {
   const tc = settings.team_colors;
   ['tc1', 'tc2', 'tc3'].forEach((id, i) => { if (tc[i]) $(id).value = toHex(tc[i]); });
   $('tcalpha').value = Math.round((tc[0]?.[3] ?? 0.35) * 100);
-  $('current-player').textContent = settings.player_name
-    ? `${settings.player_name} (#${settings.profile_id})` : 'none';
-  if (settings.profile_id) {
+  if (settings.player_name) {
+    $('current-player').textContent = settings.player_name;
+    $('tracked-sub').textContent = `profile #${settings.profile_id} — polling every ${settings.interval}s`;
     $('profile-link').href = `https://aoe4world.com/players/${settings.profile_id}`;
     $('profile-link').style.display = '';
+  } else {
+    $('current-player').textContent = 'No player tracked';
+    $('tracked-sub').textContent = 'Search for your profile to start polling';
   }
+  updatePreview();
   // build order
   $('bo-hk-show').value = settings.bo_hotkey_show;
   $('bo-hk-cycle').value = settings.bo_hotkey_cycle;
@@ -306,12 +471,14 @@ async function loadSettings() {
   renderBoList();
 }
 
+const clamp = (v, lo, hi, dflt) => { v = parseInt(v); return isNaN(v) ? dflt : Math.min(hi, Math.max(lo, v)); };
+
 function collectCommon() {
   settings.overlay_hotkey = $('hotkey').value.trim();
-  settings.interval = parseInt($('interval').value) || 15;
+  settings.interval = clamp($('interval').value, 5, 600, 15);
   settings.show_overlay_on_new_game = $('autoshow').checked;
-  settings.font_scale = parseInt($('fontscale').value) || 100;
-  settings.websocket_port = parseInt($('wsport').value) || 7307;
+  settings.font_scale = clamp($('fontscale').value, 50, 300, 100);
+  settings.websocket_port = clamp($('wsport').value, 1024, 65535, 7307);
   settings.civ_stats_color = $('civstatcolor').value;
   const a = ($('tcalpha').value | 0) / 100;
   settings.team_colors = ['tc1', 'tc2', 'tc3'].map(id => [...fromHex($(id).value), a]);
@@ -330,34 +497,47 @@ async function save() {
   settings.bo_color_background = fromHex($('bo-bgcolor').value);
   settings.bo_show_title = $('bo-showtitle').checked;
   await invoke('save_settings', { newSettings: settings });
-  setStatus('Settings saved.');
+  toast('Settings saved');
 }
 
 // ---------- player search ----------
 async function doSearch() {
   const q = $('search').value.trim();
   if (!q) return;
-  $('results').innerHTML = '<span class="muted">Searching…</span>';
+  $('search-btn').disabled = true;
+  $('search-btn').textContent = '…';
   try {
     const players = await invoke('search_player', { query: q });
-    $('results').innerHTML = '';
-    if (!players.length) { $('results').innerHTML = '<span class="muted">No players found.</span>'; return; }
+    if (!players.length) { toast('No players found', true); return; }
+    const list = document.createElement('div');
+    list.className = 'result-list';
     for (const p of players) {
       const div = document.createElement('div');
       div.className = 'result';
-      div.innerHTML = `<span>${p.name}</span><span class="muted">#${p.profile_id}${p.rating ? ' · ' + p.rating : ''}</span>`;
+      div.innerHTML = `<span>${p.name}</span><span class="muted">#${p.profile_id}${p.rating ? ' · ' + p.rating + ' elo' : ''}</span>`;
       div.onclick = async () => {
         settings.profile_id = p.profile_id;
         settings.player_name = p.name;
         await invoke('save_settings', { newSettings: settings });
         $('results').innerHTML = '';
+        $('search').value = '';
         await loadSettings();
-        setStatus('Player saved — polling for matches…');
+        toast(`Now tracking ${p.name}`);
       };
-      $('results').appendChild(div);
+      list.appendChild(div);
     }
-  } catch (e) { $('results').innerHTML = `<span class="muted">Search failed: ${e}</span>`; }
+    $('results').innerHTML = '';
+    $('results').appendChild(list);
+  } catch (e) {
+    toast('Search failed: ' + e, true);
+  } finally {
+    $('search-btn').disabled = false;
+    $('search-btn').textContent = 'Search';
+  }
 }
+document.addEventListener('click', e => {
+  if (!$('results').contains(e.target) && e.target !== $('search')) $('results').innerHTML = '';
+});
 
 // ---------- last match table ----------
 function renderMatch(d) {
@@ -687,8 +867,21 @@ $('edit-btn').onclick = () => {
 $('games-refresh').onclick = loadGames;
 
 listen('game_data', e => { renderMatch(e.payload); setStatus('Match data updated.'); });
-listen('poll_ok', e => setStatus(`Polling OK ${e.payload ? '(game ongoing)' : ''} — ${new Date().toLocaleTimeString()}`));
-listen('poll_error', e => setStatus(`Poll error: ${e.payload}`));
+listen('poll_ok', e => {
+  $('poll-dot').className = 'dot ' + (e.payload ? 'live' : 'ok');
+  setStatus(`Polling OK ${e.payload ? '(game ongoing)' : ''} — ${new Date().toLocaleTimeString()}`);
+});
+listen('poll_error', e => {
+  $('poll-dot').className = 'dot err';
+  setStatus(`Poll error: ${e.payload}`);
+});
+
+['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next'].forEach(id => makeHotkeyRecorder($(id)));
+['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'interval'].forEach(id => $(id).addEventListener('input', updatePreview));
+document.addEventListener('keydown', e => {
+  if (e.target.classList?.contains('hotkey-input')) return;
+  if (e.ctrlKey && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+});
 
 buildOverrideGrid();
 loadSettings().then(async () => {

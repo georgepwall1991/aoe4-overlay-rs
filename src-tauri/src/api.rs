@@ -204,6 +204,98 @@ fn urlencode(s: &str) -> String {
 mod tests {
     use super::*;
 
+    fn fixture_game() -> Value {
+        serde_json::json!({
+            "game_id": 123,
+            "kind": "rm_1v1",
+            "map": "Dry Arabia",
+            "server": "eu",
+            "ongoing": false,
+            "started_at": "2026-06-11T10:00:00.000Z",
+            "teams": [
+                [ { "player": {
+                    "profile_id": 1, "name": "Opponent", "country": "de",
+                    "civilization": "holy_roman_empire",
+                    "modes": { "rm_1v1": {
+                        "rating": 1500, "rank": 100, "wins_count": 60, "losses_count": 40,
+                        "win_rate": 60.0,
+                        "civilizations": [
+                            { "civilization": "holy_roman_empire", "games_count": 25, "win_rate": 64.0 }
+                        ]
+                    }}
+                }} ],
+                [ { "player": {
+                    "profile_id": 2, "name": "Me", "country": "gb",
+                    "civilization": "english",
+                    // Only quick-match stats — exercises the rm->qm fallback
+                    "modes": { "qm_1v1": {
+                        "rating": 1200, "rank": 500, "wins_count": 10, "losses_count": 10,
+                        "win_rate": 50.0
+                    }}
+                }} ]
+            ]
+        })
+    }
+
+    #[test]
+    fn process_game_reorders_main_player_team_first() {
+        let out = process_game(&fixture_game(), 2);
+        let players = out["players"].as_array().unwrap();
+        assert_eq!(players.len(), 2);
+        assert_eq!(players[0]["name"], "Me", "main player's team sorts first");
+        assert_eq!(players[0]["team"], 1);
+        assert_eq!(players[1]["name"], "Opponent");
+        assert_eq!(players[1]["team"], 2);
+        assert_eq!(out["map"], "Dry Arabia");
+        assert_eq!(out["match_id"], 123);
+    }
+
+    #[test]
+    fn process_game_extracts_mode_and_civ_stats() {
+        let out = process_game(&fixture_game(), 2);
+        let opp = &out["players"][1];
+        assert_eq!(opp["civ"], "Holy Roman Empire");
+        assert_eq!(opp["rating"], "1500");
+        assert_eq!(opp["rank"], "RM#100");
+        assert_eq!(opp["winrate"], "60%");
+        assert_eq!(opp["wins"], "60");
+        assert_eq!(opp["losses"], "40");
+        assert_eq!(opp["civ_games"], "25");
+        assert_eq!(opp["civ_winrate"], "64%");
+    }
+
+    #[test]
+    fn process_game_falls_back_rm_to_qm_stats() {
+        let out = process_game(&fixture_game(), 2);
+        let me = &out["players"][0];
+        assert_eq!(me["rating"], "1200");
+        assert_eq!(me["rank"], "QM#500", "fell back to quick-match stats and label");
+    }
+
+    #[test]
+    fn process_game_handles_missing_stats() {
+        let game = serde_json::json!({
+            "kind": "custom", "map": "Test", "ongoing": true,
+            "teams": [[ { "player": { "profile_id": 9, "name": "X", "civilization": "rus", "modes": {} } } ]]
+        });
+        let p = &process_game(&game, 9)["players"][0];
+        assert_eq!(p["rating"], "-");
+        assert_eq!(p["rank"], "");
+        assert_eq!(p["civ"], "Rus");
+    }
+
+    #[test]
+    fn team_mode_kinds_map_to_rm_team() {
+        assert_eq!(resolve_mode_key("rm_3v3"), "rm_team");
+        assert_eq!(resolve_mode_key("rm_1v1"), "rm_1v1");
+        assert_eq!(resolve_mode_key("qm_4v4"), "qm_4v4");
+    }
+
+    #[test]
+    fn urlencode_escapes_specials() {
+        assert_eq!(urlencode("a b+ü"), "a+b%2B%C3%BC");
+    }
+
     #[tokio::test]
     async fn live_search_and_process() {
         let client = reqwest::Client::new();

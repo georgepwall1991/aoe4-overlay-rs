@@ -142,3 +142,69 @@ impl Settings {
         .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn defaults_are_sane() {
+        let s = Settings::default();
+        assert_eq!(s.interval, 15);
+        assert_eq!(s.websocket_port, 7307);
+        assert_eq!(s.overlay_hotkey, "Alt+O");
+        assert_eq!(s.buildorders.len(), 1, "ships one example build order");
+        let bo = s.buildorders.values().next().unwrap();
+        assert!(serde_json::from_str::<serde_json::Value>(bo).is_ok(), "example BO is valid JSON");
+    }
+
+    #[test]
+    fn save_load_roundtrip() {
+        let dir = std::env::temp_dir().join(format!("aoe4ov-test-{}", std::process::id()));
+        let mut s = Settings::default();
+        s.profile_id = Some(42);
+        s.player_name = Some("tester".into());
+        s.team_colors = vec![[1.0, 2.0, 3.0, 0.5]];
+        s.buildorders.insert("custom".into(), "step one".into());
+        s.save(&dir);
+        let loaded = Settings::load(&dir);
+        assert_eq!(loaded.profile_id, Some(42));
+        assert_eq!(loaded.player_name.as_deref(), Some("tester"));
+        assert_eq!(loaded.team_colors, vec![[1.0, 2.0, 3.0, 0.5]]);
+        assert_eq!(loaded.buildorders.get("custom").map(String::as_str), Some("step one"));
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn load_missing_or_corrupt_falls_back_to_defaults() {
+        let dir = std::env::temp_dir().join(format!("aoe4ov-missing-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(Settings::load(&dir).interval, 15);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(Settings::path(&dir), "{not json!").unwrap();
+        assert_eq!(Settings::load(&dir).interval, 15);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn partial_config_fills_defaults() {
+        let dir = std::env::temp_dir().join(format!("aoe4ov-partial-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(Settings::path(&dir), r#"{"profile_id": 7, "interval": 30}"#).unwrap();
+        let s = Settings::load(&dir);
+        assert_eq!(s.profile_id, Some(7));
+        assert_eq!(s.interval, 30);
+        assert_eq!(s.websocket_port, 7307, "unspecified fields use defaults");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn hotkeys_skips_empty_bindings() {
+        let mut s = Settings::default();
+        s.bo_hotkey_show = "Alt+B".into();
+        let keys = s.hotkeys();
+        assert_eq!(keys.len(), 2, "overlay + bo show only");
+        assert!(keys.iter().any(|(k, a)| k == "Alt+O" && *a == crate::HotkeyAction::ToggleOverlay));
+        assert!(keys.iter().any(|(k, a)| k == "Alt+B" && *a == crate::HotkeyAction::BoToggle));
+    }
+}
