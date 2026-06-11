@@ -75,6 +75,19 @@
   .rdiff.pos { color: #6fe04a; } .rdiff.neg { color: #ff7b66; } .rdiff.na { color: #555; font-size: 14px; }
   .game-side .when, .game-side .dur { font-size: 11px; color: #888; }
   .game-side a { font-size: 11px; }
+  .games-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  #games-stats { display: flex; gap: 10px; margin-bottom: 12px; }
+  .stat-block { background: #25252d; border: 1px solid #32323c; border-radius: 10px; padding: 10px 14px;
+                flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2px; }
+  .stat-big { font-size: 20px; font-weight: 800; color: #fff; }
+  .stat-big.pos { color: #6fe04a; } .stat-big.neg { color: #ff7b66; }
+  .stat-sub { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .08em; }
+  .stat-block.civs { align-items: stretch; gap: 3px; }
+  .civ-row { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+  .civ-row img { width: 20px; height: 13px; object-fit: cover; border-radius: 2px; }
+  .civ-row .bar { flex: 1; height: 6px; background: #1a1a20; border-radius: 3px; overflow: hidden; }
+  .civ-row .bar i { display: block; height: 100%; background: linear-gradient(to right, #2d5f8a, #6fb4e0); }
+  .civ-row .pct { width: 64px; text-align: right; color: #aaa; }
 </style>
 </head>
 <body>
@@ -125,9 +138,40 @@
 
   <!-- ============ GAMES ============ -->
   <div class="tab" id="tab-games">
-    <div class="row" style="justify-content:space-between">
-      <div id="games-summary" class="muted"></div>
+    <div class="games-toolbar">
+      <select id="gf-mode">
+        <option value="">All modes</option>
+        <option value="rm_">Ranked</option>
+        <option value="qm_">Quick match</option>
+        <option value="1v1">1v1</option>
+        <option value="team">Team games</option>
+      </select>
+      <select id="gf-result">
+        <option value="">All results</option>
+        <option value="win">Wins</option>
+        <option value="loss">Losses</option>
+      </select>
+      <span style="flex:1"></span>
       <button id="games-refresh" class="primary">Refresh</button>
+    </div>
+    <div id="games-stats" style="display:none">
+      <div class="stat-block">
+        <div class="stat-big" id="gs-record">—</div>
+        <div class="stat-sub">record</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-big" id="gs-winrate">—</div>
+        <div class="stat-sub">winrate</div>
+      </div>
+      <div class="stat-block">
+        <div class="stat-big" id="gs-streak">—</div>
+        <div class="stat-sub">streak</div>
+      </div>
+      <div class="stat-block" style="flex:1.6">
+        <canvas id="gs-spark" width="220" height="44"></canvas>
+        <div class="stat-sub">rating trend <span id="gs-net"></span></div>
+      </div>
+      <div class="stat-block civs" id="gs-civs" style="flex:2"></div>
     </div>
     <div id="games-list"></div>
   </div>
@@ -363,14 +407,103 @@ function playerLine(p, pid, right) {
     <span class="pname">${p.name ?? '?'}</span>${me ? diff : ''}</div>`;
 }
 
-async function loadGames() {
+// Inline SVG placeholder for maps we have no art for
+function mapPlaceholder(img, name) {
+  const initials = name.split(/\s+/).map(w => w[0]).join('').slice(0, 3).toUpperCase();
+  let hue = 0;
+  for (const ch of name) hue = (hue * 31 + ch.charCodeAt(0)) % 360;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="110" height="100"><rect width="110" height="100" fill="hsl(${hue},35%,22%)"/><text x="55" y="58" font-family="Arial" font-size="26" font-weight="800" fill="hsl(${hue},45%,55%)" text-anchor="middle">${initials}</text></svg>`;
+  img.onerror = null;
+  img.src = 'data:image/svg+xml;base64,' + btoa(svg);
+}
+
+let allGames = [];
+
+function gameResult(g, pid) {
+  const me = (g.teams || []).flat().map(m => m.player || m).find(p => p.profile_id === pid);
+  return { me, result: g.ongoing ? 'live' : (me?.result ?? '') };
+}
+
+function applyGameFilters() {
+  const mode = $('gf-mode').value, res = $('gf-result').value;
+  const pid = settings.profile_id;
+  return allGames.filter(g => {
+    const k = g.kind ?? '';
+    if (mode === 'rm_' && !k.startsWith('rm_')) return false;
+    if (mode === 'qm_' && !k.startsWith('qm_')) return false;
+    if (mode === '1v1' && !k.endsWith('1v1')) return false;
+    if (mode === 'team' && (k.endsWith('1v1') || !/^(rm|qm)_/.test(k))) return false;
+    if (res && gameResult(g, pid).result !== res) return false;
+    return true;
+  });
+}
+
+function drawSpark(diffs) {
+  const cv = $('gs-spark'), ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  if (diffs.length < 2) return 0;
+  let cum = 0;
+  const pts = [0, ...diffs.map(d => (cum += d))];
+  const min = Math.min(...pts), max = Math.max(...pts), span = (max - min) || 1;
+  const x = i => 4 + i * (cv.width - 8) / (pts.length - 1);
+  const y = v => 4 + (max - v) * (cv.height - 8) / span;
+  const net = pts[pts.length - 1];
+  ctx.strokeStyle = net >= 0 ? '#6fe04a' : '#ff7b66';
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  pts.forEach((v, i) => i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(0), y(v)));
+  ctx.stroke();
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.globalAlpha = .15;
+  ctx.lineTo(x(pts.length - 1), cv.height); ctx.lineTo(x(0), cv.height); ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1;
+  return net;
+}
+
+function renderGameStats(games, pid) {
+  const finished = games.map(g => gameResult(g, pid)).filter(r => r.result === 'win' || r.result === 'loss');
+  if (!finished.length) { $('games-stats').style.display = 'none'; return; }
+  $('games-stats').style.display = 'flex';
+  const wins = finished.filter(r => r.result === 'win').length;
+  const losses = finished.length - wins;
+  $('gs-record').textContent = `${wins}W ${losses}L`;
+  const wr = Math.round(wins / finished.length * 100);
+  $('gs-winrate').textContent = wr + '%';
+  $('gs-winrate').className = 'stat-big ' + (wr >= 50 ? 'pos' : 'neg');
+  // current streak (games are newest-first)
+  let streak = 0;
+  for (const r of finished) { if (r.result === finished[0].result) streak++; else break; }
+  $('gs-streak').textContent = (finished[0].result === 'win' ? 'W' : 'L') + streak;
+  $('gs-streak').className = 'stat-big ' + (finished[0].result === 'win' ? 'pos' : 'neg');
+  // rating trend, oldest -> newest
+  const diffs = finished.map(r => r.me?.rating_diff).filter(d => (d ?? null) !== null).reverse();
+  const net = drawSpark(diffs);
+  $('gs-net').textContent = diffs.length > 1 ? `(${net >= 0 ? '+' : ''}${net})` : '(n/a)';
+  // my civs breakdown
+  const byCiv = {};
+  finished.forEach(r => {
+    const c = r.me?.civilization;
+    if (!c) return;
+    byCiv[c] = byCiv[c] || { n: 0, w: 0 };
+    byCiv[c].n++;
+    if (r.result === 'win') byCiv[c].w++;
+  });
+  const top = Object.entries(byCiv).sort((a, b) => b[1].n - a[1].n).slice(0, 4);
+  $('gs-civs').innerHTML = top.map(([c, v]) => {
+    const p = Math.round(v.w / v.n * 100);
+    return `<div class="civ-row">${civFlag(c)}<span class="bar"><i style="width:${p}%"></i></span>
+      <span class="pct">${p}% · ${v.n}g</span></div>`;
+  }).join('') || '';
+}
+
+function renderGames() {
   const list = $('games-list');
-  list.innerHTML = '<div class="muted">Loading…</div>';
-  try {
-    const data = await invoke('get_match_history');
-    const pid = settings.profile_id;
-    const games = data.games || [];
-    let wins = 0, losses = 0, html = '';
+  const pid = settings.profile_id;
+  const games = applyGameFilters();
+  renderGameStats(games, pid);
+  let wins = 0, losses = 0, html = '';
+  {
     for (const g of games) {
       const teams = (g.teams || []).map(t => t.map(m => m.player || m));
       const me = teams.flat().find(p => p.profile_id === pid);
@@ -387,7 +520,7 @@ async function loadGames() {
       html += `
       <div class="game-card res-${result}">
         <div class="ribbon"></div>
-        <img class="game-map" src="${mapImg}" onerror="this.remove()">
+        <img class="game-map" src="${mapImg}" onerror="mapPlaceholder(this, '${(g.map ?? '?').replace(/[^\w ]/g, '')}')">
         <div class="game-main">
           <div class="game-head">
             <span class="map-name">${g.map ?? '?'}</span>
@@ -408,12 +541,21 @@ async function loadGames() {
         </div>
       </div>`;
     }
-    const total = wins + losses;
-    $('games-summary').textContent = total
-      ? `Last ${total} games: ${wins}W / ${losses}L (${Math.round(wins / total * 100)}%)` : '';
-    list.innerHTML = html || '<div class="muted">No games found.</div>';
+  }
+  list.innerHTML = html || '<div class="muted">No games match the current filters.</div>';
+}
+
+async function loadGames() {
+  const list = $('games-list');
+  list.innerHTML = '<div class="muted">Loading…</div>';
+  try {
+    const data = await invoke('get_match_history');
+    allGames = data.games || [];
+    renderGames();
   } catch (e) { list.innerHTML = `<div class="muted">Failed to load match history: ${e}</div>`; }
 }
+$('gf-mode').onchange = renderGames;
+$('gf-result').onchange = renderGames;
 
 // ---------- build orders tab ----------
 function renderBoList() {
