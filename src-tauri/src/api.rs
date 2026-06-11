@@ -179,3 +179,23 @@ fn urlencode(s: &str) -> String {
         })
         .collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn live_search_and_process() {
+        let client = reqwest::Client::new();
+        let players = search_players(&client, "Beastyqt").await.expect("search");
+        assert!(!players.is_empty(), "no players found");
+        let pid = players[0].profile_id;
+        let game = get_last_game(&client, pid).await.expect("last game");
+        let processed = process_game(&game, pid);
+        println!("{}", serde_json::to_string_pretty(&processed).unwrap());
+        let ps = processed["players"].as_array().unwrap();
+        assert!(!ps.is_empty());
+        assert_eq!(ps[0]["team"], 1);
+        assert!(ps.iter().any(|p| p["rating"] != "-"));
+    }
+}
