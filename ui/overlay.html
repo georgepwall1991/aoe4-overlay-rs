@@ -103,19 +103,23 @@ function applyStyle() {
   document.body.style.fontSize = (settings.font_scale || 100) + '%';
 }
 
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 function flagImg(civ) {
-  return `<img class="flag" src="flags/${civ}.webp" onerror="this.style.display='none'">`;
+  return `<img class="flag" src="flags/${esc(civ)}.webp" onerror="this.style.display='none'">`;
 }
 
 function playerRow(p, right) {
   // Right team mirrors the column order
   const cells = [
     `<td>${flagImg(p.civ)}</td>`,
-    `<td class="name">${p.name ?? '?'}</td>`,
-    `<td class="rating">${p.rating}</td>`,
-    `<td class="winrate">${p.winrate}</td>`,
-    `<td><span class="wins">${p.wins}</span>/<span class="losses">${p.losses}</span></td>`,
-    `<td class="civstat">${p.civ_winrate ? p.civ_winrate + ' (' + p.civ_games + ')' : ''}</td>`,
+    `<td class="name">${esc(p.name ?? '?')}</td>`,
+    `<td class="rating">${esc(p.rating)}</td>`,
+    `<td class="winrate">${esc(p.winrate)}</td>`,
+    `<td><span class="wins">${esc(p.wins)}</span>/<span class="losses">${esc(p.losses)}</span></td>`,
+    `<td class="civstat">${p.civ_winrate ? esc(p.civ_winrate) + ' (' + esc(p.civ_games) + ')' : ''}</td>`,
   ];
   if (right) cells.reverse();
   const dir = right ? 'right' : 'left';

@@ -50,6 +50,12 @@ function parse_message(data) {
         update_player_data(data.data)
 }
 
+function esc_html(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+}
+
 function update_player_data(data) {
     $("#map").text(data.map);
     let team_data = { 1: "", 2: "" };
@@ -58,7 +64,7 @@ function update_player_data(data) {
     for (const p of data.players) {
         if (first_team == null) first_team = p.team;
         // Decide where to place flag 
-        let flag = `<td class="flag" rowspan="2"><img src="flags/${p.civ}.webp"></td>`;
+        let flag = `<td class="flag" rowspan="2"><img src="flags/${esc_html(p.civ)}.webp"></td>`;
         let t1f = '';
         let t2f = '';
         if (p.team == first_team) t1f = flag; else t2f = flag;
@@ -67,9 +73,9 @@ function update_player_data(data) {
         if (p.wins == '') wins = ''; else wins = `${p.wins}W`;
         if (p.losses == '') losses = ''; else losses = `${p.losses}L`;
         // Create player element
-        let s = `<tr class="player">${t1f}<td colspan="5" class="name">${p.name}</td>${t2f}</tr>
-        <tr class="stats"><td class="rank">${p.rank}</td><td class="rating">${p.rating}</td>
-        <td class="winrate">${p.winrate}</td><td class="wins">${wins}</td><td class="losses">${losses}</td></tr>`;
+        let s = `<tr class="player">${t1f}<td colspan="5" class="name">${esc_html(p.name)}</td>${t2f}</tr>
+        <tr class="stats"><td class="rank">${esc_html(p.rank)}</td><td class="rating">${esc_html(p.rating)}</td>
+        <td class="winrate">${esc_html(p.winrate)}</td><td class="wins">${esc_html(wins)}</td><td class="losses">${esc_html(losses)}</td></tr>`;
         if ([1, 2].includes(p.team))
             team_data[p.team] += s;
     }

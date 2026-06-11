@@ -549,6 +549,7 @@ const CIVS = ["Abbasid Dynasty","Ayyubids","Byzantines","Chinese","Delhi Sultana
 const MAPS = ["Altai", "Ancient Spires", "Archipelago", "Black Forest", "Boulder Bay", "Confluence", "Continental", "Danube River", "Dry Arabia", "Four Lakes", "French Pass", "High View", "Hill and Dale", "King of The Hill", "Lipany", "Marshland", "Mega Random", "Mongolian Heights", "Mountain Pass", "Nagari", "Warring Islands"];
 
 const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const setStatus = t => $('status').textContent = t;
 
 let toastTimer = null;
@@ -729,13 +730,13 @@ async function doSearch() {
   $('search-btn').textContent = '…';
   try {
     const players = await invoke('search_player', { query: q });
-    if (!players.length) { toast('No players found', true); return; }
+    if (!players.length) { $('results').innerHTML = ''; toast('No players found', true); return; }
     const list = document.createElement('div');
     list.className = 'result-list';
     for (const p of players) {
       const div = document.createElement('div');
       div.className = 'result';
-      div.innerHTML = `<span>${p.name}</span><span class="muted">#${p.profile_id}${p.rating ? ' · ' + p.rating + ' elo' : ''}</span>`;
+      div.innerHTML = `<span>${esc(p.name)}</span><span class="muted">#${p.profile_id}${p.rating ? ' · ' + p.rating + ' elo' : ''}</span>`;
       div.onclick = async () => {
         settings.profile_id = p.profile_id;
         settings.player_name = p.name;
@@ -790,25 +791,25 @@ function lmPlayer(p) {
   const me = settings.player_name && p.name === settings.player_name;
   const res = p.result === 'win' ? 'res-win' : p.result === 'loss' ? 'res-loss' : '';
   const country = p.country
-    ? `<img class="country" src="countries/${String(p.country).toLowerCase()}.png" onerror="this.remove()">` : '';
-  const flag = `<img class="flag${p.avatar ? '' : ' solo'}" src="flags/${p.civ}.webp" title="${p.civ}" onerror="this.style.visibility='hidden'">`;
-  const idbox = `<span class="idbox">${p.avatar ? `<img class="ava" src="${p.avatar}" onerror="this.remove()">` : ''}${flag}</span>`;
+    ? `<img class="country" src="countries/${esc(String(p.country).toLowerCase())}.png" onerror="this.remove()">` : '';
+  const flag = `<img class="flag${p.avatar ? '' : ' solo'}" src="flags/${esc(p.civ)}.webp" title="${esc(p.civ)}" onerror="this.style.visibility='hidden'">`;
+  const idbox = `<span class="idbox">${p.avatar ? `<img class="ava" src="${esc(p.avatar)}" onerror="this.remove()">` : ''}${flag}</span>`;
   const d = p.rating_diff;
   const diff = (d ?? null) !== null
     ? ` <span class="${d >= 0 ? 'win' : 'loss'}" style="font-size:11px">${d >= 0 ? '+' : ''}${d}</span>` : '';
   const peak = p.max_rating ? ` title="peak rating ${p.max_rating}"` : '';
-  const civstats = `<span class="cv">${p.civ}${p.random_civ ? ' 🎲' : ''}${p.civ_winrate ? ' ' + p.civ_winrate : ''}${p.civ_games ? ' · ' + p.civ_games + 'g' : ''}</span>`;
+  const civstats = `<span class="cv">${esc(p.civ)}${p.random_civ ? ' 🎲' : ''}${p.civ_winrate ? ' ' + esc(p.civ_winrate) : ''}${p.civ_games ? ' · ' + esc(p.civ_games) + 'g' : ''}</span>`;
   return `<div class="lmp ${me ? 'me' : ''} ${res}">
     ${idbox}
     <span class="nm">
-      ${country}<span class="nm-text" title="${p.name ?? '?'}">${p.name ?? '?'}</span>
+      ${country}<span class="nm-text" title="${esc(p.name ?? '?')}">${esc(p.name ?? '?')}</span>
       ${p.input_type === 'controller' ? '<span title="controller">🎮</span>' : ''}
       ${rankPill(p.rank_level)}
-      ${p.twitch ? `<a class="tw" href="${p.twitch}" target="_blank" title="Twitch">📺</a>` : ''}
+      ${p.twitch ? `<a class="tw" href="${esc(p.twitch)}" target="_blank" title="Twitch">📺</a>` : ''}
     </span>
-    <span class="rt"${peak}>${p.rating}${diff}${p.rank ? ` <span class="muted" style="font-weight:400">${p.rank}</span>` : ''}</span>
+    <span class="rt"${peak}>${esc(p.rating)}${diff}${p.rank ? ` <span class="muted" style="font-weight:400">${esc(p.rank)}</span>` : ''}</span>
     <span class="stats">
-      ${p.winrate ? `<span class="wr">${p.winrate} winrate</span>` : ''}
+      ${p.winrate ? `<span class="wr">${esc(p.winrate)} winrate</span>` : ''}
       ${p.wins !== '0' || p.losses !== '0' ? `<span><span class="win">${p.wins}</span> / <span class="loss">${p.losses}</span></span>` : ''}
       ${streakTag(p.streak)}
       ${civstats}
@@ -829,7 +830,7 @@ function renderMatch(d) {
     : meP?.result === 'loss' ? '<span class="badge loss">Defeat</span>'
     : '<span class="badge mode">Finished</span>';
   const sub = [
-    d.server,
+    esc(d.server ?? ''),
     d.duration ? '⏱ ' + fmtDur(d.duration) : '',
     d.avg_rating ? `~${d.avg_rating} avg elo` : '',
     d.season ? 'S' + d.season : '',
@@ -839,9 +840,9 @@ function renderMatch(d) {
     ? `<a href="https://aoe4world.com/players/${settings.profile_id}/games/${d.match_id}" target="_blank" class="lm-sub">details ↗</a>` : '';
   const mapImg = `maps/${(d.map ?? '').replace(/ /g, '_')}.png`;
   $('last-match').innerHTML = `
-    <div class="lm-banner" style="background-image:url('${mapImg}')">
+    <div class="lm-banner" style="background-image:url('${encodeURI(mapImg)}')">
       <div class="lm-head">
-        <span class="lm-map">${d.map ?? '?'}</span>
+        <span class="lm-map">${esc(d.map ?? '?')}</span>
         ${resBadge}
         <span class="badge mode">${fmtMode(d.kind)}</span>
         <span class="lm-sub">${sub}</span>
@@ -862,8 +863,8 @@ function civFlag(civ) {
   const t = civTitle(civ);
   // Flag filenames are inconsistent about particle casing ("House of Lancaster"
   // vs "Order Of The Dragon") — fall back through both, then hide.
-  const alt = t.replace(/ Of /g, ' of ');
-  return `<img src="flags/${t}.webp" title="${t}"
+  const alt = esc(t.replace(/ Of /g, ' of '));
+  return `<img src="flags/${esc(t)}.webp" title="${esc(t)}"
     onerror="if(!this.dataset.r){this.dataset.r=1;this.src='flags/${alt}.webp'}else{this.style.display='none'}">`;
 }
 
@@ -884,7 +885,7 @@ function playerLine(p, pid, right) {
   const diff = (d ?? null) !== null
     ? `<span class="pdiff ${d >= 0 ? 'win' : 'loss'}">${d >= 0 ? '+' : ''}${d}</span>` : '';
   return `<div class="gp ${me ? 'me' : ''}">${civFlag(p.civilization)}
-    <span class="pname">${p.name ?? '?'}</span>${me ? diff : ''}</div>`;
+    <span class="pname" title="${esc(p.name ?? '?')}">${esc(p.name ?? '?')}</span>${me ? diff : ''}</div>`;
 }
 
 // Inline SVG placeholder for maps we have no art for
@@ -1003,7 +1004,7 @@ function renderGames() {
         <img class="game-map" src="${mapImg}" onerror="mapPlaceholder(this, '${(g.map ?? '?').replace(/[^\w ]/g, '')}')">
         <div class="game-main">
           <div class="game-head">
-            <span class="map-name">${g.map ?? '?'}</span>
+            <span class="map-name">${esc(g.map ?? '?')}</span>
             ${badge}
             <span class="badge mode">${fmtMode(g.kind)}</span>
           </div>
@@ -1043,7 +1044,6 @@ $('gf-limit').onchange = async () => {
 };
 
 // ---------- build orders tab ----------
-const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let boSelected = null;   // name of the BO loaded in the editor
 let boDirty = false;     // editor has unsaved changes
 function setBoDirty(d) {
