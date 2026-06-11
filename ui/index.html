@@ -385,7 +385,7 @@
     <div class="cards">
 
       <div class="card">
-        <h3>📚 Library</h3>
+        <h3>📚 Library <span id="bo-count" class="muted" style="font-weight:400"></span></h3>
         <input id="bo-filter" placeholder="Filter…" style="width:100%; box-sizing:border-box; margin-bottom:8px">
         <div id="bo-list"></div>
         <div class="btn-row" style="margin-top:10px">
@@ -422,7 +422,7 @@
           <button id="bo-showbtn">Show on overlay</button>
           <label style="min-width:0; flex:1"><input id="bo-checked" type="checkbox" checked> include in hotkey cycle</label>
         </div>
-        <div class="muted">JSON format is compatible with RTS_Overlay / age4builder. Use <code>@folder/image@</code> tokens in notes for icons. Ctrl+Enter saves.</div>
+        <div class="muted">JSON format is compatible with RTS_Overlay / age4builder. Use <code>@folder/image@</code> tokens for icons (works in plain text too). Ctrl+Enter saves. ↑↓ in the filter browses the library; double-click a build order to show it on the overlay.</div>
       </div>
 
       <div class="card">
@@ -1047,13 +1047,17 @@ function renderBoList() {
   const list = $('bo-list');
   const filter = ($('bo-filter').value || '').toLowerCase();
   let names = Object.keys(settings.buildorders || {});
+  const total = names.length;
+  const setCount = shown => $('bo-count').textContent =
+    total ? (shown === total ? `(${total})` : `(${shown}/${total})`) : '';
   if (filter) {
     names = names.filter(n =>
       n.toLowerCase().includes(filter) ||
       (parseBo(settings.buildorders[n]).civ || '').toLowerCase().includes(filter) ||
       (settings.buildorders[n] || '').toLowerCase().includes(filter));
-    if (!names.length) { list.innerHTML = '<div class="bo-empty muted">No build orders match the filter.</div>'; return; }
+    if (!names.length) { setCount(0); list.innerHTML = '<div class="bo-empty muted">No build orders match the filter.</div>'; return; }
   }
+  setCount(names.length);
   if (!names.length) {
     list.innerHTML = '<div class="bo-empty muted">No build orders yet.<br>Paste one from age4builder.com or aoe4guides.com, or click ＋ New.</div>';
     return;
@@ -1370,7 +1374,7 @@ function updateBoPreview() {
     pv.innerHTML =
       ($('bo-showtitle').checked ? `<div class="pv-title" style="color:${$('bo-titlecolor').value}">${esc(name)}</div>` : '') +
       (lines.length
-        ? lines.map((l, i) => `<div class="pv-note" style="${i === boPvStep ? '' : 'opacity:.45'}">${esc(l)}</div>`).join('')
+        ? lines.map((l, i) => `<div class="pv-note" style="${i === boPvStep ? '' : 'opacity:.45'}">${boRenderLine(l)}</div>`).join('')
         : '<div class="muted">Paste or type a build order to preview it</div>');
     $('bo-pv-step').textContent = lines.length ? `${boPvStep + 1}/${lines.length}` : '';
   }
