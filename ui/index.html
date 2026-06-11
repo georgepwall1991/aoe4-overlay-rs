@@ -60,9 +60,9 @@
   #bo-preview .pv-res { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
   #bo-preview .pv-res span { display: inline-flex; align-items: center; gap: 3px; font-weight: 600;
                 background: rgba(255,255,255,.08); border-radius: .4em; padding: 1px 6px; }
-  #bo-preview .pv-res img { height: 1.4em; }
+  #bo-preview .pv-res img { height: var(--imgh, 1.4em); }
   #bo-preview .pv-note { margin: 2px 0; line-height: 1.35; }
-  #bo-preview .pv-note img { height: 1.4em; vertical-align: middle; border-radius: 2px;
+  #bo-preview .pv-note img { height: var(--imgh, 1.4em); vertical-align: middle; border-radius: 2px;
                 background: rgba(0,0,0,.35); padding: 1px; }
   #bo-preview .pv-next { opacity: .55; font-size: .85em; margin-top: 6px; border-top: 1px solid rgba(230,198,100,.25); padding-top: 4px; }
   .ov-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; font-size: 12px; margin-top: 8px; }
@@ -1341,6 +1341,7 @@ function updateBoPreview() {
   pv.style.background = `rgba(${br},${bg},${bb},${op})`;
   pv.style.color = $('bo-textcolor').value;
   pv.style.fontSize = fs + 'pt';
+  pv.style.setProperty('--imgh', Math.round(fs * 2) + 'px');  // same icon sizing rule as the overlay
   const name = $('bo-name').value.trim() || 'Build order';
 
   if (p.json && Array.isArray(p.json.build_order) && p.steps) {
@@ -1352,6 +1353,7 @@ function updateBoPreview() {
       if ((r[k] ?? -1) >= 0) res.push(`<span><img src="${BO_RES_ICONS[k]}">${r[k]}</span>`);
     if (s.villager_count >= 0) res.push(`<span><img src="${BO_RES_ICONS.villager}">${s.villager_count}</span>`);
     if (s.population_count >= 0) res.push(`<span><img src="${BO_RES_ICONS.population}">${s.population_count}</span>`);
+    if (s.age >= 1 && s.age <= 4) res.push(`<span><img src="bo_img/age/age_${s.age}.webp" title="Age ${s.age}"></span>`);
     if (s.time) res.push(`<span><img src="${BO_RES_ICONS.time}">${esc(s.time)}</span>`);
     const next = p.json.build_order[boPvStep + 1];
     pv.innerHTML =
