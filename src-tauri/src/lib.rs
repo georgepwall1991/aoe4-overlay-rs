@@ -79,10 +79,12 @@ fn get_settings(state: State<'_, AppState>) -> Settings {
 #[tauri::command]
 fn save_settings(app: AppHandle, state: State<'_, AppState>, new_settings: Settings) {
     let scale_changed;
+    let hotkeys_changed;
     {
         let mut s = state.settings.lock().unwrap();
         let profile_changed = s.profile_id != new_settings.profile_id;
         scale_changed = s.overlay_scale != new_settings.overlay_scale;
+        hotkeys_changed = s.hotkeys() != new_settings.hotkeys();
         *s = new_settings.clone();
         s.save(&config_dir(&app));
         if profile_changed {
@@ -93,11 +95,18 @@ fn save_settings(app: AppHandle, state: State<'_, AppState>, new_settings: Setti
     if scale_changed {
         apply_overlay_scale(&app, &state, new_settings.overlay_scale);
     }
-    register_hotkeys(&app, &new_settings);
+    if hotkeys_changed {
+        register_hotkeys(&app, &new_settings);
+    }
     state.ws.send_colors(&new_settings.team_colors);
     let _ = app.emit("settings_changed", &new_settings);
     state.force_check.notify_one();
     emit_bo(&app);
+}
+
+#[tauri::command]
+fn get_app_version() -> &'static str {
+    env!("CARGO_PKG_VERSION")
 }
 
 #[tauri::command]
@@ -397,6 +406,7 @@ fn register_hotkeys(app: &AppHandle, s: &Settings) {
 // ---------------- poller ----------------
 
 async fn poller(app: AppHandle) {
+    let mut consecutive_errors: u32 = 0;
     loop {
         let (profile_id, interval) = {
             let state = app.state::<AppState>();
@@ -431,18 +441,23 @@ async fn poller(app: AppHandle) {
                             }
                         }
                     }
+                    consecutive_errors = 0;
                     let _ = app.emit("poll_ok", game["ongoing"].as_bool().unwrap_or(false));
                 }
                 Err(e) => {
-                    log::warn!("poll failed: {e}");
+                    consecutive_errors = consecutive_errors.saturating_add(1);
+                    log::warn!("poll failed ({consecutive_errors} in a row): {e}");
                     let _ = app.emit("poll_error", e);
                 }
             }
         }
 
+        // Back off while the API keeps failing (offline, rate-limited) so we
+        // don't hammer it; a manual refresh still breaks the wait instantly.
+        let wait = interval * 2u64.saturating_pow(consecutive_errors.min(3)).min(8);
         let state = app.state::<AppState>();
         let _ = tokio::time::timeout(
-            std::time::Duration::from_secs(interval),
+            std::time::Duration::from_secs(wait.min(300)),
             state.force_check.notified(),
         )
         .await;
@@ -465,7 +480,9 @@ pub fn run() {
         bo_step: Mutex::new(0),
         force_check: Notify::new(),
         http: reqwest::Client::builder()
-            .user_agent("AoE4-Overlay-Rust/0.1")
+            .user_agent(concat!("AoE4-Overlay-Rust/", env!("CARGO_PKG_VERSION")))
+            .connect_timeout(std::time::Duration::from_secs(10))
+            .timeout(std::time::Duration::from_secs(20))
             .build()
             .unwrap(),
         ws: ws_server.clone(),
@@ -578,7 +595,8 @@ pub fn run() {
             get_bo,
             bo_import_url,
             bo_search_guides,
-            check_update
+            check_update,
+            get_app_version
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

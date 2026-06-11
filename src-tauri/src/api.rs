@@ -33,14 +33,7 @@ pub async fn search_players(
         }
     }
     let url = format!("{BASE}/players/search?query={}", urlencode(query));
-    let data: Value = client
-        .get(&url)
-        .send()
-        .await
-        .map_err(|e| e.to_string())?
-        .json()
-        .await
-        .map_err(|e| e.to_string())?;
+    let data = get_json(client, &url).await?;
 
     let players = data["players"].as_array().cloned().unwrap_or_default();
     Ok(players
@@ -58,20 +51,22 @@ pub async fn search_players(
         .collect())
 }
 
-pub async fn get_last_game(client: &reqwest::Client, profile_id: u64) -> Result<Value, String> {
-    let url = format!("{BASE}/players/{profile_id}/games/last");
-    let data: Value = client
-        .get(&url)
-        .send()
-        .await
-        .map_err(|e| e.to_string())?
-        .json()
-        .await
-        .map_err(|e| e.to_string())?;
+/// GET a JSON endpoint, mapping HTTP and `{"error": ...}` failures to readable messages.
+async fn get_json(client: &reqwest::Client, url: &str) -> Result<Value, String> {
+    let resp = client.get(url).send().await.map_err(|e| e.to_string())?;
+    let status = resp.status();
+    if !status.is_success() {
+        return Err(format!("aoe4world returned HTTP {}", status.as_u16()));
+    }
+    let data: Value = resp.json().await.map_err(|e| e.to_string())?;
     if data.get("error").is_some() {
         return Err(data["error"].to_string());
     }
     Ok(data)
+}
+
+pub async fn get_last_game(client: &reqwest::Client, profile_id: u64) -> Result<Value, String> {
+    get_json(client, &format!("{BASE}/players/{profile_id}/games/last")).await
 }
 
 pub async fn get_match_history(
@@ -79,19 +74,11 @@ pub async fn get_match_history(
     profile_id: u64,
     limit: u32,
 ) -> Result<Value, String> {
-    let url = format!("{BASE}/players/{profile_id}/games?limit={limit}");
-    let data: Value = client
-        .get(&url)
-        .send()
-        .await
-        .map_err(|e| e.to_string())?
-        .json()
-        .await
-        .map_err(|e| e.to_string())?;
-    if data.get("error").is_some() {
-        return Err(data["error"].to_string());
-    }
-    Ok(data)
+    get_json(
+        client,
+        &format!("{BASE}/players/{profile_id}/games?limit={limit}"),
+    )
+    .await
 }
 
 /// Transform a raw /games/last response into the overlay payload.

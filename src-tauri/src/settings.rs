@@ -115,16 +115,36 @@ impl Settings {
     }
 
     pub fn load(config_dir: &std::path::Path) -> Self {
-        std::fs::read_to_string(Self::path(config_dir))
+        let mut s: Settings = std::fs::read_to_string(Self::path(config_dir))
             .ok()
             .and_then(|s| serde_json::from_str(&s).ok())
-            .unwrap_or_default()
+            .unwrap_or_default();
+        s.sanitize();
+        s
     }
 
+    /// Clamp values a hand-edited config could push out of range.
+    fn sanitize(&mut self) {
+        self.interval = self.interval.clamp(5, 600);
+        self.font_scale = self.font_scale.clamp(50, 300);
+        self.overlay_scale = self.overlay_scale.clamp(50, 200);
+        self.bo_font_size = self.bo_font_size.clamp(6, 60);
+        self.bo_opacity = self.bo_opacity.clamp(0.0, 1.0);
+        let defaults = Settings::default();
+        while self.team_colors.len() < 3 {
+            self.team_colors
+                .push(defaults.team_colors[self.team_colors.len()]);
+        }
+    }
+
+    /// Write via a temp file + rename so a crash mid-write can't corrupt the config.
     pub fn save(&self, config_dir: &std::path::Path) {
         let _ = std::fs::create_dir_all(config_dir);
         if let Ok(json) = serde_json::to_string_pretty(self) {
-            if let Err(e) = std::fs::write(Self::path(config_dir), json) {
+            let path = Self::path(config_dir);
+            let tmp = path.with_extension("json.tmp");
+            let result = std::fs::write(&tmp, json).and_then(|_| std::fs::rename(&tmp, &path));
+            if let Err(e) = result {
                 log::error!("failed to save settings: {e}");
             }
         }
@@ -176,7 +196,8 @@ mod tests {
         let loaded = Settings::load(&dir);
         assert_eq!(loaded.profile_id, Some(42));
         assert_eq!(loaded.player_name.as_deref(), Some("tester"));
-        assert_eq!(loaded.team_colors, vec![[1.0, 2.0, 3.0, 0.5]]);
+        assert_eq!(loaded.team_colors[0], [1.0, 2.0, 3.0, 0.5]);
+        assert_eq!(loaded.team_colors.len(), 3, "load backfills missing colors");
         assert_eq!(
             loaded.buildorders.get("custom").map(String::as_str),
             Some("step one")
@@ -204,6 +225,24 @@ mod tests {
         assert_eq!(s.profile_id, Some(7));
         assert_eq!(s.interval, 30);
         assert_eq!(s.websocket_port, 7307, "unspecified fields use defaults");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn load_sanitizes_out_of_range_values() {
+        let dir = std::env::temp_dir().join(format!("aoe4ov-sanitize-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            Settings::path(&dir),
+            r#"{"interval": 1, "bo_opacity": 7.0, "overlay_scale": 9999, "team_colors": [[1.0,2.0,3.0,0.5]]}"#,
+        )
+        .unwrap();
+        let s = Settings::load(&dir);
+        assert_eq!(s.interval, 5);
+        assert_eq!(s.bo_opacity, 1.0);
+        assert_eq!(s.overlay_scale, 200);
+        assert_eq!(s.team_colors.len(), 3, "missing team colors backfilled");
+        assert_eq!(s.team_colors[0], [1.0, 2.0, 3.0, 0.5]);
         let _ = std::fs::remove_dir_all(&dir);
     }
 
