@@ -28,8 +28,14 @@
     --shadow-card: 0 1px 0 rgba(255,255,255,.03) inset, 0 8px 22px -12px rgba(0,0,0,.6);
   }
   ::selection { background: rgba(224,186,94,.3); color: #fff; }
+  .ic { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; flex: none; }
+  #tabs button .ic { margin-right: 5px; opacity: .7; transition: opacity .15s, color .15s; vertical-align: -2.5px; }
+  #tabs button.active .ic, #tabs button:hover .ic { opacity: 1; }
+  #tabs button.active .ic { color: var(--gold); }
+  .card h3 .ic, .rand-box h3 .ic { width: 13px; height: 13px; vertical-align: -2px; }
   body { font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; color: var(--ink); margin: 0; min-height: 100vh;
-    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; line-height: 1.45;
     background:
       radial-gradient(900px 420px at 85% -10%, rgba(224,186,94,.05), transparent 60%),
       radial-gradient(800px 500px at -10% 110%, rgba(61,127,176,.06), transparent 60%),
@@ -40,9 +46,10 @@
   #brand .crest { filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
   #brand .wordmark { background: linear-gradient(180deg, #fff6cf 15%, #ecc75d 55%, #c79a2e);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  #tabs { display: flex; gap: 2px; padding: 0 14px; background: rgba(16,16,21,.92);
+  #tabs { display: flex; gap: 2px; padding: 0 14px;
+    background: linear-gradient(180deg, rgba(22,22,28,.95), rgba(14,14,19,.92));
     border-bottom: 1px solid #2b2b34; position: sticky; top: 0; z-index: 20;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px) saturate(1.2);
     box-shadow: 0 6px 18px -10px rgba(0,0,0,.7); }
   #tabs button { position: relative; background: none; border: none; color: #9b9ca6; padding: 12px 16px 11px;
     font-size: 13px; font-weight: 600; letter-spacing: .015em; cursor: pointer; transition: color .15s; }
@@ -56,8 +63,9 @@
   #tabs button.active { color: var(--ink-strong); }
   #tabs button.active::after { transform: none; opacity: 1; box-shadow: 0 0 8px rgba(224,186,94,.45); }
   .tab { display: none; padding: 18px 22px 22px; max-width: 1180px; margin: 0 auto; box-sizing: border-box; }
-  .tab.active { display: block; animation: tab-in .22s ease-out; }
-  @keyframes tab-in { from { opacity: 0; transform: translateY(4px); } }
+  .tab.active { display: block; animation: tab-in .28s cubic-bezier(.22,1,.36,1); }
+  @keyframes tab-in { from { opacity: 0; transform: translateY(6px) scale(.998); } }
+  h2, .card h3, .rand-box h3 { font-family: "Segoe UI Variable Display", "Segoe UI Variable Text", "Segoe UI", sans-serif; }
   h2 { font-size: 13px; margin: 18px 0 8px; color: var(--gold); text-transform: uppercase; letter-spacing: .08em;
     border-bottom: 1px solid var(--gold-faint); padding-bottom: 5px; }
   h2:first-child { margin-top: 0; }
@@ -67,7 +75,25 @@
   ::placeholder { color: #6b6d78; opacity: 1; }
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue);
     box-shadow: 0 0 0 2px rgba(61,127,176,.25); }
-  input[type=color] { padding: 1px; width: 40px; height: 26px; cursor: pointer; }
+  select { -webkit-appearance: none; appearance: none; padding-right: 26px; cursor: pointer;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="%239094a0" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+    background-repeat: no-repeat; background-position: right 9px center; }
+  select:hover { background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" fill="none" stroke="%23d6d7de" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'); }
+  input[type=checkbox]:not(.switch input) { -webkit-appearance: none; appearance: none; width: 16px; height: 16px;
+    padding: 0; margin: 0 2px 0 0; border-radius: 5px; border: 1px solid #4a4a58; cursor: pointer;
+    background: rgba(0,0,0,.25); vertical-align: -3px; position: relative; transition: background .15s, border-color .15s; }
+  input[type=checkbox]:not(.switch input):hover { border-color: #5b9cce; }
+  input[type=checkbox]:not(.switch input):checked { background: linear-gradient(180deg, #36719f, #2a587f);
+    border-color: #4a8cbd; }
+  input[type=checkbox]:not(.switch input):checked::after { content: ""; position: absolute; left: 4.5px; top: 1.5px;
+    width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  input[type=color] { padding: 0; width: 26px; height: 26px; cursor: pointer; border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.15), 0 2px 5px rgba(0,0,0,.4); border: none; background: none; }
+  input[type=color]::-webkit-color-swatch-wrapper { padding: 2px; }
+  input[type=color]::-webkit-color-swatch { border: none; border-radius: 50%; }
+  input[type=color]:hover { box-shadow: 0 0 0 2px rgba(255,255,255,.3), 0 2px 6px rgba(0,0,0,.5); }
+  input[type=number] { font-variant-numeric: tabular-nums; }
+  input[type=number]::-webkit-inner-spin-button { opacity: .4; }
   input[type=range] { padding: 0; border: none; background: none; -webkit-appearance: none; height: 18px; }
   input[type=range]::-webkit-slider-runnable-track { height: 5px; border-radius: 3px;
     background: linear-gradient(90deg, #3d7fb0 var(--fill, 50%), #33333d var(--fill, 50%));
@@ -135,7 +161,8 @@
   #bo-g-results { max-height: 280px; overflow: auto; border: 1px solid #32323c; border-radius: 8px; margin-top: 8px; }
   #bo-g-results:empty { display: none; }
   .bo-item .bo-sub { font-weight: 400; font-size: 12px; }
-  .bo-item .imp-btn { flex: none; padding: 2px 10px; }
+  .bo-item .imp-btn { flex: none; padding: 2px 10px; opacity: .7; transition: opacity .15s; }
+  .bo-item:hover .imp-btn { opacity: 1; }
   .bo-sub a.by-author { color: #7ab6ff; text-decoration: none; }
   .bo-sub a.by-author:hover { text-decoration: underline; }
   #bo-content { width: 100%; height: 220px; font-family: "Cascadia Code", "Cascadia Mono", Consolas, monospace; font-size: 12px; box-sizing: border-box;
@@ -143,8 +170,20 @@
   #bo-content.invalid { border-color: #e0452f; }
   #bo-format.ok { background: rgba(72,189,33,.18); color: #6fe04a; }
   #bo-format.bad { background: rgba(224,69,47,.18); color: #ff7b66; }
-  .pv-checker { border-radius: 8px;
+  .pv-checker { border-radius: 8px; position: relative;
                 background: repeating-conic-gradient(#23232b 0 25%, #1a1a21 0 50%) 0 0 / 16px 16px; }
+  /* corner brackets matching the real BO overlay frame */
+  .pv-checker::after { content: ""; position: absolute; inset: 4px; border-radius: 6px; pointer-events: none;
+    --c: rgba(230,198,100,.55);
+    background:
+      linear-gradient(var(--c), var(--c)) no-repeat 0 0 / 12px 1px,
+      linear-gradient(var(--c), var(--c)) no-repeat 0 0 / 1px 12px,
+      linear-gradient(var(--c), var(--c)) no-repeat 100% 0 / 12px 1px,
+      linear-gradient(var(--c), var(--c)) no-repeat 100% 0 / 1px 12px,
+      linear-gradient(var(--c), var(--c)) no-repeat 0 100% / 12px 1px,
+      linear-gradient(var(--c), var(--c)) no-repeat 0 100% / 1px 12px,
+      linear-gradient(var(--c), var(--c)) no-repeat 100% 100% / 12px 1px,
+      linear-gradient(var(--c), var(--c)) no-repeat 100% 100% / 1px 12px; }
   #bo-preview { border-radius: 8px; padding: 10px 12px; min-height: 120px;
                 background: #000 center/cover; overflow: hidden;
                 box-shadow: inset 0 0 0 1px rgba(230,198,100,.3), 0 4px 14px -6px rgba(0,0,0,.6); }
@@ -169,6 +208,11 @@
   .ov-grid input:hover, .ov-grid select:hover { background: rgba(0,0,0,.26); }
   .ov-head { color: var(--gold); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
     padding: 0 2px 4px; border-bottom: 1px solid var(--gold-faint); margin-bottom: 2px; }
+  /* zebra striping: cells 11-20, 31-40, … are odd player rows (10 columns per row) */
+  .ov-grid > :nth-child(20n+11), .ov-grid > :nth-child(20n+12), .ov-grid > :nth-child(20n+13),
+  .ov-grid > :nth-child(20n+14), .ov-grid > :nth-child(20n+15), .ov-grid > :nth-child(20n+16),
+  .ov-grid > :nth-child(20n+17), .ov-grid > :nth-child(20n+18), .ov-grid > :nth-child(20n+19),
+  .ov-grid > :nth-child(20n+20) { background-color: rgba(255,255,255,.045); }
   .rand-wrap { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; padding-top: 26px; }
   .rand-box { text-align: center; flex: 0 1 360px;
     background: linear-gradient(180deg, #26262e, #222129); border: 1px solid var(--card-border);
@@ -197,7 +241,8 @@
   .game-card { display: flex; align-items: stretch; gap: 0; background: linear-gradient(180deg, #26262e, #232229);
                border: 1px solid #32323c; border-radius: 10px; margin: 10px 0; overflow: hidden;
                box-shadow: var(--shadow-card);
-               transition: border-color .15s, transform .15s, box-shadow .15s; }
+               transition: border-color .15s, transform .15s, box-shadow .15s;
+               content-visibility: auto; contain-intrinsic-size: auto 104px; }
   .game-card:hover { border-color: #4a4a58; transform: translateY(-1px);
                box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 12px 26px -12px rgba(0,0,0,.7); }
   #games-list .game-card { animation: card-in .3s ease-out backwards; }
@@ -288,8 +333,11 @@
   .field input[type=range] { flex: 1; max-width: 180px; accent-color: #3d7fb0; }
   .btn-row { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
   .searchbar { display: flex; gap: 8px; }
+  .searchbar input, #gf-text, #bo-filter { padding-left: 30px !important;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="%236b6d78" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>');
+    background-repeat: no-repeat; background-position: 10px center; }
   .searchbar input { flex: 1; padding: 8px 12px; font-size: 14px; border-radius: 8px;
-    background: rgba(0,0,0,.18); }
+    background-color: rgba(0,0,0,.18); }
   #results { position: relative; }
   #results .result-list { position: absolute; z-index: 5; left: 0; right: 0; background: #2c2c36;
     border: 1px solid #444; border-radius: 8px; margin-top: 4px; max-height: 220px; overflow: auto;
@@ -305,6 +353,8 @@
   .dot.live { background: #ffb300; box-shadow: 0 0 6px #ffb300aa; animation: pulse 1.6s infinite; }
   .hotkey-input { text-align: center; cursor: pointer; caret-color: transparent; width: 150px;
     font-weight: 600; letter-spacing: .03em; }
+  .hotkey-input:not(:placeholder-shown):not(:focus) { color: #ffd97a; border-color: #4a4435;
+    background: rgba(255,179,0,.05); }
   .hotkey-input:focus { border-color: var(--amber); background: #34301f; outline: none;
     box-shadow: 0 0 0 2px rgba(255,179,0,.22), 0 0 10px rgba(255,179,0,.18); animation: hk-rec 1.4s ease-in-out infinite; }
   @keyframes hk-rec { 50% { box-shadow: 0 0 0 2px rgba(255,179,0,.4), 0 0 14px rgba(255,179,0,.3); } }
@@ -346,7 +396,7 @@
     border: 1px solid rgba(255,255,255,.14);
     box-shadow: 0 10px 26px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.15);
     opacity: 0; transform: translateY(10px) scale(.97);
-    transition: opacity .22s, transform .25s cubic-bezier(.22,1,.36,1); pointer-events: none; z-index: 50; }
+    transition: opacity .22s, transform .35s cubic-bezier(.34,1.56,.64,1); pointer-events: none; z-index: 50; }
   #toast.show { opacity: 1; transform: none; }
   #toast.err { background: linear-gradient(180deg, #b04532, #93341f); }
   #toast::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
@@ -355,8 +405,8 @@
   @keyframes toast-tick { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
   /* polish */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-thumb { background: #3a3a44; border-radius: 5px; border: 2px solid #1a1a20; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #3e3e49, #34343e); border-radius: 5px; border: 2px solid #1a1a20; }
   ::-webkit-scrollbar-thumb:hover { background: #4a4a58; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-corner { background: transparent; }
@@ -371,6 +421,9 @@
     transition: border-color .2s, box-shadow .2s; }
   .savebar.dirty { border-color: rgba(255,200,69,.4);
     box-shadow: 0 10px 28px -10px rgba(0,0,0,.7), 0 0 12px -2px rgba(255,179,0,.25), inset 0 1px 0 rgba(255,255,255,.05); }
+  .savebar a { font-size: 12px; text-decoration: none; padding: 2px 10px; border-radius: 9px;
+    background: rgba(111,224,74,.1); box-shadow: inset 0 0 0 1px rgba(111,224,74,.25); color: #8ae86a; }
+  .savebar a:hover { background: rgba(111,224,74,.18); color: #a5f08a; }
   .dirty-pill { color: #ffc845; font-size: 12px; opacity: 0; transition: .2s; }
   .savebar.dirty .dirty-pill { opacity: 1; animation: pulse 1.8s infinite; }
   button:disabled { opacity: .45; cursor: default; }
@@ -407,6 +460,8 @@
   .lmp.res-loss { border-left-color: #e0452f; }
   .lmp .idbox { position: relative; grid-row: 1 / 3; width: 38px; height: 38px; flex: none; }
   .lmp .ava { width: 38px; height: 38px; border-radius: 7px; object-fit: cover; background: #14141a; }
+  .lmp.res-win .ava { box-shadow: 0 0 0 1.5px rgba(72,189,33,.5); }
+  .lmp.res-loss .ava { box-shadow: 0 0 0 1.5px rgba(224,69,47,.45); }
   .lmp img.flag { position: absolute; right: -5px; bottom: -4px; width: 20px; height: 13px; object-fit: cover;
     border-radius: 2px; box-shadow: 0 0 0 2px #1e1e26; }
   .lmp img.flag.solo { inset: 0; margin: auto; width: 34px; height: 22px; border-radius: 3px; box-shadow: none; }
@@ -433,13 +488,29 @@
 </style>
 </head>
 <body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-swords" viewBox="0 0 24 24"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" x2="19" y1="19" y2="13"/><line x1="16" x2="20" y1="16" y2="20"/><line x1="19" x2="21" y1="21" y2="19"/><polyline points="14.5 6.5 18 3 21 3 21 6 17.5 9.5"/><line x1="5" x2="9" y1="14" y2="18"/><line x1="7" x2="4" y1="17" y2="20"/><line x1="3" x2="5" y1="19" y2="21"/></symbol>
+    <symbol id="i-scroll" viewBox="0 0 24 24"><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></symbol>
+    <symbol id="i-clapper" viewBox="0 0 24 24"><path d="M20.2 6 3 11l-.9-2.4c-.3-1.1.3-2.2 1.3-2.5l13.5-4c1.1-.3 2.2.3 2.5 1.3Z"/><path d="m6.2 5.3 3.1 3.9"/><path d="m12.4 3.4 3.1 4"/><path d="M3 11h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></symbol>
+    <symbol id="i-dice" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.1" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-monitor" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></symbol>
+    <symbol id="i-signal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/><path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/><path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/><path d="M19.1 4.9C23 8.8 23 15.2 19.1 19.1"/></symbol>
+    <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20c.9 0 1.6-.7 1.6-1.6 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.6 1.6-1.6H17a5 5 0 0 0 5-5c0-5-4.5-9.6-10-9.6Z"/><circle cx="7.5" cy="10.5" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="16.5" cy="10.5" r="1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-library" viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></symbol>
+    <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01"/><path d="M10 10h.01"/><path d="M14 10h.01"/><path d="M18 10h.01"/><path d="M8 14h8"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15"/><path d="M15 6v15"/></symbol>
+  </defs></svg>
   <div id="tabs">
     <span id="brand"><span class="crest">⚜️</span><span class="wordmark">AoE IV Overlay</span></span>
-    <button data-tab="settings" class="active">⚙️ Settings</button>
-    <button data-tab="games">⚔️ Games</button>
-    <button data-tab="buildorders">📜 Build orders</button>
-    <button data-tab="override">🎬 Override</button>
-    <button data-tab="random">🎲 Randomize</button>
+    <button data-tab="settings" class="active"><svg class="ic"><use href="#i-gear"/></svg> Settings</button>
+    <button data-tab="games"><svg class="ic"><use href="#i-swords"/></svg> Games</button>
+    <button data-tab="buildorders"><svg class="ic"><use href="#i-scroll"/></svg> Build orders</button>
+    <button data-tab="override"><svg class="ic"><use href="#i-clapper"/></svg> Override</button>
+    <button data-tab="random"><svg class="ic"><use href="#i-dice"/></svg> Randomize</button>
   </div>
 
   <!-- ============ SETTINGS ============ -->
@@ -447,7 +518,7 @@
     <div class="cards">
 
       <div class="card" style="grid-column: span 2">
-        <h3>👤 Player</h3>
+        <h3><svg class="ic"><use href="#i-user"/></svg> Player</h3>
         <div class="searchbar">
           <input id="search" placeholder="Search aoe4world by name or profile ID…" autocomplete="off">
           <button id="search-btn" class="primary">Search</button>
@@ -464,7 +535,7 @@
       </div>
 
       <div class="card">
-        <h3>🖥️ Overlay</h3>
+        <h3><svg class="ic"><use href="#i-monitor"/></svg> Overlay</h3>
         <div class="btn-row">
           <button id="toggle-btn">Show / Hide</button>
           <button id="edit-btn">Reposition</button>
@@ -486,7 +557,7 @@
       </div>
 
       <div class="card">
-        <h3>📡 Polling & streaming</h3>
+        <h3><svg class="ic"><use href="#i-signal"/></svg> Polling & streaming</h3>
         <div class="field">
           <label>Poll interval <b id="interval-val"></b></label>
           <input id="interval" type="range" min="5" max="60" step="1">
@@ -499,7 +570,7 @@
       </div>
 
       <div class="card" style="grid-column: span 2">
-        <h3>🎨 Appearance</h3>
+        <h3><svg class="ic"><use href="#i-palette"/></svg> Appearance</h3>
         <div class="appearance-grid">
           <div>
             <div class="field">
@@ -533,11 +604,11 @@
     <div class="savebar" id="savebar">
       <span class="dirty-pill" id="dirty-pill">● Unsaved changes</span>
       <span class="muted"><kbd>Ctrl</kbd>+<kbd>S</kbd></span>
-      <button id="save-btn" class="primary" disabled>💾 Save settings</button>
+      <button id="save-btn" class="primary" disabled>Save settings</button>
     </div>
 
     <div class="card" style="margin-top:12px">
-      <h3>⚔️ Last match</h3>
+      <h3><svg class="ic"><use href="#i-swords"/></svg> Last match</h3>
       <div id="last-match"><div class="bo-empty match muted">No match data yet — your latest game will appear here after the first poll.</div></div>
     </div>
   </div>
@@ -596,7 +667,7 @@
     <div class="cards">
 
       <div class="card">
-        <h3>📚 Library <span id="bo-count" class="muted" style="font-weight:400"></span></h3>
+        <h3><svg class="ic"><use href="#i-library"/></svg> Library <span id="bo-count" class="muted" style="font-weight:400"></span></h3>
         <input id="bo-filter" placeholder="Filter…" style="width:100%; box-sizing:border-box; margin-bottom:8px">
         <div id="bo-list"></div>
         <div class="btn-row" style="margin-top:10px">
@@ -616,7 +687,7 @@
       </div>
 
       <div class="card">
-        <h3>🌐 Import from the web</h3>
+        <h3><svg class="ic"><use href="#i-globe"/></svg> Import from the web</h3>
         <div class="row">
           <input id="bo-url" placeholder="Paste a build link from aoe4guides.com or aoeivbuilds.com" style="flex:1">
           <button id="bo-url-import" class="primary">Import</button>
@@ -636,7 +707,7 @@
       </div>
 
       <div class="card">
-        <h3>✏️ Editor</h3>
+        <h3><svg class="ic"><use href="#i-pencil"/></svg> Editor</h3>
         <div class="row">
           <input id="bo-name" placeholder="Build order name" style="flex:1">
           <span id="bo-format" class="badge mode" title="">—</span>
@@ -653,11 +724,11 @@
           <button id="bo-showbtn">Show on overlay</button>
           <label style="min-width:0; flex:1"><input id="bo-checked" type="checkbox" checked> include in hotkey cycle</label>
         </div>
-        <div class="muted">JSON format is compatible with RTS_Overlay / age4builder — or use 🌐 Import from the web. Pasting a build link in here imports it too. Use <code>@folder/image@</code> tokens for icons (works in plain text too). <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves. <kbd>↑</kbd><kbd>↓</kbd> in the filter browses the library; double-click a build order to show it on the overlay.</div>
+        <div class="muted">JSON format is compatible with RTS_Overlay / age4builder — or use Import from the web. Pasting a build link in here imports it too. Use <code>@folder/image@</code> tokens for icons (works in plain text too). <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves. <kbd>↑</kbd><kbd>↓</kbd> in the filter browses the library; double-click a build order to show it on the overlay.</div>
       </div>
 
       <div class="card">
-        <h3>⌨️ Hotkeys & step control</h3>
+        <h3><svg class="ic"><use href="#i-keyboard"/></svg> Hotkeys & step control</h3>
         <div class="field"><label>Show/hide build order</label><input id="bo-hk-show" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
         <div class="field"><label>Cycle build orders</label><input id="bo-hk-cycle" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
         <div class="field"><label>Previous step</label><input id="bo-hk-prev" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
@@ -672,7 +743,7 @@
       </div>
 
       <div class="card">
-        <h3>🎨 Appearance</h3>
+        <h3><svg class="ic"><use href="#i-palette"/></svg> Appearance</h3>
         <div class="appearance-grid">
           <div>
             <div class="field"><label>Font size <b id="bo-fontsize-val"></b></label>
@@ -731,14 +802,14 @@
   <div class="tab" id="tab-random">
     <div class="rand-wrap">
       <div class="rand-box">
-        <h3>⚔️ Civilization</h3>
+        <h3><svg class="ic"><use href="#i-swords"/></svg> Civilization</h3>
         <button class="primary" id="rand-civ">🎲 Roll a civilization</button>
         <img id="rand-civ-img" style="display:none">
         <div class="rand-name" id="rand-civ-name">—</div>
         <div class="rand-hist" id="rand-civ-hist"></div>
       </div>
       <div class="rand-box">
-        <h3>🗺️ Map</h3>
+        <h3><svg class="ic"><use href="#i-map"/></svg> Map</h3>
         <button class="primary" id="rand-map">🎲 Roll a map</button>
         <img id="rand-map-img" style="display:none">
         <div class="rand-name" id="rand-map-name">—</div>
@@ -1206,10 +1277,17 @@ function drawSpark(diffs) {
   ctx.beginPath();
   pts.forEach((v, i) => i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(0), y(v)));
   ctx.stroke();
-  ctx.fillStyle = ctx.strokeStyle;
-  ctx.globalAlpha = .15;
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, ctx.strokeStyle); grad.addColorStop(1, 'transparent');
+  ctx.fillStyle = grad;
+  ctx.globalAlpha = .22;
   ctx.lineTo(x(pts.length - 1), H); ctx.lineTo(x(0), H); ctx.closePath(); ctx.fill();
   ctx.globalAlpha = 1;
+  // endpoint dot
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.beginPath();
+  ctx.arc(x(pts.length - 1), y(pts[pts.length - 1]), 2.6, 0, Math.PI * 2);
+  ctx.fill();
   return net;
 }
 
@@ -1314,7 +1392,7 @@ function renderGames() {
   }
   list.innerHTML = html || `<div class="bo-empty muted">${allGames.length
     ? 'No games match the current filters.<br><button id="gf-clear" style="margin-top:10px">Clear filters</button>'
-    : 'No games yet. Track a player on the ⚙️ Settings tab and your match history will appear here.'}</div>`;
+    : 'No games yet. Track a player on the Settings tab and your match history will appear here.'}</div>`;
   const clr = $('gf-clear');
   if (clr) clr.onclick = () => {
     $('gf-mode').value = ''; $('gf-result').value = ''; $('gf-text').value = '';
@@ -1402,7 +1480,9 @@ function renderBoList() {
   }
   setCount(names.length);
   if (!names.length) {
-    list.innerHTML = '<div class="bo-empty muted">No build orders yet.<br>Use 🌐 Import from the web, paste one from age4builder.com, or click ＋ New.</div>';
+    list.innerHTML = '<div class="bo-empty muted">No build orders yet.<br>Import one from the web, paste one from age4builder.com, or click ＋ New.<br><button id="bo-empty-browse" style="margin-top:10px">Browse aoe4guides</button></div>';
+    const browse = $('bo-empty-browse');
+    if (browse) browse.onclick = () => { $('bo-g-search').onclick(); $('bo-g-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
     return;
   }
   list.innerHTML = names.map(name => {
@@ -1967,7 +2047,9 @@ $('ov-prevent').onchange = () => { if (!$('ov-prevent').checked) invoke('reset_o
 function makeRoller(btnId, nameId, imgId, histId, pool, srcFor) {
   let last = null;
   const hist = [];
+  let spinning = false;
   $(btnId).onclick = () => {
+    if (spinning) return;
     let v;
     do { v = pool[Math.floor(Math.random() * pool.length)]; } while (v === last && pool.length > 1);
     if (last) {
@@ -1975,13 +2057,27 @@ function makeRoller(btnId, nameId, imgId, histId, pool, srcFor) {
       if (hist.length > 3) hist.pop();
       $(histId).innerHTML = hist.map(h => `<span>${esc(h)}</span>`).join('');
     }
+    const prev = last;
     last = v;
     const nm = $(nameId);
-    nm.textContent = v;
-    nm.style.animation = 'none'; void nm.offsetWidth; nm.style.animation = 'rand-pop .3s cubic-bezier(.22,1,.36,1)';
-    const img = $(imgId);
-    img.src = srcFor(v); img.style.display = '';
-    img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
+    const settle = () => {
+      spinning = false;
+      nm.style.opacity = '';
+      nm.textContent = v;
+      nm.style.animation = 'none'; void nm.offsetWidth; nm.style.animation = 'rand-pop .3s cubic-bezier(.22,1,.36,1)';
+      const img = $(imgId);
+      img.src = srcFor(v); img.style.display = '';
+      img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
+    };
+    // Brief slot-machine shuffle through other names before settling (skipped for reduced motion)
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches || !prev) { settle(); return; }
+    spinning = true;
+    nm.style.opacity = '.55';
+    let ticks = 0;
+    const spin = setInterval(() => {
+      nm.textContent = pool[Math.floor(Math.random() * pool.length)];
+      if (++ticks >= 7) { clearInterval(spin); settle(); }
+    }, 55);
   };
 }
 makeRoller('rand-civ', 'rand-civ-name', 'rand-civ-img', 'rand-civ-hist', CIVS, c => `flags/${c}.webp`);
