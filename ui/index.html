@@ -35,7 +35,7 @@
   #tabs button.active .ic, #tabs button:hover .ic { opacity: 1; }
   #tabs button.active .ic { color: var(--gold); }
   .card h3 .ic, .rand-box h3 .ic { width: 13px; height: 13px; vertical-align: -2px; }
-  html { scrollbar-gutter: stable; overscroll-behavior: none; }
+  html { scrollbar-gutter: stable; overscroll-behavior: none; scroll-behavior: smooth; }
   body { font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; color: var(--ink); margin: 0; min-height: 100vh;
     -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; line-height: 1.45;
     background:
@@ -142,6 +142,8 @@
   input[type=color]::-webkit-color-swatch-wrapper { padding: 2px; }
   input[type=color]::-webkit-color-swatch { border: none; border-radius: 50%; }
   input[type=color]:hover { box-shadow: 0 0 0 2px rgba(255,255,255,.3), 0 2px 6px rgba(0,0,0,.5); }
+  input[type=color]:focus-visible { outline: none;
+    box-shadow: 0 0 0 2px #3d7fb0, 0 2px 6px rgba(0,0,0,.5); }
   input[type=number] { font-variant-numeric: tabular-nums; }
   input[type=number]::-webkit-inner-spin-button { opacity: .4; }
   input[type=range] { padding: 0; border: none; background: none; -webkit-appearance: none; height: 18px; }
@@ -207,18 +209,29 @@
   .hotkey-input { width: 130px; }
   #bo-list { max-height: 320px; overflow: auto; border: 1px solid var(--card-border); border-radius: 9px;
     background: rgba(0,0,0,.14); }
+  /* scrollable lists hint at clipped content with soft edge fades */
+  .scroll-fade { --fade-top: 0px; --fade-btm: 0px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top),
+      #000 calc(100% - var(--fade-btm)), transparent);
+            mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top),
+      #000 calc(100% - var(--fade-btm)), transparent); }
   .bo-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer;
              border-bottom: 1px solid #2a2a32; transition: background .12s; }
   .bo-item:last-child { border-bottom: none; }
   .bo-item:hover { background: #2c2c36; box-shadow: inset 2px 0 0 var(--gold-dim); }
+  .bo-item:active { background: #31313c; }
   .bo-item img.boflag { box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 1px 3px rgba(0,0,0,.5); }
   .bo-item.sel { background: linear-gradient(to right, rgba(224,186,94,.13), rgba(224,186,94,.04));
     box-shadow: inset 3px 0 0 var(--gold); }
   .bo-item .bo-meta { margin-left: auto; display: flex; gap: 6px; align-items: center; flex: none; }
   .bo-item .bo-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
   .bo-item img.boflag { width: 24px; height: 15px; object-fit: cover; border-radius: 2px; flex: none; }
-  .bo-item .cyc { opacity: .5; flex: none; cursor: pointer; font-size: 14px; }
-  .bo-item .cyc.on { opacity: 1; color: #6fe04a; }
+  .bo-item .cyc { flex: none; cursor: pointer; font-size: 10px; font-weight: 700; letter-spacing: .04em;
+    padding: 1px 7px; border-radius: 8px; color: #777c88; background: rgba(255,255,255,.04);
+    box-shadow: inset 0 0 0 1px #3a3a46; transition: color .15s, background .15s, box-shadow .15s; }
+  .bo-item .cyc:hover { color: #aab; box-shadow: inset 0 0 0 1px #4a4a58; }
+  .bo-item .cyc.on { color: #6fe04a; background: rgba(72,189,33,.12); box-shadow: inset 0 0 0 1px rgba(72,189,33,.35); }
+  .bo-item .cyc.on:hover { background: rgba(72,189,33,.2); }
   .bo-item .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #6fe04a; flex: none;
                        box-shadow: 0 0 5px #6fe04a; animation: pulse 1.6s infinite; }
   .bo-empty { padding: 26px 16px; text-align: center; line-height: 1.65; }
@@ -238,6 +251,12 @@
   #bo-content { width: 100%; height: 220px; font-family: "Cascadia Code", "Cascadia Mono", Consolas, monospace; font-size: 12px; box-sizing: border-box;
                 margin: 8px 0; resize: vertical; line-height: 1.5; background: rgba(0,0,0,.22); tab-size: 2; }
   #bo-content.invalid { border-color: #e0452f; }
+  /* edit/reposition buttons stay visibly "on" while the mode is active */
+  button.toggled { background: linear-gradient(180deg, #4a3c1c, #3a2f16); border-color: rgba(255,179,0,.55);
+    color: #ffd97a; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 10px -2px rgba(255,179,0,.35); }
+  button.toggled:hover { background: linear-gradient(180deg, #564618, #443818); border-color: rgba(255,200,69,.7); }
+  button.attn-save { border-color: rgba(255,200,69,.45);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 0 10px -2px rgba(255,179,0,.35); }
   #bo-format.ok { background: rgba(72,189,33,.18); color: #6fe04a; }
   #bo-format.bad { background: rgba(224,69,47,.18); color: #ff7b66; }
   .pv-checker { border-radius: 8px; position: relative;
@@ -359,8 +378,17 @@
     opacity: .55; transition: opacity .15s, background .15s; }
   .game-card:hover .game-side a { opacity: 1; }
   .game-side a:hover { background: rgba(122,182,255,.16); }
+  .games-day { display: flex; align-items: center; gap: 10px; margin: 16px 2px 2px;
+    font-size: 10px; font-weight: 700; color: var(--ink-muted); text-transform: uppercase; letter-spacing: .1em; }
+  .games-day::after { content: ""; flex: 1; height: 1px;
+    background: linear-gradient(to right, #30303b, transparent); }
+  .games-day:first-child { margin-top: 4px; }
   .games-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-  .games-toolbar select { background: linear-gradient(180deg, #2e2e37, #26262e); }
+  .games-toolbar select { background-color: #2a2a33; }
+  input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; width: 13px; height: 13px;
+    cursor: pointer; opacity: .55; transition: opacity .15s;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="%239094a0" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>') center/contain no-repeat; }
+  input[type=search]::-webkit-search-cancel-button:hover { opacity: 1; }
   #games-stats { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
   #games-stats .stat-block { min-width: 90px; }
   .stat-block { background: linear-gradient(180deg, #26262e, #232229); border: 1px solid #32323c;
@@ -373,13 +401,17 @@
   .stat-sub { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .08em; }
   .stat-block.civs { align-items: stretch; gap: 3px; }
   .civ-row { display: flex; align-items: center; gap: 6px; font-size: 11px; }
-  .civ-row img { width: 20px; height: 13px; object-fit: cover; border-radius: 2px; }
+  .civ-row img { width: 20px; height: 13px; object-fit: cover; border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.1); }
+  .gp img { box-shadow: 0 0 0 1px rgba(255,255,255,.1); }
   .civ-row .bar { flex: 1; height: 6px; background: #17171d; border-radius: 3px; overflow: hidden;
     box-shadow: inset 0 1px 1px rgba(0,0,0,.5); }
   .civ-row .bar i { display: block; height: 100%; border-radius: inherit;
     background: linear-gradient(to right, #2d5f8a, #6fb4e0);
     box-shadow: 0 0 5px rgba(111,180,224,.35); transform-origin: left;
     animation: bar-grow .55s cubic-bezier(.22,1,.36,1); }
+  .civ-row .bar i.hi { background: linear-gradient(to right, #2f7a18, #6fe04a); box-shadow: 0 0 5px rgba(111,224,74,.35); }
+  .civ-row .bar i.lo { background: linear-gradient(to right, #8a3527, #ff7b66); box-shadow: 0 0 5px rgba(255,123,102,.3); }
   @keyframes bar-grow { from { transform: scaleX(0); } }
   .civ-row .pct { width: 64px; text-align: right; color: #aaa; }
 
@@ -419,6 +451,13 @@
     border: 1px solid #2c2c35; border-radius: 9px; padding: 10px 12px;
     box-shadow: inset 0 1px 2px rgba(0,0,0,.25); }
   .tracked-name { font-weight: 700; color: #fff; }
+  .tracked-info { min-width: 0; flex: 1; }
+  .tracked-ava { width: 34px; height: 34px; border-radius: 50%; flex: none; display: flex;
+    align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: var(--gold);
+    background: radial-gradient(circle at 35% 30%, #34343f, #232329);
+    box-shadow: inset 0 0 0 1px rgba(224,186,94,.35), 0 2px 6px -2px rgba(0,0,0,.6);
+    text-transform: uppercase; user-select: none; }
+  .tracked-ava .ic { width: 15px; height: 15px; color: var(--ink-muted); }
   .dot { width: 9px; height: 9px; border-radius: 50%; background: #555; flex: none; transition: background .3s; }
   .dot.ok { background: #48bd21; box-shadow: 0 0 6px #48bd21aa; }
   .dot.err { background: #e0452f; box-shadow: 0 0 6px #e0452faa; }
@@ -432,7 +471,8 @@
   @keyframes hk-rec { 50% { box-shadow: 0 0 0 2px rgba(255,179,0,.4), 0 0 14px rgba(255,179,0,.3); } }
   .field label.switch { flex: 0 0 40px; }
   .switch { position: relative; width: 40px; height: 22px; flex: none; }
-  .switch input { display: none; }
+  .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .switch input:focus-visible + span { outline: 2px solid #3d7fb0; outline-offset: 2px; }
   .switch span { position: absolute; inset: 0; background: #3a3a44; border-radius: 11px; cursor: pointer;
     transition: background .2s, box-shadow .2s; box-shadow: inset 0 1px 2px rgba(0,0,0,.4); }
   .switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
@@ -470,6 +510,7 @@
     border: 1px solid rgba(255,255,255,.14); overflow: hidden;
     box-shadow: 0 10px 26px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.15);
     display: flex; align-items: center; gap: 9px; max-width: min(420px, calc(100vw - 60px));
+    pointer-events: auto;
     animation: toast-in .35s cubic-bezier(.34,1.56,.64,1);
     transition: opacity .25s, transform .25s; }
   @keyframes toast-in { from { opacity: 0; transform: translateY(10px) scale(.97); } }
@@ -477,6 +518,10 @@
   .toast .t-ic { flex: none; width: 19px; height: 19px; border-radius: 50%; font-size: 12px; line-height: 19px;
     text-align: center; background: rgba(255,255,255,.18); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2);
     animation: t-ic-pop .35s cubic-bezier(.34,1.56,.64,1); }
+  .toast .t-act { flex: none; margin-left: 4px; padding: 3px 12px; font-size: 12px; font-weight: 700;
+    color: #fff; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); border-radius: 7px;
+    box-shadow: none; }
+  .toast .t-act:hover { background: rgba(255,255,255,.26); }
   @keyframes t-ic-pop { from { transform: scale(.4); opacity: 0; } }
   .toast.err { background: linear-gradient(180deg, #b04532, #93341f); }
   .toast::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
@@ -508,10 +553,25 @@
   .savebar a:hover { background: rgba(111,224,74,.18); color: #a5f08a; }
   .dirty-pill { color: #ffc845; font-size: 12px; opacity: 0; transition: .2s; }
   .savebar.dirty .dirty-pill { opacity: 1; animation: pulse 1.8s infinite; }
-  button:disabled { opacity: .45; cursor: default; }
+  button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  /* async buttons swap their label for a spinner so width never jumps */
+  .btn-busy { position: relative; color: transparent !important; pointer-events: none; }
+  .btn-busy::after { content: ""; position: absolute; inset: 0; margin: auto; width: 13px; height: 13px;
+    border-radius: 50%; border: 2px solid rgba(255,255,255,.25); border-top-color: #fff;
+    animation: spin .65s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  /* destructive actions read as such before you commit to them */
+  button.danger:hover { background: linear-gradient(180deg, #4a2a26, #3c211d); border-color: #8a4438;
+    color: #ffb3a6; box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 2px 8px -2px rgba(224,69,47,.35); }
   .result.kb { background: #33333d; border-left-color: var(--gold); }
   .tab.dropping { outline: 2px dashed var(--blue); outline-offset: -6px; border-radius: 14px;
-    background: rgba(61,127,176,.04); }
+    background: rgba(61,127,176,.04); position: relative; }
+  .tab.dropping::after { content: "Drop .json / .txt build orders to import"; position: sticky; left: 50%;
+    bottom: 48px; display: block; width: fit-content; transform: translateX(-50%);
+    padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #cde4ff;
+    background: linear-gradient(180deg, rgba(34,52,70,.97), rgba(26,40,56,.97));
+    border: 1px solid rgba(122,182,255,.4); box-shadow: 0 10px 28px -8px rgba(0,0,0,.7);
+    pointer-events: none; animation: toast-in .25s cubic-bezier(.34,1.56,.64,1); }
 
   /* about popover, anchored under the brand */
   #brand { cursor: pointer; }
@@ -565,7 +625,7 @@
   .pal-item { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border-radius: 8px;
     cursor: pointer; font-size: 13px; color: var(--ink); }
   .pal-item .ic { color: var(--ink-muted); }
-  .pal-item .pal-hl { color: var(--gold-bright); font-weight: 700; font-style: normal; }
+  .pal-hl { color: var(--gold-bright); font-weight: 700; font-style: normal; }
   .pal-item .pal-k { margin-left: auto; flex: none; opacity: .75; }
   .pal-item.sel { background: linear-gradient(to right, rgba(224,186,94,.14), rgba(224,186,94,.05));
     box-shadow: inset 2px 0 0 var(--gold); color: var(--ink-strong); }
@@ -611,6 +671,7 @@
     transition: background .15s; }
   .lm-head a.lm-sub:hover { background: rgba(122,182,255,.22); }
   .lm-teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: start; }
+  @media (max-width: 760px) { .lm-teams { grid-template-columns: 1fr; } .lm-vs { justify-self: center; } }
   .lm-vs { align-self: center; color: var(--gold-dim); font-weight: 800; font-size: 13px; letter-spacing: .1em; padding: 0 4px; }
   .lmp { display: grid; grid-template-columns: 38px minmax(90px, 1fr) auto; grid-template-rows: auto auto;
     gap: 3px 10px; align-items: center; background: linear-gradient(to right, #20202a, #1d1d25);
@@ -687,11 +748,12 @@
         </div>
         <div id="results"></div>
         <div class="tracked" id="tracked-box">
-          <span class="dot" id="poll-dot"></span>
+          <span class="tracked-ava" id="tracked-ava" aria-hidden="true"><svg class="ic"><use href="#i-user"/></svg></span>
           <div class="tracked-info">
             <div id="current-player" class="tracked-name">No player tracked</div>
             <div class="muted" id="tracked-sub">Search for your profile to start polling</div>
           </div>
+          <span class="dot" id="poll-dot" title="Poll status"></span>
           <a id="profile-link" href="#" target="_blank" style="display:none">aoe4world ↗</a>
         </div>
       </div>
@@ -765,6 +827,7 @@
 
     <div class="savebar" id="savebar">
       <span class="dirty-pill" id="dirty-pill">● Unsaved changes</span>
+      <button id="revert-btn" title="Discard unsaved changes and reload saved settings" style="display:none">Revert</button>
       <span class="muted"><kbd>Ctrl</kbd>+<kbd>S</kbd></span>
       <button id="save-btn" class="primary" disabled>Save settings</button>
     </div>
@@ -790,7 +853,7 @@
         <option value="win">Wins</option>
         <option value="loss">Losses</option>
       </select>
-      <input id="gf-text" placeholder="Filter by map or player…" style="width:180px">
+      <input id="gf-text" type="search" placeholder="Filter by map or player…" style="width:200px">
       <select id="gf-limit" title="How many games to fetch">
         <option value="25">Last 25</option>
         <option value="50">Last 50</option>
@@ -802,24 +865,24 @@
       <button id="games-refresh" class="primary">Refresh</button>
     </div>
     <div id="games-stats" style="display:none">
-      <div class="stat-block">
+      <div class="stat-block" title="Wins and losses across the games below">
         <div class="stat-big" id="gs-record">—</div>
         <div class="stat-sub">record</div>
       </div>
-      <div class="stat-block">
+      <div class="stat-block" title="Winrate across the games below">
         <div class="stat-big" id="gs-winrate">—</div>
         <div class="stat-sub">winrate</div>
       </div>
-      <div class="stat-block">
+      <div class="stat-block" title="Current win / loss streak">
         <div class="stat-big" id="gs-streak">—</div>
         <div class="stat-sub">streak</div>
       </div>
-      <div class="stat-block" style="flex:1.6">
+      <div class="stat-block" style="flex:1.6" title="Cumulative rating change, oldest to newest">
         <canvas id="gs-spark" width="220" height="44"></canvas>
         <div class="stat-sub">rating trend <span id="gs-net"></span></div>
       </div>
-      <div class="stat-block civs" id="gs-civs" style="flex:2"></div>
-      <div class="stat-block civs" id="gs-maps" style="flex:2"></div>
+      <div class="stat-block civs" id="gs-civs" style="flex:2" title="Winrate with your most-played civilizations"></div>
+      <div class="stat-block civs" id="gs-maps" style="flex:2" title="Winrate on your most-played maps"></div>
     </div>
     <div id="games-list"></div>
   </div>
@@ -880,7 +943,7 @@
           <button id="bo-dup">Duplicate</button>
           <button id="bo-format-btn">Format JSON</button>
           <button id="bo-export">Export</button>
-          <button id="bo-del">Delete</button>
+          <button id="bo-del" class="danger">Delete</button>
         </div>
         <div class="row">
           <button id="bo-showbtn">Show on overlay</button>
@@ -1075,10 +1138,20 @@ function syncRangeFill(el) {
 }
 function syncAllRanges() { document.querySelectorAll('input[type=range]').forEach(syncRangeFill); }
 document.addEventListener('input', e => { if (e.target.type === 'range') syncRangeFill(e.target); });
+// Double-click a slider to snap it back to its default value
+const RANGE_DEFAULTS = { interval: 15, tcalpha: 35, fontscale: 100, ovscale: 100, 'bo-fontsize': 12, 'bo-opacity': 75 };
+document.querySelectorAll('input[type=range]').forEach(el => {
+  if (RANGE_DEFAULTS[el.id] === undefined) return;
+  el.title = 'Double-click to reset';
+  el.addEventListener('dblclick', () => {
+    el.value = RANGE_DEFAULTS[el.id];
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+});
 
-function toast(msg, err = false) {
+function toast(msg, err = false, action = null) {
   const wrap = $('toasts');
-  const ms = err ? 4200 : 2200;  // errors stick around long enough to read
+  const ms = action ? 6000 : err ? 4200 : 2200;  // errors/actions stick around long enough to use
   const t = document.createElement('div');
   t.className = 'toast' + (err ? ' err' : '');
   t.style.setProperty('--toast-ms', ms + 'ms');
@@ -1088,6 +1161,13 @@ function toast(msg, err = false) {
   const txt = document.createElement('span');
   txt.textContent = msg;
   t.append(ic, txt);
+  if (action) {
+    const btn = document.createElement('button');
+    btn.className = 't-act';
+    btn.textContent = action.label;
+    btn.onclick = () => { t.remove(); action.run(); };
+    t.appendChild(btn);
+  }
   wrap.appendChild(t);
   while (wrap.children.length > 3) wrap.firstElementChild.remove();
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 260); }, ms);
@@ -1101,13 +1181,19 @@ function makeHotkeyRecorder(el) {
     e.preventDefault();
     if (e.key === 'Escape') { el.value = el.dataset.prev ?? ''; el.blur(); return; }
     if (e.key === 'Backspace' || e.key === 'Delete') { el.value = ''; el.dataset.prev = ''; el.blur(); return; }
-    if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
     const mods = [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift', e.metaKey && 'Super'].filter(Boolean);
+    // held modifiers show live while the combo is still incomplete
+    if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) { el.value = mods.length ? mods.join('+') + '+…' : ''; return; }
     let key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
     if (key === ' ') key = 'Space';
     el.value = [...mods, key].join('+');
     el.dataset.prev = el.value;
     el.blur();
+  });
+  el.addEventListener('keyup', e => {
+    // all modifiers released without a main key: clear the partial hint
+    if (document.activeElement === el && el.value.endsWith('…') && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey)
+      el.value = '';
   });
 }
 
@@ -1186,6 +1272,10 @@ tabButtons.forEach((b, i) => {
   const pretty = b.dataset.tab === 'buildorders' ? 'Build orders' : b.dataset.tab[0].toUpperCase() + b.dataset.tab.slice(1);
   b.title = `${pretty} — Ctrl+${i + 1}`;
   b.setAttribute('aria-keyshortcuts', `Control+${i + 1}`);
+  b.setAttribute('aria-controls', 'tab-' + b.dataset.tab);
+  const pane = $('tab-' + b.dataset.tab);
+  pane.setAttribute('role', 'tabpanel');
+  pane.setAttribute('aria-label', pretty);
   b.tabIndex = b.classList.contains('active') ? 0 : -1;
   b.onclick = () => {
     // clicking the already-active tab scrolls its pane back to the top
@@ -1258,6 +1348,9 @@ const PAL_COMMANDS = [
   { sect: 'Overlay', name: 'Previous build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'prev' }) },
   { sect: 'Actions', name: 'Save settings', icon: 'i-gear', key: 'Ctrl+S', run: () => save() },
   { sect: 'Actions', name: 'New build order', icon: 'i-pencil', run: () => { tabButtons[2].click(); $('bo-new').click(); } },
+  { sect: 'Actions', name: 'Import build order from link', icon: 'i-globe', run: () => { tabButtons[2].click(); $('bo-url').focus(); } },
+  { sect: 'Actions', name: 'Browse aoe4guides builds', icon: 'i-globe', run: () => { tabButtons[2].click(); $('bo-g-search').click(); } },
+  { sect: 'Actions', name: 'Export all build orders', icon: 'i-library', run: () => $('bo-export-all').click() },
   { sect: 'Actions', name: 'Refresh games list', icon: 'i-swords', run: () => { tabButtons[1].click(); $('games-refresh').click(); } },
   { sect: 'Actions', name: 'Roll a random civilization', icon: 'i-dice', run: () => { tabButtons[4].click(); $('rand-civ').click(); } },
   { sect: 'Actions', name: 'Roll a random map', icon: 'i-map', run: () => { tabButtons[4].click(); $('rand-map').click(); } },
@@ -1427,9 +1520,11 @@ async function loadSettings() {
     $('tracked-sub').textContent = `profile #${settings.profile_id} — polling every ${settings.interval}s`;
     $('profile-link').href = `https://aoe4world.com/players/${settings.profile_id}`;
     $('profile-link').style.display = '';
+    $('tracked-ava').textContent = settings.player_name.trim()[0] || '?';
   } else {
     $('current-player').textContent = 'No player tracked';
     $('tracked-sub').textContent = 'Search for your profile to start polling';
+    $('tracked-ava').innerHTML = '<svg class="ic"><use href="#i-user"/></svg>';
   }
   updatePreview();
   // build order
@@ -1474,11 +1569,13 @@ function collectCommon() {
 function markDirty() {
   $('savebar').classList.add('dirty');
   $('save-btn').disabled = false;
+  $('revert-btn').style.display = '';
   tabButtons[0].classList.add('unsaved');
 }
 function clearDirty() {
   $('savebar').classList.remove('dirty');
   $('save-btn').disabled = true;
+  $('revert-btn').style.display = 'none';
   tabButtons[0].classList.remove('unsaved');
 }
 
@@ -1517,6 +1614,10 @@ async function save() {
     syncAllRanges();
     clearDirty();
     toast('Settings saved');
+    // brief confirmation on the button itself
+    const btn = $('save-btn');
+    btn.textContent = 'Saved ✓';
+    setTimeout(() => { btn.textContent = 'Save settings'; }, 1400);
   } catch (e) {
     toast('Failed to save: ' + e, true);
   }
@@ -1527,16 +1628,22 @@ async function doSearch() {
   const q = $('search').value.trim();
   if (!q) return;
   $('search-btn').disabled = true;
-  $('search-btn').textContent = '…';
+  $('search-btn').classList.add('btn-busy');
   try {
     const players = await invoke('search_player', { query: q });
     if (!players.length) { $('results').innerHTML = ''; toast('No players found', true); return; }
     const list = document.createElement('div');
     list.className = 'result-list';
+    // bold the part of each name that matched the query
+    const hlName = n => {
+      const i = n.toLowerCase().indexOf(q.toLowerCase());
+      if (i < 0) return esc(n);
+      return esc(n.slice(0, i)) + `<b class="pal-hl">${esc(n.slice(i, i + q.length))}</b>` + esc(n.slice(i + q.length));
+    };
     for (const p of players) {
       const div = document.createElement('div');
       div.className = 'result';
-      div.innerHTML = `<span>${esc(p.name)}${p.rating ? `<span class="elo">${p.rating} elo</span>` : ''}</span><span class="muted">#${p.profile_id}</span>`;
+      div.innerHTML = `<span>${hlName(p.name)}${p.rating ? `<span class="elo">${p.rating} elo</span>` : ''}</span><span class="muted">#${p.profile_id}</span>`;
       div.onclick = async () => {
         settings.profile_id = p.profile_id;
         settings.player_name = p.name;
@@ -1560,7 +1667,7 @@ async function doSearch() {
     toast('Search failed: ' + e, true);
   } finally {
     $('search-btn').disabled = false;
-    $('search-btn').textContent = 'Search';
+    $('search-btn').classList.remove('btn-busy');
   }
 }
 document.addEventListener('click', e => {
@@ -1754,6 +1861,14 @@ function drawSpark(diffs) {
   const x = i => 4 + i * (W - 8) / (pts.length - 1);
   const y = v => 4 + (max - v) * (H - 8) / span;
   const net = pts[pts.length - 1];
+  // dashed baseline where the run started, so dips and gains read at a glance
+  if (min < 0 && max > 0) {
+    ctx.strokeStyle = 'rgba(255,255,255,.14)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 4]);
+    ctx.beginPath(); ctx.moveTo(4, y(0)); ctx.lineTo(W - 4, y(0)); ctx.stroke();
+    ctx.setLineDash([]);
+  }
   ctx.strokeStyle = net >= 0 ? '#6fe04a' : '#ff7b66';
   ctx.lineWidth = 2;
   ctx.lineJoin = 'round';
@@ -1802,10 +1917,11 @@ function renderGameStats(games, pid) {
     byCiv[c].n++;
     if (r.result === 'win') byCiv[c].w++;
   });
+  const barCls = p => p >= 55 ? ' class="hi"' : p < 45 ? ' class="lo"' : '';
   const top = Object.entries(byCiv).sort((a, b) => b[1].n - a[1].n).slice(0, 4);
   $('gs-civs').innerHTML = top.map(([c, v]) => {
     const p = Math.round(v.w / v.n * 100);
-    return `<div class="civ-row">${civFlag(c)}<span class="bar"><i style="width:${p}%"></i></span>
+    return `<div class="civ-row">${civFlag(c)}<span class="bar"><i${barCls(p)} style="width:${p}%"></i></span>
       <span class="pct">${p}% · ${v.n}g</span></div>`;
   }).join('') || '';
   // winrate by map, most-played first
@@ -1822,7 +1938,7 @@ function renderGameStats(games, pid) {
   $('gs-maps').innerHTML = topMaps.map(([m, v]) => {
     const p = Math.round(v.w / v.n * 100);
     return `<div class="civ-row"><span style="width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${esc(m)}">${esc(m)}</span>
-      <span class="bar"><i style="width:${p}%"></i></span><span class="pct">${p}% · ${v.n}g</span></div>`;
+      <span class="bar"><i${barCls(p)} style="width:${p}%"></i></span><span class="pct">${p}% · ${v.n}g</span></div>`;
   }).join('') || '';
 }
 
@@ -1835,7 +1951,23 @@ function renderGames() {
   renderGameStats(games, pid);
   let wins = 0, losses = 0, html = '';
   {
+    // bucket games by recency so long lists keep a sense of time
+    const dayBucket = iso => {
+      const t = new Date(iso).getTime();
+      if (!isFinite(t)) return '';
+      const days = Math.floor((Date.now() - t) / 86400000);
+      if (days < 1) return 'Today';
+      if (days < 2) return 'Yesterday';
+      if (days < 7) return 'This week';
+      return 'Earlier';
+    };
+    let lastBucket = null;
     for (const g of games) {
+      const bucket = dayBucket(g.started_at);
+      if (bucket && bucket !== lastBucket) {
+        html += `<div class="games-day">${bucket}</div>`;
+        lastBucket = bucket;
+      }
       const teams = (g.teams || []).map(t => t.map(m => m.player || m));
       const me = teams.flat().find(p => p.profile_id === pid);
       const live = !!g.ongoing;
@@ -1875,22 +2007,28 @@ function renderGames() {
   }
   list.innerHTML = html || `<div class="bo-empty muted">${allGames.length
     ? 'No games match the current filters.<br><button id="gf-clear" style="margin-top:10px">Clear filters</button>'
-    : 'No games yet. Track a player on the Settings tab and your match history will appear here.'}</div>`;
+    : 'No games yet. Track a player and your match history will appear here.<br><button id="gf-goto-settings" style="margin-top:10px">Find your profile</button>'}</div>`;
   const clr = $('gf-clear');
   if (clr) clr.onclick = () => {
     $('gf-mode').value = ''; $('gf-result').value = ''; $('gf-text').value = '';
     renderGames();
   };
+  const goto = $('gf-goto-settings');
+  if (goto) goto.onclick = () => { tabButtons[0].click(); $('search').focus(); };
 }
 
 async function loadGames() {
-  const list = $('games-list');
+  const list = $('games-list'), btn = $('games-refresh');
   list.innerHTML = '<div class="skel-card"></div>'.repeat(4);
+  btn.disabled = true; btn.textContent = 'Refreshing…';
   try {
     const data = await invoke('get_match_history');
     allGames = data.games || [];
     renderGames();
-  } catch (e) { list.innerHTML = `<div class="muted">Failed to load match history: ${e}</div>`; }
+  } catch (e) {
+    list.innerHTML = `<div class="bo-empty muted">Could not load the match history.<br>${esc(String(e))}<br><button id="gf-retry" style="margin-top:10px">Try again</button></div>`;
+    $('gf-retry').onclick = loadGames;
+  } finally { btn.disabled = false; btn.textContent = 'Refresh'; }
 }
 $('gf-mode').onchange = renderGames;
 $('gf-result').onchange = renderGames;
@@ -1914,6 +2052,7 @@ let boDirty = false;     // editor has unsaved changes
 function setBoDirty(d) {
   boDirty = d;
   $('bo-add').textContent = d ? 'Save build order •' : 'Save build order';
+  $('bo-add').classList.toggle('attn-save', d);
 }
 let boPvStep = 0;        // preview step index
 let boShownName = null;  // BO currently on the overlay (from bo_data)
@@ -1953,6 +2092,7 @@ function renderBoList() {
   let names = Object.keys(settings.buildorders || {});
   const total = names.length;
   $('tab-bo-chip').textContent = total || '';
+  $('tab-bo-chip').title = total ? `${total} build order${total === 1 ? '' : 's'} in the library` : '';
   const setCount = shown => $('bo-count').textContent =
     total ? (shown === total ? `(${total})` : `(${shown}/${total})`) : '';
   if (filter) {
@@ -1979,7 +2119,7 @@ function renderBoList() {
       <span class="bo-meta">
         ${p.err ? '<span class="badge loss" title="' + esc(p.err) + '">invalid</span>' : ''}
         <span class="muted">${p.steps} step${p.steps === 1 ? '' : 's'}</span>
-        <span class="cyc${checked ? ' on' : ''}" title="Include in hotkey cycle">${checked ? '✓' : '✗'}</span>
+        <span class="cyc${checked ? ' on' : ''}" title="${checked ? 'In the hotkey cycle — click to remove' : 'Not in the hotkey cycle — click to add'}">${checked ? '✓ cycle' : 'cycle'}</span>
       </span>
     </div>`;
   }).join('');
@@ -2108,12 +2248,18 @@ $('bo-dup').onclick = async () => {
 $('bo-del').onclick = async () => {
   const name = boSelected;
   if (!name || settings.buildorders[name] === undefined) { toast('Select a build order first', true); return; }
-  if (!confirm(`Delete build order "${name}"?`)) return;
+  const content = settings.buildorders[name];
+  const wasUnchecked = (settings.unchecked_buildorders || []).includes(name);
   delete settings.buildorders[name];
   settings.unchecked_buildorders = (settings.unchecked_buildorders || []).filter(n => n !== name);
   await persistBo();
   $('bo-new').onclick();
-  toast(`Deleted "${name}"`);
+  toast(`Deleted "${name}"`, false, { label: 'Undo', run: async () => {
+    settings.buildorders[name] = content;
+    if (wasUnchecked) (settings.unchecked_buildorders = settings.unchecked_buildorders || []).push(name);
+    await persistBo();
+    selectBo(name);
+  } });
 };
 
 $('bo-format-btn').onclick = () => {
@@ -2236,14 +2382,14 @@ async function importFromUrl(url) {
   const prof = url.match(/aoe4guides\.com\/(?:profile|user)\/([A-Za-z0-9]+)/);
   if (prof) { searchGuides({ author: prof[1] }); return; }
   const btn = $('bo-url-import');
-  btn.disabled = true; btn.textContent = 'Importing…';
+  btn.disabled = true; btn.classList.add('btn-busy');
   try {
     await saveImportedBo(await invoke('bo_import_url', { url }));
     $('bo-url').value = '';
   } catch (e) {
     toast(String(e), true);
   } finally {
-    btn.disabled = false; btn.textContent = 'Import';
+    btn.disabled = false; btn.classList.remove('btn-busy');
   }
 }
 $('bo-url-import').onclick = () => importFromUrl($('bo-url').value);
@@ -2276,7 +2422,7 @@ for (const id of ['bo-g-civ', 'bo-g-sort']) {
 
 async function searchGuides(opts = {}) {
   const btn = $('bo-g-search'), out = $('bo-g-results');
-  btn.disabled = true; btn.textContent = 'Searching…';
+  btn.disabled = true; btn.classList.add('btn-busy');
   try {
     const builds = await invoke('bo_search_guides', {
       civ: opts.author ? null : ($('bo-g-civ').value || null),
@@ -2323,7 +2469,7 @@ async function searchGuides(opts = {}) {
   } catch (e) {
     toast(String(e), true);
   } finally {
-    btn.disabled = false; btn.textContent = 'Browse aoe4guides';
+    btn.disabled = false; btn.classList.remove('btn-busy');
   }
 }
 $('bo-g-search').onclick = () => searchGuides();
@@ -2358,6 +2504,7 @@ $('bo-edit-btn').onclick = () => {
   boEditMode = !boEditMode;
   invoke('set_edit_mode', { window: 'buildorder', edit: boEditMode });
   $('bo-edit-btn').textContent = boEditMode ? 'Done repositioning' : 'Reposition BO overlay';
+  $('bo-edit-btn').classList.toggle('toggled', boEditMode);
 };
 
 // ---------- BO live preview ----------
@@ -2411,6 +2558,7 @@ function updateBoPreview() {
       ($('bo-shownext').checked && next && (next.notes || []).length
         ? `<div class="pv-next">Next: ${boRenderLine(next.notes[0])}</div>` : '');
     $('bo-pv-step').textContent = `${boPvStep + 1}/${p.steps}`;
+    syncPvPager(p.steps);
   } else {
     const lines = ($('bo-content').value || '').split('\n').filter(l => l.trim());
     boPvStep = Math.min(Math.max(boPvStep, 0), Math.max(lines.length - 1, 0));
@@ -2420,8 +2568,27 @@ function updateBoPreview() {
         ? lines.map((l, i) => `<div class="pv-note" style="${i === boPvStep ? '' : 'opacity:.45'}">${boRenderLine(l)}</div>`).join('')
         : '<div class="muted">Paste or type a build order to preview it</div>');
     $('bo-pv-step').textContent = lines.length ? `${boPvStep + 1}/${lines.length}` : '';
+    syncPvPager(lines.length);
   }
 }
+function syncPvPager(steps) {
+  $('bo-pv-prev').disabled = boPvStep <= 0;
+  $('bo-pv-next').disabled = boPvStep >= steps - 1;
+}
+// Soft fades at the edges of scrollable lists whenever content is clipped
+function attachScrollFade(el) {
+  el.classList.add('scroll-fade');
+  const sync = () => {
+    el.style.setProperty('--fade-top', el.scrollTop > 4 ? '14px' : '0px');
+    el.style.setProperty('--fade-btm', el.scrollHeight - el.scrollTop - el.clientHeight > 4 ? '14px' : '0px');
+  };
+  el.addEventListener('scroll', sync, { passive: true });
+  new MutationObserver(sync).observe(el, { childList: true, subtree: true });
+  sync();
+}
+attachScrollFade($('bo-list'));
+attachScrollFade($('bo-g-results'));
+
 $('bo-filter').addEventListener('input', renderBoList);
 // Arrow keys move the selection through the (filtered) list; Enter shows it; Escape clears the filter.
 $('bo-filter').addEventListener('keydown', e => {
@@ -2460,6 +2627,13 @@ $('bo-name').addEventListener('keydown', e => {
   }));
 $('bo-content').addEventListener('keydown', e => {
   if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); $('bo-add').onclick(); }
+  // Tab indents like a code editor instead of leaving the field
+  else if (e.key === 'Tab' && !e.ctrlKey && !e.altKey && !e.shiftKey) {
+    e.preventDefault();
+    const el = e.target, s = el.selectionStart;
+    el.setRangeText('  ', s, el.selectionEnd, 'end');
+    el.dispatchEvent(new Event('input'));
+  }
 });
 
 listen('bo_data', e => {
@@ -2472,6 +2646,12 @@ listen('bo_data', e => {
   const p = parseBo(b.content);
   $('bo-now-sub').textContent = `On overlay — step ${(b.step ?? 0) + 1}${p.steps ? '/' + p.steps : ''}`;
 });
+// clicking the "now showing" panel opens that build order in the editor
+$('bo-now').parentElement.parentElement.style.cursor = 'pointer';
+$('bo-now').parentElement.parentElement.title = 'Open in the editor';
+$('bo-now').parentElement.parentElement.onclick = () => {
+  if (boShownName && settings.buildorders[boShownName] !== undefined) selectBo(boShownName);
+};
 
 // ---------- override tab ----------
 const OV_ROWS = 8;
@@ -2594,12 +2774,14 @@ $('search').addEventListener('keydown', e => {
   }
 });
 $('save-btn').onclick = save;
+$('revert-btn').onclick = async () => { await loadSettings(); toast('Reverted to saved settings'); };
 $('toggle-btn').onclick = () => invoke('toggle_overlay');
 $('refresh-btn').onclick = () => { invoke('force_refresh'); setStatus('Refreshing…', 'busy'); };
 $('edit-btn').onclick = () => {
   editMode = !editMode;
   invoke('set_edit_mode', { window: 'overlay', edit: editMode });
   $('edit-btn').textContent = editMode ? 'Done repositioning' : 'Reposition overlay';
+  $('edit-btn').classList.toggle('toggled', editMode);
 };
 $('games-refresh').onclick = loadGames;
 $('status-dot').title = 'Refresh overlay data now';
@@ -2644,6 +2826,21 @@ const NO_DIRTY = new Set(['search', 'bo-filter', 'bo-import-file']);
   $(id).addEventListener('change', e => { if (!NO_DIRTY.has(e.target.id)) markDirty(); });
 });
 ['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'ovscale', 'interval'].forEach(id => $(id).addEventListener('input', updatePreview));
+// flag an out-of-range port as you type instead of silently clamping at save
+$('wsport').addEventListener('input', () => {
+  const v = parseInt($('wsport').value);
+  const bad = isNaN(v) || v < 1024 || v > 65535;
+  $('wsport').classList.toggle('invalid', bad);
+  $('wsport').title = bad ? 'Port must be between 1024 and 65535' : '';
+});
+// Ctrl+F focuses whichever search/filter box the active tab offers
+document.addEventListener('keydown', e => {
+  if (!e.ctrlKey || e.altKey || e.shiftKey || e.key.toLowerCase() !== 'f') return;
+  if (e.target.classList?.contains('hotkey-input')) return;
+  const active = document.querySelector('.tab.active')?.id;
+  const target = { 'tab-settings': 'search', 'tab-games': 'gf-text', 'tab-buildorders': 'bo-filter' }[active];
+  if (target) { e.preventDefault(); $(target).focus(); $(target).select(); }
+});
 document.addEventListener('keydown', e => {
   if (e.target.classList?.contains('hotkey-input')) return;
   if (e.ctrlKey && e.key.toLowerCase() === 's') {
@@ -2652,6 +2849,16 @@ document.addEventListener('keydown', e => {
     if (e.target.id === 'bo-content' || e.target.id === 'bo-name') $('bo-add').onclick();
     else save();
   }
+});
+
+// inline file paths copy themselves on click
+document.querySelectorAll('code').forEach(c => {
+  c.title = 'Click to copy';
+  c.style.cursor = 'copy';
+  c.onclick = async () => {
+    try { await navigator.clipboard.writeText(c.textContent); toast(`Copied "${c.textContent}"`); }
+    catch (e) { toast('Could not copy', true); }
+  };
 });
 
 // text fields keep cut/copy/paste; everywhere else the webview menu (Reload etc.) is hidden
