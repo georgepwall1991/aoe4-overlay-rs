@@ -203,7 +203,7 @@ function render() {
       `<span class="t">${esc(current.name)}</span>` +
       `<span id="step-count">${step + 1}/${steps.length}</span>`;
     progEl.style.display = '';
-    progEl.style.setProperty('--seg', (100 / steps.length) + '%');
+    progEl.style.setProperty('--seg', steps.length > 40 ? '200%' : (100 / steps.length) + '%');
     progEl.firstElementChild.style.width = ((step + 1) / steps.length * 100) + '%';
     const r = s.resources || {};
     const pr = (steps[step - 1] || {}).resources || {};
@@ -248,13 +248,18 @@ function render() {
       (stepIdx.length ? `<span id="step-count">${step + 1}/${stepIdx.length}</span>` : '');
     if (stepIdx.length) {
       progEl.style.display = '';
-      progEl.style.setProperty('--seg', (100 / stepIdx.length) + '%');
+      progEl.style.setProperty('--seg', stepIdx.length > 40 ? '200%' : (100 / stepIdx.length) + '%');
       progEl.firstElementChild.style.width = ((step + 1) / stepIdx.length * 100) + '%';
     }
     notesEl.innerHTML = lines.map((l, i) =>
       `<div class="${i === curLine ? 'txt-cur' : 'txt-dim'}">${esc(l) || '&nbsp;'}</div>`).join('');
     const cur = notesEl.querySelector('.txt-cur');
     if (cur) cur.scrollIntoView({ block: 'center' });
+    const nxLine = lines[stepIdx[step + 1]];
+    if ((settings?.bo_show_next ?? true) && nxLine) {
+      nextEl.style.display = '';
+      nextEl.innerHTML = `<span class="nx-label">Next</span><div>${esc(nxLine)}</div>`;
+    }
   }
 }
 
