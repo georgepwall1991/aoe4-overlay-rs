@@ -135,6 +135,11 @@ pub fn process_game(game: &Value, main_profile_id: u64) -> Value {
         "server": game["server"],
         "match_id": game["game_id"],
         "ongoing": game["ongoing"],
+        "duration": game["duration"],
+        "season": game["season"],
+        "patch": game["patch"],
+        "avg_rating": game["average_rating"],
+        "avg_mmr": game["average_mmr"],
         "players": players,
     })
 }
@@ -175,11 +180,36 @@ fn process_player(p: &Value, team: i64, mode_key: &str, mode_label: &str) -> Val
         }
     }
 
+    // Rating history (oldest -> newest) for a per-player sparkline
+    let mut history: Vec<(u64, i64)> = modes["rating_history"]
+        .as_object()
+        .map(|h| {
+            h.iter()
+                .filter_map(|(ts, v)| Some((ts.parse::<u64>().ok()?, v["rating"].as_i64()?)))
+                .collect()
+        })
+        .unwrap_or_default();
+    history.sort_by_key(|(ts, _)| *ts);
+    let skip = history.len().saturating_sub(24);
+    let rating_history: Vec<i64> = history.into_iter().skip(skip).map(|(_, r)| r).collect();
+
     serde_json::json!({
         "name": p["name"],
         "civ": civ,
         "team": team,
         "country": p["country"],
+        "profile_id": p["profile_id"],
+        "result": p["result"],
+        "rating_diff": p["rating_diff"],
+        "input_type": p["input_type"],
+        "avatar": p["avatars"]["medium"],
+        "random_civ": p["civilization_randomized"].as_bool().unwrap_or(false),
+        "twitch": p["social"]["twitch"],
+        "rank_level": modes["rank_level"],
+        "streak": modes["streak"],
+        "max_rating": modes["max_rating"],
+        "games_count": modes["games_count"],
+        "rating_history": rating_history,
         "rating": modes["rating"].as_i64().map(|v| v.to_string()).unwrap_or_else(|| "-".into()),
         "rank": modes["rank"].as_i64().map(|r| format!("{label}#{r}")).unwrap_or_default(),
         "wins": modes["wins_count"].as_i64().unwrap_or(0).to_string(),
@@ -236,13 +266,24 @@ mod tests {
             "server": "eu",
             "ongoing": false,
             "started_at": "2026-06-11T10:00:00.000Z",
+            "duration": 1930,
+            "season": 13,
+            "average_rating": 1350,
             "teams": [
                 [ { "player": {
                     "profile_id": 1, "name": "Opponent", "country": "de",
                     "civilization": "holy_roman_empire",
+                    "result": "win", "rating_diff": 12, "input_type": "keyboard",
+                    "avatars": { "medium": "https://example.com/a_medium.jpg" },
                     "modes": { "rm_1v1": {
                         "rating": 1500, "rank": 100, "wins_count": 60, "losses_count": 40,
-                        "win_rate": 60.0,
+                        "win_rate": 60.0, "rank_level": "conqueror_2", "streak": 4,
+                        "max_rating": 1550, "games_count": 100,
+                        "rating_history": {
+                            "1780500845": { "rating": 1480 },
+                            "1780498882": { "rating": 1470 },
+                            "1780579715": { "rating": 1500 }
+                        },
                         "civilizations": [
                             { "civilization": "holy_roman_empire", "games_count": 25, "win_rate": 64.0,
                               "game_length": { "wins_median": 1130.5 } }
@@ -288,6 +329,28 @@ mod tests {
         assert_eq!(opp["civ_games"], "25");
         assert_eq!(opp["civ_winrate"], "64%");
         assert_eq!(opp["civ_win_length_median"], "18:50");
+    }
+
+    #[test]
+    fn process_game_passes_through_enriched_fields() {
+        let out = process_game(&fixture_game(), 2);
+        assert_eq!(out["duration"], 1930);
+        assert_eq!(out["season"], 13);
+        assert_eq!(out["avg_rating"], 1350);
+        let opp = &out["players"][1];
+        assert_eq!(opp["result"], "win");
+        assert_eq!(opp["rating_diff"], 12);
+        assert_eq!(opp["rank_level"], "conqueror_2");
+        assert_eq!(opp["streak"], 4);
+        assert_eq!(opp["max_rating"], 1550);
+        assert_eq!(opp["avatar"], "https://example.com/a_medium.jpg");
+        // history sorted by timestamp, oldest first
+        assert_eq!(opp["rating_history"], serde_json::json!([1470, 1480, 1500]));
+        // absent on the other player -> null / empty, not a crash
+        let me = &out["players"][0];
+        assert!(me["rank_level"].is_null());
+        assert_eq!(me["rating_history"].as_array().unwrap().len(), 0);
+        assert_eq!(me["random_civ"], false);
     }
 
     #[test]

@@ -22,6 +22,8 @@ pub struct Settings {
     pub civ_stats_color: String,
     /// Overlay font scale percent (100 = default)
     pub font_scale: u32,
+    /// Overlay window size percent (100 = default); content scales with the window
+    pub overlay_scale: u32,
 
     // OBS websocket streaming
     pub websocket_port: u16,
@@ -61,6 +63,7 @@ impl Default for Settings {
             ],
             civ_stats_color: "#BC8AEA".into(),
             font_scale: 100,
+            overlay_scale: 100,
             websocket_port: 7307,
             bo_hotkey_show: String::new(),
             bo_hotkey_cycle: String::new(),

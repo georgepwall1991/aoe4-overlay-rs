@@ -1,3 +1,5 @@
+#![recursion_limit = "256"]
+
 mod api;
 mod settings;
 mod ws;
@@ -75,15 +77,20 @@ fn get_settings(state: State<'_, AppState>) -> Settings {
 
 #[tauri::command]
 fn save_settings(app: AppHandle, state: State<'_, AppState>, new_settings: Settings) {
+    let scale_changed;
     {
         let mut s = state.settings.lock().unwrap();
         let profile_changed = s.profile_id != new_settings.profile_id;
+        scale_changed = s.overlay_scale != new_settings.overlay_scale;
         *s = new_settings.clone();
         s.save(&config_dir(&app));
         if profile_changed {
             *state.last_started.lock().unwrap() = None;
             *state.last_game.lock().unwrap() = None;
         }
+    }
+    if scale_changed {
+        apply_overlay_scale(&app, &state, new_settings.overlay_scale);
     }
     register_hotkeys(&app, &new_settings);
     state.ws.send_colors(&new_settings.team_colors);
@@ -138,11 +145,38 @@ fn toggle_overlay(app: AppHandle) {
     toggle_window(&app, "overlay");
 }
 
+/// Base logical overlay size (matches tauri.conf.json); the size slider scales this.
+const OVERLAY_BASE: (f64, f64) = (1040.0, 150.0);
+
+/// Resize the overlay window to `scale`% of its base size. The overlay's CSS
+/// uses vw units, so the content scales with the window. The new size is
+/// persisted into the saved geometry so it survives a restart.
+fn apply_overlay_scale(app: &AppHandle, state: &AppState, scale: u32) {
+    let Some(w) = app.get_webview_window("overlay") else { return };
+    let f = scale.clamp(50, 200) as f64 / 100.0;
+    let sf = w.scale_factor().unwrap_or(1.0);
+    let (pw, ph) = (
+        (OVERLAY_BASE.0 * f * sf).round() as i32,
+        (OVERLAY_BASE.1 * f * sf).round() as i32,
+    );
+    let _ = w.set_size(tauri::PhysicalSize::new(pw as u32, ph as u32));
+    let mut s = state.settings.lock().unwrap();
+    if let Some(geo) = s.overlay_geometry.as_mut() {
+        geo[2] = pw;
+        geo[3] = ph;
+        s.save(&config_dir(app));
+    }
+}
+
 /// Edit mode: a window becomes draggable/clickable with a visible frame.
 #[tauri::command]
 fn set_edit_mode(app: AppHandle, state: State<'_, AppState>, window: String, edit: bool) {
     if let Some(w) = app.get_webview_window(&window) {
         let _ = w.set_ignore_cursor_events(!edit);
+        // Let the user drag-resize the overlay while repositioning
+        if window == "overlay" {
+            let _ = w.set_resizable(edit);
+        }
         let _ = w.show();
         let _ = app.emit("edit_mode", serde_json::json!({"window": window, "edit": edit}));
         if !edit {
@@ -460,6 +494,8 @@ pub fn run() {
                     if let Some([x, y, width, height]) = geo {
                         let _ = w.set_position(tauri::PhysicalPosition::new(x, y));
                         let _ = w.set_size(tauri::PhysicalSize::new(width as u32, height as u32));
+                    } else if label == "overlay" && s.overlay_scale != 100 {
+                        apply_overlay_scale(&handle, &app.state::<AppState>(), s.overlay_scale);
                     }
                     let _ = w.set_ignore_cursor_events(true);
                 }

@@ -153,22 +153,45 @@
   .result.kb { background: #33333d; }
 
   /* last match panel */
-  .lm-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-  .lm-map { font-size: 17px; font-weight: 800; color: #fff; }
-  .lm-sub { color: #888; font-size: 12px; }
+  .lm-banner { position: relative; border-radius: 10px; overflow: hidden; margin-bottom: 12px;
+    background: #15151c center/cover no-repeat; }
+  .lm-banner::before { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(100deg, rgba(14,14,20,.94) 30%, rgba(14,14,20,.55) 65%, rgba(14,14,20,.25)); }
+  .lm-head { position: relative; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 16px; }
+  .lm-map { font-size: 19px; font-weight: 800; color: #fff; text-shadow: 0 1px 4px #000; }
+  .lm-sub { color: #ccc; font-size: 12px; text-shadow: 0 1px 3px #000; }
   .lm-teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: start; }
   .lm-vs { align-self: center; color: #555; font-weight: 800; font-size: 13px; padding: 0 4px; }
-  .lmp { display: grid; grid-template-columns: 26px minmax(90px, 1fr) auto; gap: 4px 8px; align-items: center;
-    background: #1e1e26; border-radius: 8px; padding: 7px 10px; margin: 6px 0; }
-  .lmp img.flag { width: 26px; height: 17px; object-fit: cover; border-radius: 3px; }
-  .lmp .nm { font-weight: 700; color: #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .lmp .nm img.country { height: 11px; margin-right: 5px; vertical-align: baseline; border-radius: 1px; }
+  .lmp { display: grid; grid-template-columns: 38px minmax(90px, 1fr) auto; grid-template-rows: auto auto;
+    gap: 3px 10px; align-items: center; background: #1e1e26; border-radius: 8px; padding: 8px 10px;
+    margin: 6px 0; border-left: 3px solid #2c2c36; }
+  .lmp.res-win { border-left-color: #48bd21; }
+  .lmp.res-loss { border-left-color: #e0452f; }
+  .lmp .idbox { position: relative; grid-row: 1 / 3; width: 38px; height: 38px; flex: none; }
+  .lmp .ava { width: 38px; height: 38px; border-radius: 7px; object-fit: cover; background: #14141a; }
+  .lmp img.flag { position: absolute; right: -5px; bottom: -4px; width: 20px; height: 13px; object-fit: cover;
+    border-radius: 2px; box-shadow: 0 0 0 2px #1e1e26; }
+  .lmp img.flag.solo { inset: 0; margin: auto; width: 34px; height: 22px; border-radius: 3px; box-shadow: none; }
+  .lmp .nm { font-weight: 700; color: #eee; display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .lmp .nm .nm-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lmp .nm img.country { height: 11px; border-radius: 1px; flex: none; }
   .lmp.me { outline: 1px solid #ffd97a55; }
-  .lmp.me .nm { color: #ffd97a; }
-  .lmp .rt { color: #7ab6ff; font-weight: 700; text-align: right; }
-  .lmp .stats { grid-column: 1 / -1; display: flex; gap: 10px; font-size: 11px; color: #999; flex-wrap: wrap; }
+  .lmp.me .nm .nm-text { color: #ffd97a; }
+  .lmp .rt { color: #7ab6ff; font-weight: 700; text-align: right; white-space: nowrap; }
+  .lmp .stats { grid-column: 2; display: flex; gap: 10px; font-size: 11px; color: #999; flex-wrap: wrap; align-items: center; }
   .lmp .stats .wr { color: #fffb78; }
   .lmp .stats .cv { color: var(--civstat, #bc8aea); }
+  .lm-spark { grid-column: 3; grid-row: 2; justify-self: end; opacity: .9; }
+  .streak.pos { color: #ffac4d; } .streak.neg { color: #7fc7ff; }
+  .lmp a.tw { text-decoration: none; flex: none; font-size: 11px; }
+  .rk { font-size: 9px; font-weight: 700; padding: 1px 7px; border-radius: 8px; text-transform: capitalize;
+    letter-spacing: .03em; flex: none; }
+  .rk-bronze { background: rgba(176,122,78,.18); color: #d6915c; }
+  .rk-silver { background: rgba(170,180,190,.15); color: #c2cad2; }
+  .rk-gold { background: rgba(232,189,78,.16); color: #eccb5c; }
+  .rk-platinum { background: rgba(94,207,202,.15); color: #74dcd7; }
+  .rk-diamond { background: rgba(122,155,255,.16); color: #a3b7ff; }
+  .rk-conqueror { background: linear-gradient(90deg, rgba(232,74,106,.25), rgba(255,179,0,.25)); color: #ff9d7e; }
 </style>
 </head>
 <body>
@@ -216,6 +239,11 @@
           <label>Show overlay on new game</label>
           <label class="switch"><input id="autoshow" type="checkbox"><span></span></label>
         </div>
+        <div class="field">
+          <label>Overlay size <b id="ovscale-val"></b></label>
+          <input id="ovscale" type="range" min="60" max="200" step="5">
+        </div>
+        <div class="muted">You can also drag the overlay's edges while repositioning.</div>
       </div>
 
       <div class="card">
@@ -438,7 +466,7 @@ function updatePreview() {
   const a = ($('tcalpha').value | 0) / 100;
   const t1 = fromHex($('tc1').value), t2 = fromHex($('tc2').value);
   const civc = $('civstatcolor').value;
-  const fs = Math.round(12 * ($('fontscale').value | 0) / 100);
+  const fs = Math.round(12 * ($('fontscale').value | 0) / 100 * ($('ovscale').value | 0) / 100);
   const row = (civ, name, rating, wr, w, l, cw, c, dir) => {
     let cells = [
       `<td><img src="flags/${civ}.webp"></td>`,
@@ -458,6 +486,7 @@ function updatePreview() {
   $('interval-val').textContent = $('interval').value + 's';
   $('alpha-val').textContent = $('tcalpha').value + '%';
   $('fontscale-val').textContent = $('fontscale').value + '%';
+  $('ovscale-val').textContent = $('ovscale').value + '%';
 }
 
 // ---------- tabs ----------
@@ -480,6 +509,7 @@ async function loadSettings() {
   $('interval').value = settings.interval;
   $('autoshow').checked = settings.show_overlay_on_new_game;
   $('fontscale').value = settings.font_scale;
+  $('ovscale').value = settings.overlay_scale ?? 100;
   $('wsport').value = settings.websocket_port;
   $('civstatcolor').value = settings.civ_stats_color;
   const tc = settings.team_colors;
@@ -517,6 +547,7 @@ function collectCommon() {
   settings.interval = clamp($('interval').value, 5, 600, 15);
   settings.show_overlay_on_new_game = $('autoshow').checked;
   settings.font_scale = clamp($('fontscale').value, 50, 300, 100);
+  settings.overlay_scale = clamp($('ovscale').value, 50, 200, 100);
   settings.websocket_port = clamp($('wsport').value, 1024, 65535, 7307);
   settings.civ_stats_color = $('civstatcolor').value;
   const a = ($('tcalpha').value | 0) / 100;
@@ -555,6 +586,7 @@ async function save() {
     $('interval').value = settings.interval;
     $('wsport').value = settings.websocket_port;
     $('fontscale').value = settings.font_scale;
+    $('ovscale').value = settings.overlay_scale;
     updatePreview();
     clearDirty();
     toast('Settings saved');
@@ -603,21 +635,60 @@ document.addEventListener('click', e => {
 });
 
 // ---------- last match panel ----------
+const ROMAN = ['', 'I', 'II', 'III'];
+function rankPill(rl) {
+  if (!rl || rl === 'unranked') return '';
+  const [league, div] = String(rl).split('_');
+  return `<span class="rk rk-${league}">${league} ${ROMAN[+div] ?? div ?? ''}</span>`;
+}
+
+function streakTag(s) {
+  s = +s || 0;
+  if (Math.abs(s) < 2) return '';
+  const icon = s >= 3 ? '🔥' : s <= -3 ? '🧊' : '';
+  return `<span class="streak ${s > 0 ? 'pos' : 'neg'}" title="current streak">${icon}${s > 0 ? 'W' + s : 'L' + -s}</span>`;
+}
+
+function lmSpark(hist) {
+  if (!Array.isArray(hist) || hist.length < 2) return '';
+  const w = 74, h = 22, min = Math.min(...hist), max = Math.max(...hist), span = (max - min) || 1;
+  const pts = hist.map((v, i) =>
+    `${(2 + i * (w - 4) / (hist.length - 1)).toFixed(1)},${(h - 3 - (v - min) * (h - 6) / span).toFixed(1)}`).join(' ');
+  const up = hist[hist.length - 1] >= hist[0];
+  return `<svg class="lm-spark" width="${w}" height="${h}"><title>rating, last ${hist.length} rated games</title>
+    <polyline points="${pts}" fill="none" stroke="${up ? '#6fe04a' : '#ff7b66'}" stroke-width="1.5"
+      stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+
 function lmPlayer(p) {
   const me = settings.player_name && p.name === settings.player_name;
-  const civstats = p.civ_winrate ? `<span class="cv">${p.civ} ${p.civ_winrate}${p.civ_games ? ' · ' + p.civ_games + 'g' : ''}</span>` : `<span class="cv">${p.civ}</span>`;
+  const res = p.result === 'win' ? 'res-win' : p.result === 'loss' ? 'res-loss' : '';
   const country = p.country
     ? `<img class="country" src="countries/${String(p.country).toLowerCase()}.png" onerror="this.remove()">` : '';
-  return `<div class="lmp ${me ? 'me' : ''}">
-    <img class="flag" src="flags/${p.civ}.webp" onerror="this.style.visibility='hidden'">
-    <span class="nm" title="${p.name ?? '?'}">${country}${p.name ?? '?'}</span>
-    <span class="rt">${p.rating}${p.rank ? ` <span class="muted" style="font-weight:400">${p.rank}</span>` : ''}</span>
+  const flag = `<img class="flag${p.avatar ? '' : ' solo'}" src="flags/${p.civ}.webp" title="${p.civ}" onerror="this.style.visibility='hidden'">`;
+  const idbox = `<span class="idbox">${p.avatar ? `<img class="ava" src="${p.avatar}" onerror="this.remove()">` : ''}${flag}</span>`;
+  const d = p.rating_diff;
+  const diff = (d ?? null) !== null
+    ? ` <span class="${d >= 0 ? 'win' : 'loss'}" style="font-size:11px">${d >= 0 ? '+' : ''}${d}</span>` : '';
+  const peak = p.max_rating ? ` title="peak rating ${p.max_rating}"` : '';
+  const civstats = `<span class="cv">${p.civ}${p.random_civ ? ' 🎲' : ''}${p.civ_winrate ? ' ' + p.civ_winrate : ''}${p.civ_games ? ' · ' + p.civ_games + 'g' : ''}</span>`;
+  return `<div class="lmp ${me ? 'me' : ''} ${res}">
+    ${idbox}
+    <span class="nm">
+      ${country}<span class="nm-text" title="${p.name ?? '?'}">${p.name ?? '?'}</span>
+      ${p.input_type === 'controller' ? '<span title="controller">🎮</span>' : ''}
+      ${rankPill(p.rank_level)}
+      ${p.twitch ? `<a class="tw" href="${p.twitch}" target="_blank" title="Twitch">📺</a>` : ''}
+    </span>
+    <span class="rt"${peak}>${p.rating}${diff}${p.rank ? ` <span class="muted" style="font-weight:400">${p.rank}</span>` : ''}</span>
     <span class="stats">
       ${p.winrate ? `<span class="wr">${p.winrate} winrate</span>` : ''}
       ${p.wins !== '0' || p.losses !== '0' ? `<span><span class="win">${p.wins}</span> / <span class="loss">${p.losses}</span></span>` : ''}
+      ${streakTag(p.streak)}
       ${civstats}
       ${p.civ_win_length_median ? `<span title="median win duration with this civ">⏱ ${p.civ_win_length_median}</span>` : ''}
     </span>
+    ${lmSpark(p.rating_history)}
   </div>`;
 }
 
@@ -626,15 +697,30 @@ function renderMatch(d) {
   const t1 = d.players.filter(p => p.team === 1);
   const t2 = d.players.filter(p => p.team !== 1);
   const live = d.ongoing;
+  const meP = d.players.find(p => settings.player_name && p.name === settings.player_name);
+  const resBadge = live ? '<span class="badge live">Live</span>'
+    : meP?.result === 'win' ? '<span class="badge win">Victory</span>'
+    : meP?.result === 'loss' ? '<span class="badge loss">Defeat</span>'
+    : '<span class="badge mode">Finished</span>';
+  const sub = [
+    d.server,
+    d.duration ? '⏱ ' + fmtDur(d.duration) : '',
+    d.avg_rating ? `~${d.avg_rating} avg elo` : '',
+    d.season ? 'S' + d.season : '',
+    d.started ? timeAgo(d.started) : '',
+  ].filter(Boolean).join(' · ');
   const gameLink = settings.profile_id && d.match_id && d.match_id !== 'override'
     ? `<a href="https://aoe4world.com/players/${settings.profile_id}/games/${d.match_id}" target="_blank" class="lm-sub">details ↗</a>` : '';
+  const mapImg = `maps/${(d.map ?? '').replace(/ /g, '_')}.png`;
   $('last-match').innerHTML = `
-    <div class="lm-head">
-      <span class="lm-map">${d.map ?? '?'}</span>
-      ${live ? '<span class="badge live">Live</span>' : '<span class="badge mode">Finished</span>'}
-      <span class="badge mode">${fmtMode(d.kind)}</span>
-      <span class="lm-sub">${d.server ?? ''}${d.started ? ' · ' + timeAgo(d.started) : ''}</span>
-      ${gameLink}
+    <div class="lm-banner" style="background-image:url('${mapImg}')">
+      <div class="lm-head">
+        <span class="lm-map">${d.map ?? '?'}</span>
+        ${resBadge}
+        <span class="badge mode">${fmtMode(d.kind)}</span>
+        <span class="lm-sub">${sub}</span>
+        ${gameLink}
+      </div>
     </div>
     <div class="lm-teams">
       <div>${t1.map(lmPlayer).join('')}</div>
@@ -999,7 +1085,7 @@ listen('poll_error', e => {
   $(id).addEventListener('input', e => { if (e.target.id !== 'search') markDirty(); });
   $(id).addEventListener('change', e => { if (e.target.id !== 'search') markDirty(); });
 });
-['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'interval'].forEach(id => $(id).addEventListener('input', updatePreview));
+['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'ovscale', 'interval'].forEach(id => $(id).addEventListener('input', updatePreview));
 document.addEventListener('keydown', e => {
   if (e.target.classList?.contains('hotkey-input')) return;
   if (e.ctrlKey && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
