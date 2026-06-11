@@ -124,9 +124,15 @@ async fn check_update(state: State<'_, AppState>) -> Result<Option<Value>, Strin
         return Ok(None); // no releases yet / offline — not an error
     }
     let rel: Value = resp.json().await.map_err(|e| e.to_string())?;
-    let tag = rel["tag_name"].as_str().unwrap_or("").trim_start_matches('v');
+    let tag = rel["tag_name"]
+        .as_str()
+        .unwrap_or("")
+        .trim_start_matches('v');
     let newer = {
-        let cur: Vec<u32> = env!("CARGO_PKG_VERSION").split('.').filter_map(|p| p.parse().ok()).collect();
+        let cur: Vec<u32> = env!("CARGO_PKG_VERSION")
+            .split('.')
+            .filter_map(|p| p.parse().ok())
+            .collect();
         let new: Vec<u32> = tag.split('.').filter_map(|p| p.parse().ok()).collect();
         !new.is_empty() && new > cur
     };
@@ -152,7 +158,9 @@ const OVERLAY_BASE: (f64, f64) = (1040.0, 150.0);
 /// uses vw units, so the content scales with the window. The new size is
 /// persisted into the saved geometry so it survives a restart.
 fn apply_overlay_scale(app: &AppHandle, state: &AppState, scale: u32) {
-    let Some(w) = app.get_webview_window("overlay") else { return };
+    let Some(w) = app.get_webview_window("overlay") else {
+        return;
+    };
     let f = scale.clamp(50, 200) as f64 / 100.0;
     let sf = w.scale_factor().unwrap_or(1.0);
     let (pw, ph) = (
@@ -178,7 +186,10 @@ fn set_edit_mode(app: AppHandle, state: State<'_, AppState>, window: String, edi
             let _ = w.set_resizable(edit);
         }
         let _ = w.show();
-        let _ = app.emit("edit_mode", serde_json::json!({"window": window, "edit": edit}));
+        let _ = app.emit(
+            "edit_mode",
+            serde_json::json!({"window": window, "edit": edit}),
+        );
         if !edit {
             if let (Ok(pos), Ok(size)) = (w.outer_position(), w.outer_size()) {
                 let geo = Some([pos.x, pos.y, size.width as i32, size.height as i32]);
@@ -489,7 +500,10 @@ pub fn run() {
                     .build(app)?;
             }
 
-            for (label, geo) in [("overlay", s.overlay_geometry), ("buildorder", s.bo_geometry)] {
+            for (label, geo) in [
+                ("overlay", s.overlay_geometry),
+                ("buildorder", s.bo_geometry),
+            ] {
                 if let Some(w) = app.get_webview_window(label) {
                     if let Some([x, y, width, height]) = geo {
                         let _ = w.set_position(tauri::PhysicalPosition::new(x, y));
@@ -513,9 +527,7 @@ pub fn run() {
                 })
                 .to_string()];
                 if let Some(d) = state.last_game.lock().unwrap().as_ref() {
-                    msgs.push(
-                        serde_json::json!({"type": "player_data", "data": d}).to_string(),
-                    );
+                    msgs.push(serde_json::json!({"type": "player_data", "data": d}).to_string());
                 }
                 msgs
             }));

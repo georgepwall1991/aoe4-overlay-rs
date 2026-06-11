@@ -76,10 +76,7 @@ impl Default for Settings {
             bo_color_background: [30, 30, 30],
             bo_opacity: 0.75,
             bo_geometry: None,
-            buildorders: BTreeMap::from([(
-                "Example: villagers".into(),
-                DEFAULT_BO.trim().into(),
-            )]),
+            buildorders: BTreeMap::from([("Example: villagers".into(), DEFAULT_BO.trim().into())]),
             unchecked_buildorders: Vec::new(),
         }
     }
@@ -158,7 +155,10 @@ mod tests {
         assert_eq!(s.overlay_hotkey, "Alt+O");
         assert_eq!(s.buildorders.len(), 1, "ships one example build order");
         let bo = s.buildorders.values().next().unwrap();
-        assert!(serde_json::from_str::<serde_json::Value>(bo).is_ok(), "example BO is valid JSON");
+        assert!(
+            serde_json::from_str::<serde_json::Value>(bo).is_ok(),
+            "example BO is valid JSON"
+        );
     }
 
     #[test]
@@ -174,7 +174,10 @@ mod tests {
         assert_eq!(loaded.profile_id, Some(42));
         assert_eq!(loaded.player_name.as_deref(), Some("tester"));
         assert_eq!(loaded.team_colors, vec![[1.0, 2.0, 3.0, 0.5]]);
-        assert_eq!(loaded.buildorders.get("custom").map(String::as_str), Some("step one"));
+        assert_eq!(
+            loaded.buildorders.get("custom").map(String::as_str),
+            Some("step one")
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 
@@ -207,7 +210,11 @@ mod tests {
         s.bo_hotkey_show = "Alt+B".into();
         let keys = s.hotkeys();
         assert_eq!(keys.len(), 2, "overlay + bo show only");
-        assert!(keys.iter().any(|(k, a)| k == "Alt+O" && *a == crate::HotkeyAction::ToggleOverlay));
-        assert!(keys.iter().any(|(k, a)| k == "Alt+B" && *a == crate::HotkeyAction::BoToggle));
+        assert!(keys
+            .iter()
+            .any(|(k, a)| k == "Alt+O" && *a == crate::HotkeyAction::ToggleOverlay));
+        assert!(keys
+            .iter()
+            .any(|(k, a)| k == "Alt+B" && *a == crate::HotkeyAction::BoToggle));
     }
 }

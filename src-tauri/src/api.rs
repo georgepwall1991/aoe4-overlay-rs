@@ -157,7 +157,11 @@ fn process_player(p: &Value, team: i64, mode_key: &str, mode_label: &str) -> Val
             key.replacen("qm_", "rm_", 1)
         };
         if !p["modes"][&swapped].is_null() {
-            label = if swapped.starts_with("rm") { "RM" } else { "QM" };
+            label = if swapped.starts_with("rm") {
+                "RM"
+            } else {
+                "QM"
+            };
             key = swapped;
         }
     }
@@ -167,8 +171,14 @@ fn process_player(p: &Value, team: i64, mode_key: &str, mode_label: &str) -> Val
     let mut civ_winrate = String::new();
     let mut civ_win_median = String::new();
     if let Some(civs) = modes["civilizations"].as_array() {
-        if let Some(c) = civs.iter().find(|c| c["civilization"].as_str() == Some(civ_raw)) {
-            civ_games = c["games_count"].as_i64().map(|v| v.to_string()).unwrap_or_default();
+        if let Some(c) = civs
+            .iter()
+            .find(|c| c["civilization"].as_str() == Some(civ_raw))
+        {
+            civ_games = c["games_count"]
+                .as_i64()
+                .map(|v| v.to_string())
+                .unwrap_or_default();
             civ_winrate = c["win_rate"]
                 .as_f64()
                 .map(|v| format!("{v:.0}%"))
@@ -358,7 +368,10 @@ mod tests {
         let out = process_game(&fixture_game(), 2);
         let me = &out["players"][0];
         assert_eq!(me["rating"], "1200");
-        assert_eq!(me["rank"], "QM#500", "fell back to quick-match stats and label");
+        assert_eq!(
+            me["rank"], "QM#500",
+            "fell back to quick-match stats and label"
+        );
     }
 
     #[test]
