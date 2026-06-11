@@ -12,6 +12,7 @@
              radial-gradient(120% 110% at 50% 0%, rgba(255,255,255,.08), rgba(255,255,255,0) 55%),
              radial-gradient(140% 130% at 50% 115%, rgba(212,175,55,.06), rgba(212,175,55,0) 60%),
              linear-gradient(to right, rgba(0,0,0,0), rgba(6,8,13,0.87) 22%, rgba(6,8,13,0.87) 78%, rgba(0,0,0,0));
+           filter: drop-shadow(0 .3vw .8vw rgba(0,0,0,.35));
            animation: panel-in .55s cubic-bezier(.22,1,.36,1) backwards; }
   @keyframes panel-in { from { opacity: 0; transform: translateY(-18%); } }
   /* gold hairlines framing the bar, fading out with the panel; a sheen drifts along each line */
@@ -71,7 +72,9 @@
   /* Edit mode */
   body.edit { outline: 3px dashed #ffb300; outline-offset: -3px; background: rgba(0,0,0,0.4); }
   #edit-hint { display: none; position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
-               background: #ffb300; color: #000; font-size: 12px; padding: 2px 10px; border-radius: 4px; z-index: 10; white-space: nowrap; }
+               background: linear-gradient(180deg, #ffc845, #e09b00); color: #1a1200; font-weight: 600;
+               font-size: 12px; padding: 3px 12px; border-radius: 12px; z-index: 10; white-space: nowrap;
+               text-shadow: none; box-shadow: 0 2px 8px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.4); }
   body.edit #edit-hint { display: block; }
 </style>
 </head>
