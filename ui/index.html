@@ -173,6 +173,10 @@
   .result-hint { padding: 5px 12px; font-size: 11px; color: var(--ink-muted);
     border-top: 1px solid #34343f; background: rgba(0,0,0,.18); position: sticky; bottom: 0; }
   .muted { color: var(--ink-muted); font-size: 12px; }
+  .hint { display: flex; gap: 9px; align-items: flex-start; color: var(--ink-muted); font-size: 12px;
+    background: rgba(0,0,0,.16); border: 1px solid #2c2c35; border-radius: 9px; padding: 8px 11px;
+    line-height: 1.5; }
+  .hint .ic { width: 13px; height: 13px; margin-top: 2px; color: var(--gold-dim); }
   #current-player { color: #8f8; }
   #status { font-size: 12px; color: var(--ink-muted); padding: 6px 22px; border-top: 1px solid #292930;
     position: sticky; bottom: 0; background: rgba(18,18,23,.92); backdrop-filter: blur(6px); z-index: 15;
@@ -215,17 +219,36 @@
       #000 calc(100% - var(--fade-btm)), transparent);
             mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top),
       #000 calc(100% - var(--fade-btm)), transparent); }
-  .bo-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer;
+  .bo-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; cursor: pointer;
              border-bottom: 1px solid #2a2a32; transition: background .12s; }
   .bo-item:last-child { border-bottom: none; }
   .bo-item:hover { background: #2c2c36; box-shadow: inset 2px 0 0 var(--gold-dim); }
   .bo-item:active { background: #31313c; }
-  .bo-item img.boflag { box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 1px 3px rgba(0,0,0,.5); }
+  .bo-item img.boflag { box-shadow: 0 0 0 1px rgba(255,255,255,.14), 0 2px 5px rgba(0,0,0,.55);
+    transition: transform .18s cubic-bezier(.22,1,.36,1), box-shadow .18s; }
+  .bo-item:hover img.boflag { transform: scale(1.08); box-shadow: 0 0 0 1px rgba(224,186,94,.45), 0 2px 7px rgba(0,0,0,.6); }
   .bo-item.sel { background: linear-gradient(to right, rgba(224,186,94,.13), rgba(224,186,94,.04));
-    box-shadow: inset 3px 0 0 var(--gold); }
+    box-shadow: inset 3px 0 0 var(--gold); animation: bo-sel-in .25s cubic-bezier(.22,1,.36,1); }
+  @keyframes bo-sel-in { from { background-color: rgba(224,186,94,.22); } }
   .bo-item .bo-meta { margin-left: auto; display: flex; gap: 6px; align-items: center; flex: none; }
+  .bo-item .bo-text { min-width: 0; display: flex; flex-direction: column; gap: 0; line-height: 1.3; }
   .bo-item .bo-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-  .bo-item img.boflag { width: 24px; height: 15px; object-fit: cover; border-radius: 2px; flex: none; }
+  .bo-item .bo-civ { font-size: 10.5px; color: var(--ink-muted); overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap; letter-spacing: .02em; }
+  .bo-item.sel .bo-civ { color: rgba(224,186,94,.75); }
+  .bo-item img.boflag { width: 30px; height: 19px; object-fit: cover; border-radius: 3px; flex: none; }
+  .bo-item .bo-noflag { width: 30px; height: 19px; flex: none; display: inline-flex; align-items: center;
+    justify-content: center; font-size: 12px; border-radius: 3px; background: rgba(255,255,255,.05);
+    box-shadow: inset 0 0 0 1px #34343f; filter: grayscale(.5); opacity: .8; }
+  .bo-item .steps-pill { font-size: 10.5px; color: var(--ink-muted); font-variant-numeric: tabular-nums;
+    background: rgba(255,255,255,.05); border-radius: 8px; padding: 1px 7px;
+    box-shadow: inset 0 0 0 1px #34343f; white-space: nowrap; }
+  .bo-item .live-badge { flex: none; font-size: 9px; font-weight: 800; letter-spacing: .09em; color: #6fe04a;
+    background: rgba(72,189,33,.13); border-radius: 8px; padding: 1px 7px 1px 5px;
+    box-shadow: inset 0 0 0 1px rgba(72,189,33,.4), 0 0 8px -2px rgba(111,224,74,.5);
+    display: inline-flex; align-items: center; gap: 4px; }
+  .bo-item .live-badge::before { content: ""; width: 5px; height: 5px; border-radius: 50%;
+    background: #6fe04a; box-shadow: 0 0 4px #6fe04a; animation: pulse 1.6s infinite; }
   .bo-item .cyc { flex: none; cursor: pointer; font-size: 10px; font-weight: 700; letter-spacing: .04em;
     padding: 1px 7px; border-radius: 8px; color: #777c88; background: rgba(255,255,255,.04);
     box-shadow: inset 0 0 0 1px #3a3a46; transition: color .15s, background .15s, box-shadow .15s; }
@@ -244,13 +267,32 @@
   #bo-g-results { max-height: 280px; overflow: auto; border: 1px solid #32323c; border-radius: 8px; margin-top: 8px; }
   #bo-g-results:empty { display: none; }
   .bo-item .bo-sub { font-weight: 400; font-size: 12px; }
+  .g-stat { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: var(--ink-muted);
+    font-variant-numeric: tabular-nums; }
+  .g-stat .ic { width: 12px; height: 12px; opacity: .7; }
+  .g-stat.likes { color: #d98a9c; }
+  #bo-url.ok-link { border-color: rgba(72,189,33,.45); box-shadow: 0 0 0 2px rgba(72,189,33,.12); }
+  /* the create buttons read as "start here" */
+  #bo-new { color: var(--gold-bright); border-color: rgba(224,186,94,.35); }
+  #bo-new:hover { border-color: rgba(224,186,94,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 0 10px -3px rgba(224,186,94,.4); }
+  .card h3 .ic { transition: filter .2s; }
+  .card:hover h3 .ic { filter: drop-shadow(0 0 4px rgba(224,186,94,.55)); }
   .bo-item .imp-btn { flex: none; padding: 2px 10px; opacity: .7; transition: opacity .15s; }
   .bo-item:hover .imp-btn { opacity: 1; }
   .bo-sub a.by-author { color: #7ab6ff; text-decoration: none; }
   .bo-sub a.by-author:hover { text-decoration: underline; }
   #bo-content { width: 100%; height: 220px; font-family: "Cascadia Code", "Cascadia Mono", Consolas, monospace; font-size: 12px; box-sizing: border-box;
                 margin: 8px 0; resize: vertical; line-height: 1.5; background: rgba(0,0,0,.22); tab-size: 2; }
-  #bo-content.invalid { border-color: #e0452f; }
+  #bo-content.invalid { border-color: #e0452f; box-shadow: 0 0 0 2px rgba(224,69,47,.14); }
+  /* valid JSON gets a quiet green edge so "it parsed" is visible at a glance */
+  #bo-content.json-ok { border-color: rgba(72,189,33,.4); }
+  #bo-content.json-ok:focus { border-color: rgba(72,189,33,.6); box-shadow: 0 0 0 2px rgba(72,189,33,.18); }
+  /* paired buttons render as one segmented control */
+  .seg-group { display: inline-flex; }
+  .seg-group button { border-radius: 0; margin: 0; }
+  .seg-group button:first-child { border-radius: 7px 0 0 7px; }
+  .seg-group button:last-child { border-radius: 0 7px 7px 0; border-left-width: 0; }
+  .seg-group button:hover { position: relative; z-index: 1; }
   /* edit/reposition buttons stay visibly "on" while the mode is active */
   button.toggled { background: linear-gradient(180deg, #4a3c1c, #3a2f16); border-color: rgba(255,179,0,.55);
     color: #ffd97a; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 10px -2px rgba(255,179,0,.35); }
@@ -286,9 +328,15 @@
                 background: rgba(255,255,255,.08); border-radius: .4em; padding: 1px 6px; }
   #bo-preview .pv-res img { height: var(--imgh, 1.4em); }
   #bo-preview .pv-note { margin: 2px 0; line-height: 1.35; }
+  /* stepping through the preview replays the same slide-in the real overlay uses */
+  #bo-preview .pv-res, #bo-preview .pv-note { animation: pv-in .22s ease-out; }
+  @keyframes pv-in { from { opacity: 0; transform: translateY(3px); } }
   #bo-preview .pv-note img { height: var(--imgh, 1.4em); vertical-align: middle; border-radius: 2px;
                 background: rgba(0,0,0,.35); padding: 1px; }
   #bo-preview .pv-next { opacity: .55; font-size: .85em; margin-top: 6px; border-top: 1px solid rgba(230,198,100,.25); padding-top: 4px; }
+  #bo-preview .pv-empty { text-align: center; color: var(--ink-muted); font-size: 12px; line-height: 1.7;
+    padding: 26px 10px; }
+  #bo-pv-step { font-variant-numeric: tabular-nums; display: inline-block; min-width: 30px; text-align: center; }
   .ov-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px 6px; font-size: 12px; margin-top: 8px;
     background: linear-gradient(180deg, #26262e, #222129); border: 1px solid var(--card-border);
     border-radius: var(--radius); padding: 12px 14px 14px; box-shadow: var(--shadow-card); }
@@ -451,6 +499,24 @@
     border: 1px solid #2c2c35; border-radius: 9px; padding: 10px 12px;
     box-shadow: inset 0 1px 2px rgba(0,0,0,.25); }
   .tracked-name { font-weight: 700; color: #fff; }
+  /* the BO "now showing" box lights up while something is on the overlay */
+  .tracked { position: relative; transition: border-color .3s, box-shadow .3s; }
+  .tracked.live { border-color: rgba(72,189,33,.35);
+    background: linear-gradient(to right, rgba(72,189,33,.07), rgba(0,0,0,.12));
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.25), 0 0 14px -6px rgba(111,224,74,.45); }
+  .tracked-bar { position: absolute; left: 8px; right: 8px; bottom: 0; height: 2px; border-radius: 2px;
+    background: rgba(255,255,255,.07); overflow: hidden; }
+  .tracked-bar i { display: block; height: 100%; border-radius: inherit; transition: width .3s ease;
+    background: linear-gradient(90deg, #3a9c18, #6fe04a); box-shadow: 0 0 6px rgba(111,224,74,.6); }
+  /* build-order cards settle in with a slight stagger when the tab opens */
+  #tab-buildorders .card { animation: card-in .38s cubic-bezier(.22,1,.36,1) backwards; }
+  #tab-buildorders .card:nth-child(2) { animation-delay: .05s; }
+  #tab-buildorders .card:nth-child(3) { animation-delay: .1s; }
+  #tab-buildorders .card:nth-child(4) { animation-delay: .15s; }
+  #tab-buildorders .card:nth-child(5) { animation-delay: .2s; }
+  #bo-count { display: inline-block; }
+  #bo-count.pop { animation: count-pop .3s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes count-pop { 50% { transform: scale(1.25); color: var(--gold-bright); } }
   .tracked-info { min-width: 0; flex: 1; }
   .tracked-ava { width: 34px; height: 34px; border-radius: 50%; flex: none; display: flex;
     align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: var(--gold);
@@ -725,6 +791,8 @@
     <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></symbol>
     <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01"/><path d="M10 10h.01"/><path d="M14 10h.01"/><path d="M18 10h.01"/><path d="M8 14h8"/></symbol>
     <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15"/><path d="M15 6v15"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M19 14c1.5-1.4 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2C10.5 3.5 9.3 3 7.5 3A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.1 3 5.5l7 7Z"/></symbol>
   </defs></svg>
   <div id="tabs" role="tablist" aria-label="Sections">
     <span id="brand"><svg class="crest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 5.5 5 19h14l1.5-13.5-4.5 3.5L12 3 8 9z"/><path d="M5 19h14" opacity=".5"/></svg><span class="wordmark">AoE IV Overlay</span></span>
@@ -893,7 +961,7 @@
 
       <div class="card">
         <h3><svg class="ic"><use href="#i-library"/></svg> Library <span id="bo-count" class="muted" style="font-weight:400"></span></h3>
-        <input id="bo-filter" placeholder="Filter…" style="width:100%; box-sizing:border-box; margin-bottom:8px">
+        <input id="bo-filter" type="search" placeholder="Filter by name, civ or contents…" style="width:100%; box-sizing:border-box; margin-bottom:8px">
         <div id="bo-list"></div>
         <div class="btn-row" style="margin-top:10px">
           <button id="bo-new">＋ New</button>
@@ -928,7 +996,7 @@
           <button id="bo-g-search">Browse aoe4guides</button>
         </div>
         <div id="bo-g-results"></div>
-        <div class="muted" style="margin-top:8px">Build links and aoe4guides profile links both work — profiles list the author's builds. Click an author name to see more of their builds; double-click a result to import <i>and</i> show it. Esc clears the results.</div>
+        <div class="hint" style="margin-top:10px"><svg class="ic"><use href="#i-globe"/></svg><span>Build links and aoe4guides profile links both work — profiles list the author's builds. Click an author name to see more of their builds; double-click a result to import <i>and</i> show it. <kbd>Esc</kbd> clears the results.</span></div>
       </div>
 
       <div class="card">
@@ -943,13 +1011,13 @@
           <button id="bo-dup">Duplicate</button>
           <button id="bo-format-btn">Format JSON</button>
           <button id="bo-export">Export</button>
-          <button id="bo-del" class="danger">Delete</button>
+          <button id="bo-del" class="danger" style="margin-left:auto">Delete</button>
         </div>
         <div class="row">
           <button id="bo-showbtn">Show on overlay</button>
           <label style="min-width:0; flex:1"><input id="bo-checked" type="checkbox" checked> include in hotkey cycle</label>
         </div>
-        <div class="muted">JSON format is compatible with RTS_Overlay / age4builder — or use Import from the web. Pasting a build link in here imports it too. Use <code>@folder/image@</code> tokens for icons (works in plain text too). <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves. <kbd>↑</kbd><kbd>↓</kbd> in the filter browses the library; double-click a build order to show it on the overlay.</div>
+        <div class="hint" style="margin-top:8px"><svg class="ic"><use href="#i-pencil"/></svg><span>JSON format is compatible with RTS_Overlay / age4builder — or use Import from the web. Pasting a build link in here imports it too. Use <code>@folder/image@</code> tokens for icons (works in plain text too). <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves. <kbd>↑</kbd><kbd>↓</kbd> in the filter browses the library; double-click a build order to show it on the overlay.</span></div>
       </div>
 
       <div class="card">
@@ -959,12 +1027,14 @@
         <div class="field"><label>Previous step</label><input id="bo-hk-prev" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
         <div class="field"><label>Next step</label><input id="bo-hk-next" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
         <div class="btn-row">
-          <button id="bo-act-prev" onclick="invoke('bo_action',{action:'prev'})">◀ Prev step</button>
-          <button id="bo-act-next" onclick="invoke('bo_action',{action:'next'})">Next step ▶</button>
+          <span class="seg-group">
+            <button id="bo-act-prev" onclick="invoke('bo_action',{action:'prev'})">◀ Prev step</button><button id="bo-act-next" onclick="invoke('bo_action',{action:'next'})">Next step ▶</button>
+          </span>
           <button id="bo-act-cycle" onclick="invoke('bo_action',{action:'cycle'})">Cycle</button>
           <button id="bo-act-toggle" onclick="invoke('bo_action',{action:'toggle'})">Show / Hide</button>
           <button id="bo-edit-btn">Reposition BO overlay</button>
         </div>
+        <div class="hint" style="margin-top:12px"><svg class="ic"><use href="#i-keyboard"/></svg><span>Hotkeys work globally — even while the game has focus. The buttons above do the same thing, handy for testing without hotkeys set.</span></div>
       </div>
 
       <div class="card">
@@ -2093,8 +2163,12 @@ function renderBoList() {
   const total = names.length;
   $('tab-bo-chip').textContent = total || '';
   $('tab-bo-chip').title = total ? `${total} build order${total === 1 ? '' : 's'} in the library` : '';
-  const setCount = shown => $('bo-count').textContent =
-    total ? (shown === total ? `(${total})` : `(${shown}/${total})`) : '';
+  const setCount = shown => {
+    const el = $('bo-count');
+    const txt = total ? (shown === total ? `(${total})` : `(${shown}/${total})`) : '';
+    if (el.textContent !== txt) { el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop'); }
+    el.textContent = txt;
+  };
   if (filter) {
     names = names.filter(n =>
       n.toLowerCase().includes(filter) ||
@@ -2112,13 +2186,14 @@ function renderBoList() {
   list.innerHTML = names.map(name => {
     const checked = !(settings.unchecked_buildorders || []).includes(name);
     const p = parseBo(settings.buildorders[name]);
-    const flag = p.civ ? `<img class="boflag" src="flags/${esc(flagName(p.civ))}.webp" title="${esc(p.civ)}" onerror="this.remove()">` : '';
+    const flag = p.civ ? `<img class="boflag" src="flags/${esc(flagName(p.civ))}.webp" title="${esc(p.civ)}" onerror="this.remove()">`
+                       : '<span class="bo-noflag" title="No civilization set">📜</span>';
     return `<div class="bo-item${name === boSelected ? ' sel' : ''}" data-name="${esc(name)}">
-      ${flag}<span class="bo-title">${esc(name)}</span>
-      ${name === boShownName ? '<span class="live-dot" title="Currently on the overlay"></span>' : ''}
+      ${flag}<span class="bo-text"><span class="bo-title">${esc(name)}</span>${p.civ ? `<span class="bo-civ">${esc(p.civ)}</span>` : ''}</span>
+      ${name === boShownName ? '<span class="live-badge" title="Currently on the overlay">LIVE</span>' : ''}
       <span class="bo-meta">
         ${p.err ? '<span class="badge loss" title="' + esc(p.err) + '">invalid</span>' : ''}
-        <span class="muted">${p.steps} step${p.steps === 1 ? '' : 's'}</span>
+        <span class="steps-pill">${p.steps} step${p.steps === 1 ? '' : 's'}</span>
         <span class="cyc${checked ? ' on' : ''}" title="${checked ? 'In the hotkey cycle — click to remove' : 'Not in the hotkey cycle — click to add'}">${checked ? '✓ cycle' : 'cycle'}</span>
       </span>
     </div>`;
@@ -2163,6 +2238,7 @@ function validateBoContent() {
   const p = parseBo($('bo-content').value);
   const badge = $('bo-format');
   $('bo-content').classList.toggle('invalid', !!p.err);
+  $('bo-content').classList.toggle('json-ok', !!p.json && !p.err);
   if (p.err) { badge.className = 'badge bad'; badge.textContent = 'invalid JSON'; badge.title = p.err; }
   else if (p.json) { badge.className = 'badge ok'; badge.textContent = `JSON · ${p.steps} steps`; badge.title = p.civ || ''; }
   else { badge.className = 'badge mode'; badge.textContent = `text · ${p.steps} steps`; badge.title = ''; }
@@ -2410,6 +2486,11 @@ try {
   $('bo-g-civ').value = localStorage.getItem('boGuidesCiv') || '';
   $('bo-g-sort').value = localStorage.getItem('boGuidesSort') || 'score';
 } catch (e) { /* storage unavailable */ }
+// quiet green edge once the pasted link looks importable
+$('bo-url').addEventListener('input', () => {
+  const v = $('bo-url').value.trim();
+  $('bo-url').classList.toggle('ok-link', /aoe4guides\.com|aoeivbuilds\.com/.test(v));
+});
 for (const id of ['bo-g-civ', 'bo-g-sort']) {
   $(id).onchange = () => {
     try {
@@ -2439,10 +2520,10 @@ async function searchGuides(opts = {}) {
       const sub = [author, esc(b.strategy || ''), esc(b.map || ''), esc(b.season || '')]
         .filter(Boolean).join(' · ');
       return `<div class="bo-item" data-id="${esc(b.id)}">
-        ${flag}<span class="bo-title">${esc(b.title || 'Untitled')}<br><span class="muted bo-sub">${sub}</span></span>
+        ${flag}<span class="bo-text"><span class="bo-title">${esc(b.title || 'Untitled')}</span><span class="bo-civ">${sub}</span></span>
         <span class="bo-meta">
-          ${b.views ? `<span class="muted" title="Views">👁 ${esc(b.views)}</span>` : ''}
-          ${b.likes ? `<span class="muted" title="Likes">♥ ${esc(b.likes)}</span>` : ''}
+          ${b.views ? `<span class="g-stat" title="Views"><svg class="ic"><use href="#i-eye"/></svg>${esc(b.views)}</span>` : ''}
+          ${b.likes ? `<span class="g-stat likes" title="Likes"><svg class="ic"><use href="#i-heart"/></svg>${esc(b.likes)}</span>` : ''}
           <button class="imp-btn">Import</button>
         </span>
       </div>`;
@@ -2566,7 +2647,7 @@ function updateBoPreview() {
       ($('bo-showtitle').checked ? `<div class="pv-title" style="color:${$('bo-titlecolor').value}">${esc(name)}</div>` : '') +
       (lines.length
         ? lines.map((l, i) => `<div class="pv-note" style="${i === boPvStep ? '' : 'opacity:.45'}">${boRenderLine(l)}</div>`).join('')
-        : '<div class="muted">Paste or type a build order to preview it</div>');
+        : '<div class="pv-empty">📜<br>Paste or type a build order<br>to preview it here</div>');
     $('bo-pv-step').textContent = lines.length ? `${boPvStep + 1}/${lines.length}` : '';
     syncPvPager(lines.length);
   }
@@ -2645,6 +2726,12 @@ listen('bo_data', e => {
   $('bo-now').textContent = b.name;
   const p = parseBo(b.content);
   $('bo-now-sub').textContent = `On overlay — step ${(b.step ?? 0) + 1}${p.steps ? '/' + p.steps : ''}`;
+  const box = $('bo-now').parentElement.parentElement;
+  box.classList.add('live');
+  let bar = box.querySelector('.tracked-bar');
+  if (!bar) { bar = document.createElement('div'); bar.className = 'tracked-bar'; bar.innerHTML = '<i></i>'; box.appendChild(bar); }
+  bar.style.display = p.steps ? '' : 'none';
+  if (p.steps) bar.firstElementChild.style.width = (((b.step ?? 0) + 1) / p.steps * 100) + '%';
 });
 // clicking the "now showing" panel opens that build order in the editor
 $('bo-now').parentElement.parentElement.style.cursor = 'pointer';
