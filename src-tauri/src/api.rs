@@ -14,6 +14,24 @@ pub async fn search_players(
     client: &reqwest::Client,
     query: &str,
 ) -> Result<Vec<PlayerSearchResult>, String> {
+    // A numeric query may be a profile ID — try a direct lookup first
+    if let Ok(id) = query.parse::<u64>() {
+        if let Ok(resp) = client.get(format!("{BASE}/players/{id}")).send().await {
+            if let Ok(p) = resp.json::<Value>().await {
+                if let (Some(profile_id), Some(name)) =
+                    (p["profile_id"].as_u64(), p["name"].as_str())
+                {
+                    return Ok(vec![PlayerSearchResult {
+                        profile_id,
+                        name: name.to_string(),
+                        rating: p["leaderboards"]["rm_solo"]["rating"]
+                            .as_i64()
+                            .or_else(|| p["modes"]["rm_1v1"]["rating"].as_i64()),
+                    }]);
+                }
+            }
+        }
+    }
     let url = format!("{BASE}/players/search?query={}", urlencode(query));
     let data: Value = client
         .get(&url)
@@ -142,12 +160,17 @@ fn process_player(p: &Value, team: i64, mode_key: &str, mode_label: &str) -> Val
 
     let mut civ_games = String::new();
     let mut civ_winrate = String::new();
+    let mut civ_win_median = String::new();
     if let Some(civs) = modes["civilizations"].as_array() {
         if let Some(c) = civs.iter().find(|c| c["civilization"].as_str() == Some(civ_raw)) {
             civ_games = c["games_count"].as_i64().map(|v| v.to_string()).unwrap_or_default();
             civ_winrate = c["win_rate"]
                 .as_f64()
                 .map(|v| format!("{v:.0}%"))
+                .unwrap_or_default();
+            civ_win_median = c["game_length"]["wins_median"]
+                .as_f64()
+                .map(|s| format!("{}:{:02}", (s as i64) / 60, (s as i64) % 60))
                 .unwrap_or_default();
         }
     }
@@ -164,6 +187,7 @@ fn process_player(p: &Value, team: i64, mode_key: &str, mode_label: &str) -> Val
         "winrate": modes["win_rate"].as_f64().map(|v| format!("{v:.0}%")).unwrap_or_default(),
         "civ_games": civ_games,
         "civ_winrate": civ_winrate,
+        "civ_win_length_median": civ_win_median,
     })
 }
 
@@ -220,7 +244,8 @@ mod tests {
                         "rating": 1500, "rank": 100, "wins_count": 60, "losses_count": 40,
                         "win_rate": 60.0,
                         "civilizations": [
-                            { "civilization": "holy_roman_empire", "games_count": 25, "win_rate": 64.0 }
+                            { "civilization": "holy_roman_empire", "games_count": 25, "win_rate": 64.0,
+                              "game_length": { "wins_median": 1130.5 } }
                         ]
                     }}
                 }} ],
@@ -262,6 +287,7 @@ mod tests {
         assert_eq!(opp["losses"], "40");
         assert_eq!(opp["civ_games"], "25");
         assert_eq!(opp["civ_winrate"], "64%");
+        assert_eq!(opp["civ_win_length_median"], "18:50");
     }
 
     #[test]

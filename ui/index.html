@@ -34,7 +34,7 @@
   .hotkey-input { width: 130px; }
   #bo-list { width: 100%; min-height: 90px; }
   #bo-content { width: 100%; height: 220px; font-family: Consolas, monospace; font-size: 12px; box-sizing: border-box; }
-  .ov-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; font-size: 12px; margin-top: 8px; }
+  .ov-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; font-size: 12px; margin-top: 8px; }
   .ov-grid input, .ov-grid select { width: 100%; box-sizing: border-box; padding: 4px 6px; }
   .ov-head { color: #9bd; font-weight: 600; }
   .rand-box { display: inline-block; text-align: center; margin-right: 40px; vertical-align: top; }
@@ -162,6 +162,7 @@
     background: #1e1e26; border-radius: 8px; padding: 7px 10px; margin: 6px 0; }
   .lmp img.flag { width: 26px; height: 17px; object-fit: cover; border-radius: 3px; }
   .lmp .nm { font-weight: 700; color: #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lmp .nm img.country { height: 11px; margin-right: 5px; vertical-align: baseline; border-radius: 1px; }
   .lmp.me { outline: 1px solid #ffd97a55; }
   .lmp.me .nm { color: #ffd97a; }
   .lmp .rt { color: #7ab6ff; font-weight: 700; text-align: right; }
@@ -289,6 +290,12 @@
         <option value="win">Wins</option>
         <option value="loss">Losses</option>
       </select>
+      <select id="gf-limit" title="How many games to fetch">
+        <option value="25">Last 25</option>
+        <option value="50">Last 50</option>
+        <option value="100">Last 100</option>
+        <option value="200">Last 200</option>
+      </select>
       <span style="flex:1"></span>
       <button id="games-refresh" class="primary">Refresh</button>
     </div>
@@ -360,7 +367,7 @@
     <div class="ov-grid" id="ov-grid">
       <span class="ov-head">Name</span><span class="ov-head">Civ</span><span class="ov-head">Team</span>
       <span class="ov-head">Rating</span><span class="ov-head">Rank</span><span class="ov-head">Winrate</span>
-      <span class="ov-head">Wins</span><span class="ov-head">Losses</span><span class="ov-head">Civ WR</span>
+      <span class="ov-head">Wins</span><span class="ov-head">Losses</span><span class="ov-head">Civ WR</span><span class="ov-head">Win time</span>
     </div>
     <div class="row" style="margin-top:10px">
       <button id="ov-load">Load current data</button>
@@ -599,14 +606,17 @@ document.addEventListener('click', e => {
 function lmPlayer(p) {
   const me = settings.player_name && p.name === settings.player_name;
   const civstats = p.civ_winrate ? `<span class="cv">${p.civ} ${p.civ_winrate}${p.civ_games ? ' · ' + p.civ_games + 'g' : ''}</span>` : `<span class="cv">${p.civ}</span>`;
+  const country = p.country
+    ? `<img class="country" src="countries/${String(p.country).toLowerCase()}.png" onerror="this.remove()">` : '';
   return `<div class="lmp ${me ? 'me' : ''}">
     <img class="flag" src="flags/${p.civ}.webp" onerror="this.style.visibility='hidden'">
-    <span class="nm" title="${p.name ?? '?'}">${p.name ?? '?'}</span>
+    <span class="nm" title="${p.name ?? '?'}">${country}${p.name ?? '?'}</span>
     <span class="rt">${p.rating}${p.rank ? ` <span class="muted" style="font-weight:400">${p.rank}</span>` : ''}</span>
     <span class="stats">
       ${p.winrate ? `<span class="wr">${p.winrate} winrate</span>` : ''}
       ${p.wins !== '0' || p.losses !== '0' ? `<span><span class="win">${p.wins}</span> / <span class="loss">${p.losses}</span></span>` : ''}
       ${civstats}
+      ${p.civ_win_length_median ? `<span title="median win duration with this civ">⏱ ${p.civ_win_length_median}</span>` : ''}
     </span>
   </div>`;
 }
@@ -814,6 +824,11 @@ async function loadGames() {
 }
 $('gf-mode').onchange = renderGames;
 $('gf-result').onchange = renderGames;
+$('gf-limit').onchange = async () => {
+  settings.max_games_history = parseInt($('gf-limit').value);
+  await invoke('save_settings', { newSettings: settings });
+  loadGames();
+};
 
 // ---------- build orders tab ----------
 function renderBoList() {
@@ -873,8 +888,8 @@ function buildOverrideGrid() {
     row.civ.innerHTML = '<option value=""></option>' + CIVS.map(c => `<option>${c}</option>`).join('');
     row.team = document.createElement('select');
     row.team.innerHTML = '<option value="0">No team</option><option value="1">Team 1</option><option value="2">Team 2</option>';
-    for (const k of ['rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate']) row[k] = document.createElement('input');
-    ['name', 'civ', 'team', 'rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate']
+    for (const k of ['rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate', 'civ_win_length_median']) row[k] = document.createElement('input');
+    ['name', 'civ', 'team', 'rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate', 'civ_win_length_median']
       .forEach(k => grid.appendChild(row[k]));
     ovInputs.push(row);
   }
@@ -893,6 +908,7 @@ function ovLoad(d) {
     row.wins.value = p.wins ?? '';
     row.losses.value = p.losses ?? '';
     row.civ_winrate.value = p.civ_winrate ?? '';
+    row.civ_win_length_median.value = p.civ_win_length_median ?? '';
   });
 }
 $('ov-load').onclick = async () => ovLoad(await invoke('get_current_data'));
@@ -904,6 +920,7 @@ $('ov-send').onclick = () => {
       country: '', rating: r.rating.value, rank: r.rank.value, winrate: r.winrate.value,
       wins: r.wins.value, losses: r.losses.value,
       civ_games: '', civ_winrate: r.civ_winrate.value,
+      civ_win_length_median: r.civ_win_length_median.value,
     }));
   const data = { map: $('ov-map').value, kind: 'override', started: '', server: '', match_id: 'override', ongoing: true, players };
   invoke('override_data', { data, prevent: $('ov-prevent').checked });
@@ -990,9 +1007,21 @@ document.addEventListener('keydown', e => {
 
 buildOverrideGrid();
 loadSettings().then(async () => {
+  $('gf-limit').value = String(settings.max_games_history ?? 50);
   const d = await invoke('get_current_data');
   if (d) renderMatch(d);
-}).catch(e => { document.title = 'INIT ERROR: ' + e; });
+  try {
+    const upd = await invoke('check_update');
+    if (upd) {
+      toast(`Update available: v${upd.version}`);
+      const a = document.createElement('a');
+      a.href = upd.url; a.target = '_blank';
+      a.textContent = `v${upd.version} available ↗`;
+      a.style.marginRight = 'auto';
+      $('savebar').prepend(a);
+    }
+  } catch (e) { /* offline / no releases is fine */ }
+}).catch(e => toast('Init failed: ' + e, true));
 </script>
 </body>
 </html>

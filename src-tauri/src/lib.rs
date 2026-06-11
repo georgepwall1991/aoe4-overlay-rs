@@ -103,6 +103,34 @@ fn force_refresh(state: State<'_, AppState>) {
     state.force_check.notify_one();
 }
 
+/// Returns Some({version, url}) when a newer GitHub release exists.
+#[tauri::command]
+async fn check_update(state: State<'_, AppState>) -> Result<Option<Value>, String> {
+    let resp = state
+        .http
+        .get("https://api.github.com/repos/georgepwall1991/aoe4-overlay-rs/releases/latest")
+        .header("Accept", "application/vnd.github+json")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+    if !resp.status().is_success() {
+        return Ok(None); // no releases yet / offline — not an error
+    }
+    let rel: Value = resp.json().await.map_err(|e| e.to_string())?;
+    let tag = rel["tag_name"].as_str().unwrap_or("").trim_start_matches('v');
+    let newer = {
+        let cur: Vec<u32> = env!("CARGO_PKG_VERSION").split('.').filter_map(|p| p.parse().ok()).collect();
+        let new: Vec<u32> = tag.split('.').filter_map(|p| p.parse().ok()).collect();
+        !new.is_empty() && new > cur
+    };
+    Ok(newer.then(|| {
+        serde_json::json!({
+            "version": tag,
+            "url": rel["html_url"].as_str().unwrap_or("https://github.com/georgepwall1991/aoe4-overlay-rs/releases"),
+        })
+    }))
+}
+
 // ---------------- overlay commands ----------------
 
 #[tauri::command]
@@ -372,10 +400,60 @@ pub fn run() {
     };
 
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            // Second launch: focus the existing control panel instead
+            if let Some(w) = app.get_webview_window("main") {
+                let _ = w.show();
+                let _ = w.unminimize();
+                let _ = w.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(state)
         .setup(move |app| {
             let handle = app.handle().clone();
+
+            // Tray icon: left-click opens the panel; menu for overlay/quit
+            {
+                use tauri::menu::{MenuBuilder, MenuItemBuilder};
+                use tauri::tray::TrayIconBuilder;
+                let open = MenuItemBuilder::with_id("open", "Open control panel").build(app)?;
+                let ovl = MenuItemBuilder::with_id("overlay", "Show / hide overlay").build(app)?;
+                let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
+                let menu = MenuBuilder::new(app).items(&[&open, &ovl, &quit]).build()?;
+                TrayIconBuilder::new()
+                    .icon(app.default_window_icon().unwrap().clone())
+                    .tooltip("AoE4 Overlay")
+                    .menu(&menu)
+                    .show_menu_on_left_click(false)
+                    .on_menu_event(|app, event| match event.id().as_ref() {
+                        "open" => {
+                            if let Some(w) = app.get_webview_window("main") {
+                                let _ = w.show();
+                                let _ = w.unminimize();
+                                let _ = w.set_focus();
+                            }
+                        }
+                        "overlay" => toggle_window(app, "overlay"),
+                        "quit" => app.exit(0),
+                        _ => {}
+                    })
+                    .on_tray_icon_event(|tray, event| {
+                        if let tauri::tray::TrayIconEvent::Click {
+                            button: tauri::tray::MouseButton::Left,
+                            button_state: tauri::tray::MouseButtonState::Up,
+                            ..
+                        } = event
+                        {
+                            if let Some(w) = tray.app_handle().get_webview_window("main") {
+                                let _ = w.show();
+                                let _ = w.unminimize();
+                                let _ = w.set_focus();
+                            }
+                        }
+                    })
+                    .build(app)?;
+            }
 
             for (label, geo) in [("overlay", s.overlay_geometry), ("buildorder", s.bo_geometry)] {
                 if let Some(w) = app.get_webview_window(label) {
@@ -422,7 +500,8 @@ pub fn run() {
             reset_override,
             bo_action,
             bo_select,
-            get_bo
+            get_bo,
+            check_update
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

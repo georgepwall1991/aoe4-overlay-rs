@@ -58,7 +58,7 @@ function update_player_data(data) {
     for (const p of data.players) {
         if (first_team == null) first_team = p.team;
         // Decide where to place flag 
-        let flag = `<td class="flag" rowspan="2"><img src="../img/flags/${p.civ}.webp"></td>`;
+        let flag = `<td class="flag" rowspan="2"><img src="flags/${p.civ}.webp"></td>`;
         let t1f = '';
         let t2f = '';
         if (p.team == first_team) t1f = flag; else t2f = flag;
