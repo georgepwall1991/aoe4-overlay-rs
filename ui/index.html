@@ -136,6 +136,38 @@
     transition: .25s; pointer-events: none; z-index: 50; }
   #toast.show { opacity: 1; transform: none; }
   #toast.err { background: #a33b2a; }
+
+  /* polish */
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-thumb { background: #3a3a44; border-radius: 5px; border: 2px solid #1e1e24; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  .card { transition: border-color .15s; }
+  .card:hover { border-color: #3e3e4a; }
+  input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid #3d7fb0; outline-offset: 1px; }
+  input.invalid { border-color: #e0452f; background: #34201e; }
+  .savebar { position: sticky; bottom: 28px; z-index: 8; background: rgba(30,30,36,.92);
+    backdrop-filter: blur(4px); border: 1px solid #32323c; border-radius: 10px; padding: 8px 14px; }
+  .dirty-pill { color: #ffc845; font-size: 12px; opacity: 0; transition: .2s; }
+  .savebar.dirty .dirty-pill { opacity: 1; }
+  button:disabled { opacity: .45; cursor: default; }
+  .result.kb { background: #33333d; }
+
+  /* last match panel */
+  .lm-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .lm-map { font-size: 17px; font-weight: 800; color: #fff; }
+  .lm-sub { color: #888; font-size: 12px; }
+  .lm-teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: start; }
+  .lm-vs { align-self: center; color: #555; font-weight: 800; font-size: 13px; padding: 0 4px; }
+  .lmp { display: grid; grid-template-columns: 26px minmax(90px, 1fr) auto; gap: 4px 8px; align-items: center;
+    background: #1e1e26; border-radius: 8px; padding: 7px 10px; margin: 6px 0; }
+  .lmp img.flag { width: 26px; height: 17px; object-fit: cover; border-radius: 3px; }
+  .lmp .nm { font-weight: 700; color: #eee; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lmp.me { outline: 1px solid #ffd97a55; }
+  .lmp.me .nm { color: #ffd97a; }
+  .lmp .rt { color: #7ab6ff; font-weight: 700; text-align: right; }
+  .lmp .stats { grid-column: 1 / -1; display: flex; gap: 10px; font-size: 11px; color: #999; flex-wrap: wrap; }
+  .lmp .stats .wr { color: #fffb78; }
+  .lmp .stats .cv { color: var(--civstat, #bc8aea); }
 </style>
 </head>
 <body>
@@ -230,17 +262,16 @@
 
     </div>
 
-    <div class="savebar">
-      <span class="muted">Ctrl+S to save</span>
-      <button id="save-btn" class="primary">Save settings</button>
+    <div class="savebar" id="savebar">
+      <span class="dirty-pill" id="dirty-pill">● Unsaved changes</span>
+      <span class="muted">Ctrl+S</span>
+      <button id="save-btn" class="primary" disabled>Save settings</button>
     </div>
 
-    <h2>Last match</h2>
-    <div id="match-info" class="muted">No match data yet.</div>
-    <table id="match-table" style="display:none">
-      <thead><tr><th>Team</th><th>Player</th><th>Civ</th><th>Rating</th><th>Rank</th><th>Winrate</th><th>W/L</th><th>Civ WR</th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <div class="card" style="margin-top:12px">
+      <h3>⚔️ Last match</h3>
+      <div id="last-match"><div class="muted">No match data yet — waiting for the first poll…</div></div>
+    </div>
   </div>
 
   <!-- ============ GAMES ============ -->
@@ -469,6 +500,7 @@ async function loadSettings() {
   $('bo-bgcolor').value = toHex(settings.bo_color_background);
   $('bo-showtitle').checked = settings.bo_show_title;
   renderBoList();
+  clearDirty();
 }
 
 const clamp = (v, lo, hi, dflt) => { v = parseInt(v); return isNaN(v) ? dflt : Math.min(hi, Math.max(lo, v)); };
@@ -484,7 +516,21 @@ function collectCommon() {
   settings.team_colors = ['tc1', 'tc2', 'tc3'].map(id => [...fromHex($(id).value), a]);
 }
 
+function markDirty() { $('savebar').classList.add('dirty'); $('save-btn').disabled = false; }
+function clearDirty() { $('savebar').classList.remove('dirty'); $('save-btn').disabled = true; }
+
+function validateSettings() {
+  const keys = ['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next']
+    .map(id => $(id).value.trim()).filter(Boolean);
+  if (new Set(keys.map(k => k.toLowerCase())).size !== keys.length) {
+    toast('Two hotkeys use the same key combo', true);
+    return false;
+  }
+  return true;
+}
+
 async function save() {
+  if (!validateSettings()) return;
   collectCommon();
   settings.bo_hotkey_show = $('bo-hk-show').value.trim();
   settings.bo_hotkey_cycle = $('bo-hk-cycle').value.trim();
@@ -496,8 +542,18 @@ async function save() {
   settings.bo_title_color = fromHex($('bo-titlecolor').value);
   settings.bo_color_background = fromHex($('bo-bgcolor').value);
   settings.bo_show_title = $('bo-showtitle').checked;
-  await invoke('save_settings', { newSettings: settings });
-  toast('Settings saved');
+  try {
+    await invoke('save_settings', { newSettings: settings });
+    // reflect clamped values back into the controls
+    $('interval').value = settings.interval;
+    $('wsport').value = settings.websocket_port;
+    $('fontscale').value = settings.font_scale;
+    updatePreview();
+    clearDirty();
+    toast('Settings saved');
+  } catch (e) {
+    toast('Failed to save: ' + e, true);
+  }
 }
 
 // ---------- player search ----------
@@ -539,20 +595,42 @@ document.addEventListener('click', e => {
   if (!$('results').contains(e.target) && e.target !== $('search')) $('results').innerHTML = '';
 });
 
-// ---------- last match table ----------
+// ---------- last match panel ----------
+function lmPlayer(p) {
+  const me = settings.player_name && p.name === settings.player_name;
+  const civstats = p.civ_winrate ? `<span class="cv">${p.civ} ${p.civ_winrate}${p.civ_games ? ' · ' + p.civ_games + 'g' : ''}</span>` : `<span class="cv">${p.civ}</span>`;
+  return `<div class="lmp ${me ? 'me' : ''}">
+    <img class="flag" src="flags/${p.civ}.webp" onerror="this.style.visibility='hidden'">
+    <span class="nm" title="${p.name ?? '?'}">${p.name ?? '?'}</span>
+    <span class="rt">${p.rating}${p.rank ? ` <span class="muted" style="font-weight:400">${p.rank}</span>` : ''}</span>
+    <span class="stats">
+      ${p.winrate ? `<span class="wr">${p.winrate} winrate</span>` : ''}
+      ${p.wins !== '0' || p.losses !== '0' ? `<span><span class="win">${p.wins}</span> / <span class="loss">${p.losses}</span></span>` : ''}
+      ${civstats}
+    </span>
+  </div>`;
+}
+
 function renderMatch(d) {
-  $('match-info').textContent =
-    `${d.map ?? '?'} — ${d.kind ?? ''} — ${d.ongoing ? 'ongoing' : 'finished'} — started ${d.started ?? ''}`;
-  const tbody = $('match-table').querySelector('tbody');
-  tbody.innerHTML = '';
-  for (const p of d.players || []) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${p.team}</td><td>${p.name ?? '?'}</td><td>${p.civ}</td>
-      <td>${p.rating}</td><td>${p.rank}</td><td>${p.winrate}</td><td>${p.wins}/${p.losses}</td>
-      <td>${p.civ_winrate ?? ''}${p.civ_games ? ' (' + p.civ_games + ')' : ''}</td>`;
-    tbody.appendChild(tr);
-  }
-  $('match-table').style.display = '';
+  if (!d || !d.players) return;
+  const t1 = d.players.filter(p => p.team === 1);
+  const t2 = d.players.filter(p => p.team !== 1);
+  const live = d.ongoing;
+  const gameLink = settings.profile_id && d.match_id && d.match_id !== 'override'
+    ? `<a href="https://aoe4world.com/players/${settings.profile_id}/games/${d.match_id}" target="_blank" class="lm-sub">details ↗</a>` : '';
+  $('last-match').innerHTML = `
+    <div class="lm-head">
+      <span class="lm-map">${d.map ?? '?'}</span>
+      ${live ? '<span class="badge live">Live</span>' : '<span class="badge mode">Finished</span>'}
+      <span class="badge mode">${fmtMode(d.kind)}</span>
+      <span class="lm-sub">${d.server ?? ''}${d.started ? ' · ' + timeAgo(d.started) : ''}</span>
+      ${gameLink}
+    </div>
+    <div class="lm-teams">
+      <div>${t1.map(lmPlayer).join('')}</div>
+      <span class="lm-vs">VS</span>
+      <div>${t2.map(lmPlayer).join('')}</div>
+    </div>`;
 }
 
 // ---------- games tab ----------
@@ -855,7 +933,30 @@ $('rand-map').onclick = () => {
 
 // ---------- wiring ----------
 $('search-btn').onclick = doSearch;
-$('search').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+let searchTimer = null;
+$('search').addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = $('search').value.trim();
+  if (q.length >= 3) searchTimer = setTimeout(doSearch, 450);
+  else $('results').innerHTML = '';
+});
+$('search').addEventListener('keydown', e => {
+  const items = [...document.querySelectorAll('#results .result')];
+  const cur = items.findIndex(i => i.classList.contains('kb'));
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (!items.length) return;
+    const next = e.key === 'ArrowDown' ? Math.min(cur + 1, items.length - 1) : Math.max(cur - 1, 0);
+    items.forEach(i => i.classList.remove('kb'));
+    items[next].classList.add('kb');
+    items[next].scrollIntoView({ block: 'nearest' });
+  } else if (e.key === 'Enter') {
+    clearTimeout(searchTimer);
+    if (cur >= 0) items[cur].click(); else doSearch();
+  } else if (e.key === 'Escape') {
+    $('results').innerHTML = '';
+  }
+});
 $('save-btn').onclick = save;
 $('toggle-btn').onclick = () => invoke('toggle_overlay');
 $('refresh-btn').onclick = () => { invoke('force_refresh'); setStatus('Refreshing…'); };
@@ -877,6 +978,10 @@ listen('poll_error', e => {
 });
 
 ['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next'].forEach(id => makeHotkeyRecorder($(id)));
+['tab-settings', 'tab-buildorders'].forEach(id => {
+  $(id).addEventListener('input', e => { if (e.target.id !== 'search') markDirty(); });
+  $(id).addEventListener('change', e => { if (e.target.id !== 'search') markDirty(); });
+});
 ['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'interval'].forEach(id => $(id).addEventListener('input', updatePreview));
 document.addEventListener('keydown', e => {
   if (e.target.classList?.contains('hotkey-input')) return;
