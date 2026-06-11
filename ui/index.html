@@ -43,6 +43,8 @@
   .bo-item img.boflag { width: 24px; height: 15px; object-fit: cover; border-radius: 2px; flex: none; }
   .bo-item .cyc { opacity: .5; flex: none; cursor: pointer; font-size: 14px; }
   .bo-item .cyc.on { opacity: 1; color: #6fe04a; }
+  .bo-item .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #6fe04a; flex: none;
+                       box-shadow: 0 0 5px #6fe04a; }
   .bo-empty { padding: 18px 12px; text-align: center; }
   #bo-content { width: 100%; height: 220px; font-family: Consolas, monospace; font-size: 12px; box-sizing: border-box;
                 margin: 8px 0; resize: vertical; }
@@ -464,7 +466,7 @@
                 <button id="bo-pv-next" style="padding:0 8px">▶</button>
               </span>
             </div>
-            <div id="bo-preview"></div>
+            <div id="bo-preview" tabindex="0" title="Click, then use ← → to step"></div>
           </div>
         </div>
         <div class="row" style="justify-content:flex-end">
@@ -1062,6 +1064,7 @@ function renderBoList() {
     const flag = p.civ ? `<img class="boflag" src="flags/${esc(p.civ)}.webp" title="${esc(p.civ)}" onerror="this.remove()">` : '';
     return `<div class="bo-item${name === boSelected ? ' sel' : ''}" data-name="${esc(name)}">
       ${flag}<span class="bo-title">${esc(name)}</span>
+      ${name === boShownName ? '<span class="live-dot" title="Currently on the overlay"></span>' : ''}
       <span class="bo-meta">
         ${p.err ? '<span class="badge loss" title="' + esc(p.err) + '">invalid</span>' : ''}
         <span class="muted">${p.steps} step${p.steps === 1 ? '' : 's'}</span>
@@ -1384,6 +1387,10 @@ $('bo-filter').addEventListener('keydown', e => {
 });
 $('bo-pv-prev').onclick = () => { boPvStep--; updateBoPreview(); };
 $('bo-pv-next').onclick = () => { boPvStep++; updateBoPreview(); };
+$('bo-preview').addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') { e.preventDefault(); boPvStep--; updateBoPreview(); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); boPvStep++; updateBoPreview(); }
+});
 $('bo-content').addEventListener('input', () => { setBoDirty(true); validateBoContent(); updateBoPreview(); });
 $('bo-name').addEventListener('input', () => { setBoDirty(true); updateBoPreview(); });
 ['bo-fontsize', 'bo-opacity', 'bo-textcolor', 'bo-titlecolor', 'bo-bgcolor', 'bo-showtitle', 'bo-shownext'].forEach(id =>
@@ -1399,7 +1406,9 @@ $('bo-content').addEventListener('keydown', e => {
 listen('bo_data', e => {
   const b = e.payload;
   if (!b) return;
+  const prevShown = boShownName;
   boShownName = b.name;
+  if (prevShown !== b.name) renderBoList();
   $('bo-now').textContent = b.name;
   const p = parseBo(b.content);
   $('bo-now-sub').textContent = `On overlay — step ${(b.step ?? 0) + 1}${p.steps ? '/' + p.steps : ''}`;
