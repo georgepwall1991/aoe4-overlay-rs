@@ -110,18 +110,18 @@ const DEFAULT_BO: &str = r#"
 "#;
 
 impl Settings {
-    pub fn path(config_dir: &PathBuf) -> PathBuf {
+    pub fn path(config_dir: &std::path::Path) -> PathBuf {
         config_dir.join("config.json")
     }
 
-    pub fn load(config_dir: &PathBuf) -> Self {
+    pub fn load(config_dir: &std::path::Path) -> Self {
         std::fs::read_to_string(Self::path(config_dir))
             .ok()
             .and_then(|s| serde_json::from_str(&s).ok())
             .unwrap_or_default()
     }
 
-    pub fn save(&self, config_dir: &PathBuf) {
+    pub fn save(&self, config_dir: &std::path::Path) {
         let _ = std::fs::create_dir_all(config_dir);
         if let Ok(json) = serde_json::to_string_pretty(self) {
             if let Err(e) = std::fs::write(Self::path(config_dir), json) {

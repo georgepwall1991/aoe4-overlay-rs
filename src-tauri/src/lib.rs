@@ -1,6 +1,7 @@
 #![recursion_limit = "256"]
 
 mod api;
+mod bo_import;
 mod settings;
 mod ws;
 
@@ -254,6 +255,30 @@ fn bo_select(app: AppHandle, state: State<'_, AppState>, name: String) {
 #[tauri::command]
 fn get_bo(app: AppHandle) -> Option<Value> {
     bo_payload(&app)
+}
+
+#[tauri::command]
+async fn bo_import_url(
+    state: State<'_, AppState>,
+    url: String,
+) -> Result<bo_import::ImportedBo, String> {
+    bo_import::import_from_url(&state.http, &url).await
+}
+
+#[tauri::command]
+async fn bo_search_guides(
+    state: State<'_, AppState>,
+    civ: Option<String>,
+    order_by: Option<String>,
+    author: Option<String>,
+) -> Result<Value, String> {
+    bo_import::search_aoe4guides(
+        &state.http,
+        civ.as_deref(),
+        order_by.as_deref(),
+        author.as_deref(),
+    )
+    .await
 }
 
 fn bo_step_count(content: &str) -> usize {
@@ -551,6 +576,8 @@ pub fn run() {
             bo_action,
             bo_select,
             get_bo,
+            bo_import_url,
+            bo_search_guides,
             check_update
         ])
         .run(tauri::generate_context!())

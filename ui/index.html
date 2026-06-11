@@ -46,6 +46,12 @@
   .bo-item .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #6fe04a; flex: none;
                        box-shadow: 0 0 5px #6fe04a; }
   .bo-empty { padding: 18px 12px; text-align: center; }
+  #bo-g-results { max-height: 280px; overflow: auto; border: 1px solid #32323c; border-radius: 8px; margin-top: 8px; }
+  #bo-g-results:empty { display: none; }
+  .bo-item .bo-sub { font-weight: 400; font-size: 12px; }
+  .bo-item .imp-btn { flex: none; padding: 2px 10px; }
+  .bo-sub a.by-author { color: #7ab6ff; text-decoration: none; }
+  .bo-sub a.by-author:hover { text-decoration: underline; }
   #bo-content { width: 100%; height: 220px; font-family: Consolas, monospace; font-size: 12px; box-sizing: border-box;
                 margin: 8px 0; resize: vertical; }
   #bo-content.invalid { border-color: #e0452f; }
@@ -405,6 +411,26 @@
       </div>
 
       <div class="card">
+        <h3>🌐 Import from the web</h3>
+        <div class="row">
+          <input id="bo-url" placeholder="Paste a build link from aoe4guides.com or aoeivbuilds.com" style="flex:1">
+          <button id="bo-url-import" class="primary">Import</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <select id="bo-g-civ" title="Civilization filter"><option value="">Any civ</option></select>
+          <select id="bo-g-sort" title="Sort order">
+            <option value="score">Top rated</option>
+            <option value="views">Most viewed</option>
+            <option value="likes">Most liked</option>
+            <option value="timeCreated">Newest</option>
+          </select>
+          <button id="bo-g-search">Browse aoe4guides</button>
+        </div>
+        <div id="bo-g-results"></div>
+        <div class="muted" style="margin-top:8px">Build links and aoe4guides profile links both work — profiles list the author's builds. Click an author name to see more of their builds; double-click a result to import <i>and</i> show it. Esc clears the results.</div>
+      </div>
+
+      <div class="card">
         <h3>✏️ Editor</h3>
         <div class="row">
           <input id="bo-name" placeholder="Build order name" style="flex:1">
@@ -422,7 +448,7 @@
           <button id="bo-showbtn">Show on overlay</button>
           <label style="min-width:0; flex:1"><input id="bo-checked" type="checkbox" checked> include in hotkey cycle</label>
         </div>
-        <div class="muted">JSON format is compatible with RTS_Overlay / age4builder. Use <code>@folder/image@</code> tokens for icons (works in plain text too). Ctrl+Enter saves. ↑↓ in the filter browses the library; double-click a build order to show it on the overlay.</div>
+        <div class="muted">JSON format is compatible with RTS_Overlay / age4builder — or use 🌐 Import from the web. Pasting a build link in here imports it too. Use <code>@folder/image@</code> tokens for icons (works in plain text too). Ctrl+Enter saves. ↑↓ in the filter browses the library; double-click a build order to show it on the overlay.</div>
       </div>
 
       <div class="card">
@@ -1027,6 +1053,10 @@ function setBoDirty(d) {
 let boPvStep = 0;        // preview step index
 let boShownName = null;  // BO currently on the overlay (from bo_data)
 
+// Civ names with punctuation (as exported by aoe4guides) -> our flag file names.
+const FLAG_ALIASES = { "Zhu Xi's Legacy": 'Zhu Xis Legacy', "Jeanne d'Arc": 'Jeanne Darc' };
+const flagName = civ => FLAG_ALIASES[civ] || civ;
+
 // Parse a BO body: returns {json, steps, civ, err} — json null for plain text.
 function parseBo(content) {
   const t = (content || '').trim();
@@ -1059,13 +1089,13 @@ function renderBoList() {
   }
   setCount(names.length);
   if (!names.length) {
-    list.innerHTML = '<div class="bo-empty muted">No build orders yet.<br>Paste one from age4builder.com or aoe4guides.com, or click ＋ New.</div>';
+    list.innerHTML = '<div class="bo-empty muted">No build orders yet.<br>Use 🌐 Import from the web, paste one from age4builder.com, or click ＋ New.</div>';
     return;
   }
   list.innerHTML = names.map(name => {
     const checked = !(settings.unchecked_buildorders || []).includes(name);
     const p = parseBo(settings.buildorders[name]);
-    const flag = p.civ ? `<img class="boflag" src="flags/${esc(p.civ)}.webp" title="${esc(p.civ)}" onerror="this.remove()">` : '';
+    const flag = p.civ ? `<img class="boflag" src="flags/${esc(flagName(p.civ))}.webp" title="${esc(p.civ)}" onerror="this.remove()">` : '';
     return `<div class="bo-item${name === boSelected ? ' sel' : ''}" data-name="${esc(name)}">
       ${flag}<span class="bo-title">${esc(name)}</span>
       ${name === boShownName ? '<span class="live-dot" title="Currently on the overlay"></span>' : ''}
@@ -1290,6 +1320,141 @@ $('bo-import-file').onchange = async e => {
   await importBoFiles(files);
 };
 
+// ---------- import from the web ----------
+const GUIDES_CIVS = {
+  ABB: 'Abbasid Dynasty', AYY: 'Ayyubids', BYZ: 'Byzantines', CHI: 'Chinese',
+  DEL: 'Delhi Sultanate', ENG: 'English', FRE: 'French', HRE: 'Holy Roman Empire',
+  JAP: 'Japanese', JDA: "Jeanne d'Arc", JIN: 'Jin Dynasty', MAL: 'Malians',
+  MON: 'Mongols', DRA: 'Order of the Dragon', OTT: 'Ottomans', RUS: 'Rus',
+  ZXL: "Zhu Xi's Legacy",
+};
+$('bo-g-civ').innerHTML += Object.entries(GUIDES_CIVS)
+  .sort((a, b) => a[1].localeCompare(b[1]))
+  .map(([code, name]) => `<option value="${code}">${esc(name)}</option>`).join('');
+
+// Save an imported BO, select it, and report. A build imported before (same
+// source link) is updated in place; otherwise the name gets a unique suffix.
+async function saveImportedBo(bo) {
+  let name = (bo.name || 'Imported build').trim();
+  const sameSource = bo.source && Object.entries(settings.buildorders)
+    .find(([, c]) => parseBo(c).json?.source === bo.source);
+  if (sameSource) {
+    name = sameSource[0];
+  } else {
+    for (let i = 2; settings.buildorders[name] !== undefined; i++)
+      name = `${(bo.name || 'Imported build').trim()} (${i})`;
+  }
+  const updated = settings.buildorders[name] !== undefined;
+  settings.buildorders[name] = bo.content;
+  await persistBo();
+  selectBo(name);
+  const p = parseBo(bo.content);
+  const detail = [bo.civilization, p.steps ? `${p.steps} steps` : ''].filter(Boolean).join(', ');
+  toast(`${updated ? 'Updated' : 'Imported'} "${name}"${detail ? ` — ${detail}` : ''}`);
+}
+
+async function importFromUrl(url) {
+  if (!url.trim()) { toast('Paste a build order link first', true); return; }
+  // A profile link lists the author's builds in the browse panel instead.
+  const prof = url.match(/aoe4guides\.com\/(?:profile|user)\/([A-Za-z0-9]+)/);
+  if (prof) { searchGuides({ author: prof[1] }); return; }
+  const btn = $('bo-url-import');
+  btn.disabled = true; btn.textContent = 'Importing…';
+  try {
+    await saveImportedBo(await invoke('bo_import_url', { url }));
+    $('bo-url').value = '';
+  } catch (e) {
+    toast(String(e), true);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Import';
+  }
+}
+$('bo-url-import').onclick = () => importFromUrl($('bo-url').value);
+$('bo-url').addEventListener('keydown', e => { if (e.key === 'Enter') importFromUrl($('bo-url').value); });
+
+// Pasting a bare build link into the editor imports it instead of saving a URL as content.
+$('bo-content').addEventListener('paste', e => {
+  const text = (e.clipboardData?.getData('text') || '').trim();
+  if (!/^(https?:\/\/)?(www\.)?(aoe4guides\.com\/builds\/|aoeivbuilds\.com\/build_orders\/)\S+$/i.test(text)) return;
+  if (!$('bo-content').value.trim() || confirm('That looks like a build order link — import it instead of pasting?')) {
+    e.preventDefault();
+    importFromUrl(text);
+  }
+});
+
+// Remember the browse filters; re-search on change once results are showing.
+try {
+  $('bo-g-civ').value = localStorage.getItem('boGuidesCiv') || '';
+  $('bo-g-sort').value = localStorage.getItem('boGuidesSort') || 'score';
+} catch (e) { /* storage unavailable */ }
+for (const id of ['bo-g-civ', 'bo-g-sort']) {
+  $(id).onchange = () => {
+    try {
+      localStorage.setItem('boGuidesCiv', $('bo-g-civ').value);
+      localStorage.setItem('boGuidesSort', $('bo-g-sort').value);
+    } catch (e) { /* storage unavailable */ }
+    if ($('bo-g-results').innerHTML) $('bo-g-search').onclick();
+  };
+}
+
+async function searchGuides(opts = {}) {
+  const btn = $('bo-g-search'), out = $('bo-g-results');
+  btn.disabled = true; btn.textContent = 'Searching…';
+  try {
+    const builds = await invoke('bo_search_guides', {
+      civ: opts.author ? null : ($('bo-g-civ').value || null),
+      orderBy: $('bo-g-sort').value || null,
+      author: opts.author || null,
+    });
+    if (!builds.length) { out.innerHTML = '<div class="bo-empty muted">No builds found.</div>'; return; }
+    out.innerHTML = builds.map(b => {
+      const civ = GUIDES_CIVS[b.civ] || '';
+      const flag = civ ? `<img class="boflag" src="flags/${esc(flagName(civ))}.webp" title="${esc(civ)}" onerror="this.remove()">` : '';
+      const author = b.author && b.authorUid
+        ? `<a href="#" class="by-author" data-uid="${esc(b.authorUid)}" title="Show more by ${esc(b.author)}">${esc(b.author)}</a>`
+        : esc(b.author || '');
+      const sub = [author, esc(b.strategy || ''), esc(b.map || ''), esc(b.season || '')]
+        .filter(Boolean).join(' · ');
+      return `<div class="bo-item" data-id="${esc(b.id)}">
+        ${flag}<span class="bo-title">${esc(b.title || 'Untitled')}<br><span class="muted bo-sub">${sub}</span></span>
+        <span class="bo-meta">
+          ${b.views ? `<span class="muted" title="Views">👁 ${esc(b.views)}</span>` : ''}
+          ${b.likes ? `<span class="muted" title="Likes">♥ ${esc(b.likes)}</span>` : ''}
+          <button class="imp-btn">Import</button>
+        </span>
+      </div>`;
+    }).join('');
+    out.querySelectorAll('.bo-item').forEach(el => {
+      const doImport = async show => {
+        const ib = el.querySelector('.imp-btn');
+        if (ib.disabled) return;
+        ib.disabled = true; ib.textContent = '…';
+        try {
+          await saveImportedBo(await invoke('bo_import_url', { url: el.dataset.id }));
+          if (show && boSelected) invoke('bo_select', { name: boSelected });
+        }
+        catch (e) { toast(String(e), true); }
+        finally { ib.disabled = false; ib.textContent = 'Import'; }
+      };
+      el.querySelector('.imp-btn').onclick = e => { e.stopPropagation(); doImport(false); };
+      el.ondblclick = () => doImport(true);
+      el.title = 'Double-click to import and show on the overlay';
+    });
+    out.querySelectorAll('.by-author').forEach(a => {
+      a.onclick = e => { e.preventDefault(); e.stopPropagation(); searchGuides({ author: a.dataset.uid }); };
+    });
+  } catch (e) {
+    toast(String(e), true);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Browse aoe4guides';
+  }
+}
+$('bo-g-search').onclick = () => searchGuides();
+// Esc with the browse panel open clears the results.
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('bo-g-results').innerHTML) $('bo-g-results').innerHTML = '';
+});
+
 $('bo-showbtn').onclick = () => {
   const name = boSelected || $('bo-name').value.trim();
   if (name && settings.buildorders[name] !== undefined) invoke('bo_select', { name });
@@ -1362,7 +1527,7 @@ function updateBoPreview() {
     const next = p.json.build_order[boPvStep + 1];
     pv.innerHTML =
       ($('bo-showtitle').checked ? `<div class="pv-title" style="color:${$('bo-titlecolor').value}">
-        ${p.civ ? `<img src="flags/${esc(p.civ)}.webp" onerror="this.remove()">` : ''}${esc(name)}</div>` : '') +
+        ${p.civ ? `<img src="flags/${esc(flagName(p.civ))}.webp" onerror="this.remove()">` : ''}${esc(name)}</div>` : '') +
       (res.length ? `<div class="pv-res">${res.join('')}</div>` : '') +
       (s.notes || []).map(n => `<div class="pv-note">${boRenderLine(n)}</div>`).join('') +
       ($('bo-shownext').checked && next && (next.notes || []).length

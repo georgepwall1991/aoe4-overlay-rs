@@ -199,7 +199,10 @@ function render() {
     const s = steps[step];
     const civs = (Array.isArray(bo.civilization) ? bo.civilization : [bo.civilization]).filter(Boolean).slice(0, 3);
     titleEl.innerHTML =
-      civs.map(c => `<img src="flags/${esc(c)}.webp" title="${esc(c)}" onerror="this.style.display='none'">`).join('') +
+      civs.map(c => {
+        const f = { "Zhu Xi's Legacy": 'Zhu Xis Legacy', "Jeanne d'Arc": 'Jeanne Darc' }[c] || c;
+        return `<img src="flags/${esc(f)}.webp" title="${esc(c)}" onerror="this.style.display='none'">`;
+      }).join('') +
       `<span class="t">${esc(current.name)}</span>` +
       `<span id="step-count">${step + 1}/${steps.length}</span>`;
     progEl.style.display = '';

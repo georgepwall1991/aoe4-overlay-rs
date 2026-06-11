@@ -16,6 +16,10 @@ powered by the [aoe4world.com](https://aoe4world.com) API.
 - **Global hotkey** (default `Alt+O`) to show/hide the overlay.
 - **Reposition mode** — click "Reposition overlay" in the control panel, drag the
   overlay where you want it; the position is saved.
+- **Build order import** — paste a build link from
+  [aoe4guides.com](https://aoe4guides.com) (REST API, native overlay JSON) or
+  [aoeivbuilds.com](https://www.aoeivbuilds.com) (text export, converted
+  automatically), or browse/search aoe4guides by civ and rating right in the app.
 - **Auto-detection** — polls `https://aoe4world.com/api/v0/players/{id}/games/last`
   (default every 15 s) and pushes new-match data to the overlay automatically.
 
