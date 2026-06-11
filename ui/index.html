@@ -1077,6 +1077,11 @@ function renderBoList() {
       if (e.target.classList.contains('cyc')) { toggleCycle(el.dataset.name); return; }
       selectBo(el.dataset.name);
     };
+    el.ondblclick = e => {
+      if (e.target.classList.contains('cyc')) return;
+      invoke('bo_select', { name: el.dataset.name });
+    };
+    el.title = 'Double-click to show on overlay';
   });
 }
 
@@ -1123,6 +1128,8 @@ $('bo-add').onclick = async () => {
   const name = $('bo-name').value.trim();
   if (!name) { toast('Enter a build order name', true); return; }
   const renamed = boSelected && boSelected !== name && settings.buildorders[boSelected] !== undefined;
+  if (boSelected !== name && settings.buildorders[name] !== undefined &&
+      !confirm(`A build order named "${name}" already exists. Overwrite it?`)) return;
   if (renamed) {
     delete settings.buildorders[boSelected];
     settings.unchecked_buildorders = (settings.unchecked_buildorders || []).map(n => n === boSelected ? name : n);
