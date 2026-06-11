@@ -1034,7 +1034,8 @@ function renderBoList() {
   if (filter) {
     names = names.filter(n =>
       n.toLowerCase().includes(filter) ||
-      (parseBo(settings.buildorders[n]).civ || '').toLowerCase().includes(filter));
+      (parseBo(settings.buildorders[n]).civ || '').toLowerCase().includes(filter) ||
+      (settings.buildorders[n] || '').toLowerCase().includes(filter));
     if (!names.length) { list.innerHTML = '<div class="bo-empty muted">No build orders match the filter.</div>'; return; }
   }
   if (!names.length) {
@@ -1287,6 +1288,24 @@ function updateBoPreview() {
   }
 }
 $('bo-filter').addEventListener('input', renderBoList);
+// Arrow keys move the selection through the (filtered) list; Enter shows it; Escape clears the filter.
+$('bo-filter').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { $('bo-filter').value = ''; renderBoList(); return; }
+  if (e.key === 'Enter') {
+    if (boSelected && settings.buildorders[boSelected] !== undefined) invoke('bo_select', { name: boSelected });
+    return;
+  }
+  if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+  e.preventDefault();
+  const items = [...$('bo-list').querySelectorAll('.bo-item')].map(el => el.dataset.name);
+  if (!items.length) return;
+  const i = items.indexOf(boSelected);
+  const next = e.key === 'ArrowDown'
+    ? items[Math.min(i + 1, items.length - 1)]
+    : items[Math.max(i - 1, 0)];
+  if (next !== boSelected) selectBo(next);
+  $('bo-list').querySelector('.bo-item.sel')?.scrollIntoView({ block: 'nearest' });
+});
 $('bo-pv-prev').onclick = () => { boPvStep--; updateBoPreview(); };
 $('bo-pv-next').onclick = () => { boPvStep++; updateBoPreview(); };
 $('bo-content').addEventListener('input', () => { validateBoContent(); updateBoPreview(); });
