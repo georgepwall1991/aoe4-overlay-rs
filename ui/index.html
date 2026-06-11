@@ -40,6 +40,41 @@
   .rand-box { display: inline-block; text-align: center; margin-right: 40px; vertical-align: top; }
   .rand-box img { display: block; margin: 10px auto; max-width: 270px; max-height: 270px; border-radius: 6px; }
   .rand-name { font-size: 20px; font-weight: bold; }
+
+  /* ---- games tab ---- */
+  .game-card { display: flex; align-items: stretch; gap: 0; background: #25252d; border: 1px solid #32323c;
+               border-radius: 10px; margin: 10px 0; overflow: hidden; transition: border-color .15s; }
+  .game-card:hover { border-color: #4a4a58; }
+  .game-card .ribbon { width: 5px; flex: none; }
+  .game-card.res-win .ribbon { background: #48bd21; }
+  .game-card.res-loss .ribbon { background: #e0452f; }
+  .game-card.res-live .ribbon { background: #ffb300; }
+  .game-map { width: 110px; flex: none; object-fit: cover; align-self: stretch;
+              -webkit-mask-image: linear-gradient(to left, transparent, #000 70%); }
+  .game-main { flex: 1; padding: 10px 14px; min-width: 0; }
+  .game-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; flex-wrap: wrap; }
+  .game-head .map-name { font-weight: 700; font-size: 14px; color: #fff; }
+  .badge { font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 2px 8px; border-radius: 10px; text-transform: uppercase; }
+  .badge.win { background: rgba(72,189,33,.18); color: #6fe04a; }
+  .badge.loss { background: rgba(224,69,47,.18); color: #ff7b66; }
+  .badge.live { background: rgba(255,179,0,.18); color: #ffc845; animation: pulse 1.6s infinite; }
+  .badge.mode { background: rgba(122,182,255,.14); color: #9cc6ff; }
+  @keyframes pulse { 50% { opacity: .55; } }
+  .game-teams { display: flex; align-items: center; gap: 14px; }
+  .team-col { flex: 1; min-width: 0; }
+  .team-col.right .gp { flex-direction: row-reverse; }
+  .vs { color: #666; font-size: 11px; font-weight: 700; flex: none; }
+  .gp { display: flex; align-items: center; gap: 6px; margin: 2px 0; font-size: 12.5px; white-space: nowrap; }
+  .gp img { width: 22px; height: 14px; object-fit: cover; border-radius: 2px; flex: none; }
+  .gp .pname { overflow: hidden; text-overflow: ellipsis; }
+  .gp.me .pname { color: #ffd97a; font-weight: 700; }
+  .gp .pdiff { font-size: 11px; }
+  .game-side { flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
+               gap: 4px; padding: 10px 16px; min-width: 86px; }
+  .rdiff { font-size: 20px; font-weight: 800; }
+  .rdiff.pos { color: #6fe04a; } .rdiff.neg { color: #ff7b66; } .rdiff.na { color: #555; font-size: 14px; }
+  .game-side .when, .game-side .dur { font-size: 11px; color: #888; }
+  .game-side a { font-size: 11px; }
 </style>
 </head>
 <body>
@@ -90,11 +125,11 @@
 
   <!-- ============ GAMES ============ -->
   <div class="tab" id="tab-games">
-    <div class="row"><button id="games-refresh" class="primary">Refresh match history</button></div>
-    <table id="games-table">
-      <thead><tr><th>Team 1</th><th>Team 2</th><th>Map</th><th>Started</th><th>Mode</th><th>Result</th><th>±Rating</th><th></th></tr></thead>
-      <tbody></tbody>
-    </table>
+    <div class="row" style="justify-content:space-between">
+      <div id="games-summary" class="muted"></div>
+      <button id="games-refresh" class="primary">Refresh</button>
+    </div>
+    <div id="games-list"></div>
   </div>
 
   <!-- ============ BUILD ORDERS ============ -->
@@ -297,31 +332,87 @@ function renderMatch(d) {
 }
 
 // ---------- games tab ----------
+const civTitle = c => (c ?? '').replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase());
+
+function civFlag(civ) {
+  const t = civTitle(civ);
+  // Flag filenames are inconsistent about particle casing ("House of Lancaster"
+  // vs "Order Of The Dragon") — fall back through both, then hide.
+  const alt = t.replace(/ Of /g, ' of ');
+  return `<img src="flags/${t}.webp" title="${t}"
+    onerror="if(!this.dataset.r){this.dataset.r=1;this.src='flags/${alt}.webp'}else{this.style.display='none'}">`;
+}
+
+function timeAgo(iso) {
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 3600) return `${Math.max(1, Math.round(s / 60))} min ago`;
+  if (s < 86400) return `${Math.round(s / 3600)} h ago`;
+  if (s < 86400 * 7) return `${Math.round(s / 86400)} d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+const fmtDur = sec => sec ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : '';
+const fmtMode = k => (k ?? '').replace(/^rm_/, 'Ranked ').replace(/^qm_/, 'Quick ').replace(/^custom.*/, 'Custom');
+
+function playerLine(p, pid, right) {
+  const me = p.profile_id === pid;
+  const d = p.rating_diff;
+  const diff = (d ?? null) !== null
+    ? `<span class="pdiff ${d >= 0 ? 'win' : 'loss'}">${d >= 0 ? '+' : ''}${d}</span>` : '';
+  return `<div class="gp ${me ? 'me' : ''}">${civFlag(p.civilization)}
+    <span class="pname">${p.name ?? '?'}</span>${me ? diff : ''}</div>`;
+}
+
 async function loadGames() {
-  const tbody = $('games-table').querySelector('tbody');
-  tbody.innerHTML = '<tr><td colspan="8" class="muted">Loading…</td></tr>';
+  const list = $('games-list');
+  list.innerHTML = '<div class="muted">Loading…</div>';
   try {
     const data = await invoke('get_match_history');
-    tbody.innerHTML = '';
     const pid = settings.profile_id;
-    for (const g of (data.games || [])) {
-      if (g.ongoing) continue;
+    const games = data.games || [];
+    let wins = 0, losses = 0, html = '';
+    for (const g of games) {
       const teams = (g.teams || []).map(t => t.map(m => m.player || m));
-      const fmtTeam = t => t.map(p => `${p.name ?? '?'} (${(p.civilization ?? '').replace(/_/g, ' ')})`).join('<br>');
-      let me = null;
-      teams.flat().forEach(p => { if (p.profile_id === pid) me = p; });
-      const result = me?.result ? me.result[0].toUpperCase() + me.result.slice(1) : '?';
-      const diff = me?.rating_diff ?? '?';
-      const started = g.started_at ? new Date(g.started_at).toLocaleString() : '?';
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${fmtTeam(teams[0] || [])}</td><td>${fmtTeam(teams[1] || [])}</td>
-        <td>${g.map ?? '?'}</td><td>${started}</td><td>${g.kind ?? ''}</td>
-        <td class="${result === 'Win' ? 'win' : 'loss'}">${result}</td><td>${diff}</td>
-        <td><a href="https://aoe4world.com/players/${pid}/games/${g.game_id}" target="_blank">aoe4world</a></td>`;
-      tbody.appendChild(tr);
+      const me = teams.flat().find(p => p.profile_id === pid);
+      const live = !!g.ongoing;
+      const result = live ? 'live' : (me?.result === 'win' ? 'win' : me?.result === 'loss' ? 'loss' : '');
+      if (result === 'win') wins++; else if (result === 'loss') losses++;
+      const d = me?.rating_diff;
+      const rdiff = live ? '' : (d ?? null) !== null
+        ? `<div class="rdiff ${d >= 0 ? 'pos' : 'neg'}">${d >= 0 ? '+' : ''}${d}</div>`
+        : '<div class="rdiff na">—</div>';
+      const mapImg = `maps/${(g.map ?? '').replace(/ /g, '_')}.png`;
+      const badge = live ? '<span class="badge live">Live</span>'
+        : result ? `<span class="badge ${result}">${result}</span>` : '';
+      html += `
+      <div class="game-card res-${result}">
+        <div class="ribbon"></div>
+        <img class="game-map" src="${mapImg}" onerror="this.remove()">
+        <div class="game-main">
+          <div class="game-head">
+            <span class="map-name">${g.map ?? '?'}</span>
+            ${badge}
+            <span class="badge mode">${fmtMode(g.kind)}</span>
+          </div>
+          <div class="game-teams">
+            <div class="team-col">${(teams[0] || []).map(p => playerLine(p, pid)).join('')}</div>
+            <span class="vs">VS</span>
+            <div class="team-col right">${(teams[1] || []).map(p => playerLine(p, pid, true)).join('')}</div>
+          </div>
+        </div>
+        <div class="game-side">
+          ${rdiff}
+          <span class="when">${g.started_at ? timeAgo(g.started_at) : ''}</span>
+          <span class="dur">${fmtDur(g.duration)}</span>
+          <a href="https://aoe4world.com/players/${pid}/games/${g.game_id}" target="_blank">details ↗</a>
+        </div>
+      </div>`;
     }
-    if (!tbody.children.length) tbody.innerHTML = '<tr><td colspan="8" class="muted">No games.</td></tr>';
-  } catch (e) { tbody.innerHTML = `<tr><td colspan="8" class="muted">Failed: ${e}</td></tr>`; }
+    const total = wins + losses;
+    $('games-summary').textContent = total
+      ? `Last ${total} games: ${wins}W / ${losses}L (${Math.round(wins / total * 100)}%)` : '';
+    list.innerHTML = html || '<div class="muted">No games found.</div>';
+  } catch (e) { list.innerHTML = `<div class="muted">Failed to load match history: ${e}</div>`; }
 }
 
 // ---------- build orders tab ----------
