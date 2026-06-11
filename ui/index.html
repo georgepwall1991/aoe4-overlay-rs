@@ -28,32 +28,53 @@
     --shadow-card: 0 1px 0 rgba(255,255,255,.03) inset, 0 8px 22px -12px rgba(0,0,0,.6);
   }
   ::selection { background: rgba(224,186,94,.3); color: #fff; }
+  input, textarea { caret-color: var(--blue-bright); }
   .ic { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2;
     stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; flex: none; }
   #tabs button .ic { margin-right: 5px; opacity: .7; transition: opacity .15s, color .15s; vertical-align: -2.5px; }
   #tabs button.active .ic, #tabs button:hover .ic { opacity: 1; }
   #tabs button.active .ic { color: var(--gold); }
   .card h3 .ic, .rand-box h3 .ic { width: 13px; height: 13px; vertical-align: -2px; }
+  html { scrollbar-gutter: stable; overscroll-behavior: none; }
   body { font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; color: var(--ink); margin: 0; min-height: 100vh;
     -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; line-height: 1.45;
     background:
       radial-gradient(900px 420px at 85% -10%, rgba(224,186,94,.05), transparent 60%),
       radial-gradient(800px 500px at -10% 110%, rgba(61,127,176,.06), transparent 60%),
-      linear-gradient(180deg, #17171d, var(--bg) 320px); }
+      linear-gradient(180deg, #17171d, var(--bg) 320px);
+    animation: launch-in .45s ease-out; }
+  @keyframes launch-in { from { opacity: 0; } }
+  /* faint film grain keeps the large dark surfaces from looking flat */
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: .035;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="120" height="120" filter="url(%23n)" opacity="0.5"/></svg>'); }
   #brand { display: flex; align-items: center; gap: 7px; padding: 10px 10px 9px 2px; margin-right: 8px;
     font-size: 13px; font-weight: 800; letter-spacing: .06em; user-select: none; white-space: nowrap;
     border-right: 1px solid #2b2b34; padding-right: 16px; }
-  #brand .crest { filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+  #brand .crest { width: 16px; height: 16px; flex: none; color: #ecc75d;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); transition: filter .25s; }
+  #brand:hover .crest { filter: drop-shadow(0 0 5px rgba(236,199,93,.55)); }
   #brand .wordmark { background: linear-gradient(180deg, #fff6cf 15%, #ecc75d 55%, #c79a2e);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-  #tabs { display: flex; gap: 2px; padding: 0 14px;
+  #tabs { display: flex; gap: 2px; padding: 0 14px; user-select: none;
     background: linear-gradient(180deg, rgba(22,22,28,.95), rgba(14,14,19,.92));
     border-bottom: 1px solid #2b2b34; position: sticky; top: 0; z-index: 20;
     backdrop-filter: blur(10px) saturate(1.2);
-    box-shadow: 0 6px 18px -10px rgba(0,0,0,.7); }
+    transition: box-shadow .25s; }
+  #tabs::before { content: ""; position: absolute; inset: 0 0 auto; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.05) 30%, rgba(255,255,255,.05) 70%, transparent);
+    pointer-events: none; }
+  body.scrolled #tabs { box-shadow: 0 8px 22px -8px rgba(0,0,0,.75); }
+  #tab-ind { position: absolute; bottom: -1px; height: 2px; border-radius: 2px 2px 0 0;
+    background: linear-gradient(90deg, transparent, var(--gold) 25%, var(--gold-bright) 50%, var(--gold) 75%, transparent);
+    box-shadow: 0 0 8px rgba(224,186,94,.45);
+    transition: left .28s cubic-bezier(.22,1,.36,1), width .28s cubic-bezier(.22,1,.36,1), opacity .2s;
+    opacity: 0; pointer-events: none; }
+  #tab-ind.on { opacity: 1; }
   #tabs button { position: relative; background: none; border: none; color: #9b9ca6; padding: 12px 16px 11px;
-    font-size: 13px; font-weight: 600; letter-spacing: .015em; cursor: pointer; transition: color .15s; }
+    font-size: 13px; font-weight: 600; letter-spacing: .015em; cursor: pointer;
+    transition: color .15s, transform .1s; }
   #tabs button:hover { color: #d6d7de; background: none; }
+  #tabs button:active { transform: translateY(1px); box-shadow: none; }
   #tabs button:hover:not(.active)::after { transform: scaleX(.55); opacity: .35; }
   #tabs button:focus-visible { outline: none; color: var(--ink-strong); }
   #tabs button:focus-visible::after { transform: none; opacity: .6; }
@@ -61,10 +82,14 @@
     border-radius: 2px 2px 0 0; background: linear-gradient(90deg, transparent, var(--gold) 25%, var(--gold-bright) 50%, var(--gold) 75%, transparent);
     transform: scaleX(0); opacity: 0; transition: transform .22s cubic-bezier(.22,1,.36,1), opacity .18s; }
   #tabs button.active { color: var(--ink-strong); }
-  #tabs button.active::after { transform: none; opacity: 1; box-shadow: 0 0 8px rgba(224,186,94,.45); }
+  #tabs button .chip { font-size: 9px; font-weight: 700; color: var(--gold); background: var(--gold-faint);
+    border-radius: 8px; padding: 1px 6px; margin-left: 5px; vertical-align: 1px;
+    box-shadow: inset 0 0 0 1px rgba(224,186,94,.2); }
+  #tabs button .chip:empty { display: none; }
+  @media (forced-colors: active) { #tabs button.active { outline: 2px solid CanvasText; } }
   .tab { display: none; padding: 18px 22px 22px; max-width: 1180px; margin: 0 auto; box-sizing: border-box; }
   .tab.active { display: block; animation: tab-in .28s cubic-bezier(.22,1,.36,1); }
-  @keyframes tab-in { from { opacity: 0; transform: translateY(6px) scale(.998); } }
+  @keyframes tab-in { from { opacity: 0; transform: translateX(var(--dir, 0px)) translateY(4px) scale(.998); } }
   h2, .card h3, .rand-box h3 { font-family: "Segoe UI Variable Display", "Segoe UI Variable Text", "Segoe UI", sans-serif; }
   h2 { font-size: 13px; margin: 18px 0 8px; color: var(--gold); text-transform: uppercase; letter-spacing: .08em;
     border-bottom: 1px solid var(--gold-faint); padding-bottom: 5px; }
@@ -125,7 +150,19 @@
   #status { font-size: 12px; color: var(--ink-muted); padding: 6px 22px; border-top: 1px solid #292930;
     position: sticky; bottom: 0; background: rgba(18,18,23,.92); backdrop-filter: blur(6px); z-index: 15;
     box-shadow: 0 -6px 16px -12px rgba(0,0,0,.8); font-variant-numeric: tabular-nums;
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    display: flex; align-items: center; gap: 8px; user-select: none; }
+  #status .sdot { width: 7px; height: 7px; border-radius: 50%; background: #4a4a55; flex: none;
+    transition: background .3s, box-shadow .3s; }
+  #status .sdot.ok { background: #48bd21; box-shadow: 0 0 5px rgba(72,189,33,.6); }
+  #status .sdot.err { background: #e0452f; box-shadow: 0 0 5px rgba(224,69,47,.6); }
+  #status .sdot.busy { background: var(--amber); box-shadow: 0 0 5px rgba(255,179,0,.6); animation: pulse 1.2s infinite; }
+  #status-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  .status-right { margin-left: auto; display: flex; align-items: center; gap: 8px; flex: none; }
+  .status-chip { opacity: .8; background: rgba(255,255,255,.05); border: 1px solid #2f2f3a;
+    border-radius: 8px; padding: 0 8px; font-size: 11px; line-height: 16px; white-space: nowrap; }
+  button.status-chip { cursor: pointer; color: var(--ink-muted); transition: opacity .15s, border-color .15s; box-shadow: none; }
+  button.status-chip:hover { opacity: 1; border-color: #41414d; background: rgba(255,255,255,.08); color: var(--ink); }
+  #app-ver:empty { display: none; }
   table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 12px; }
   td, th { padding: 4px 8px; text-align: left; border-bottom: 1px solid #2c2c34; vertical-align: top; }
   th { color: var(--gold); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
@@ -398,6 +435,11 @@
     opacity: 0; transform: translateY(10px) scale(.97);
     transition: opacity .22s, transform .35s cubic-bezier(.34,1.56,.64,1); pointer-events: none; z-index: 50; }
   #toast.show { opacity: 1; transform: none; }
+  #toast { display: flex; align-items: center; gap: 9px; max-width: min(420px, calc(100vw - 60px)); }
+  #toast .t-ic { flex: none; width: 19px; height: 19px; border-radius: 50%; font-size: 12px; line-height: 19px;
+    text-align: center; background: rgba(255,255,255,.18); box-shadow: inset 0 0 0 1px rgba(255,255,255,.2); }
+  #toast.show .t-ic { animation: t-ic-pop .35s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes t-ic-pop { from { transform: scale(.4); opacity: 0; } }
   #toast.err { background: linear-gradient(180deg, #b04532, #93341f); }
   #toast::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
     background: rgba(255,255,255,.45); border-radius: 0 0 9px 9px; transform-origin: left; opacity: 0; }
@@ -430,6 +472,33 @@
   .result.kb { background: #33333d; border-left-color: var(--gold); }
   .tab.dropping { outline: 2px dashed var(--blue); outline-offset: -6px; border-radius: 14px;
     background: rgba(61,127,176,.04); }
+
+  /* command palette */
+  #palette { position: fixed; inset: 0; z-index: 60; display: none; background: rgba(8,8,12,.55);
+    backdrop-filter: blur(3px) saturate(.9); }
+  #palette.open { display: block; animation: pal-bg .18s ease-out; }
+  @keyframes pal-bg { from { opacity: 0; } }
+  #palette .pal-box { width: min(520px, calc(100vw - 48px)); margin: 12vh auto 0;
+    background: linear-gradient(180deg, #25252e, #1e1e26); border: 1px solid #3a3a46; border-radius: 13px;
+    box-shadow: 0 24px 70px -18px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 1px rgba(0,0,0,.4);
+    overflow: hidden; animation: pal-in .22s cubic-bezier(.22,1,.36,1); }
+  @keyframes pal-in { from { opacity: 0; transform: translateY(-10px) scale(.985); } }
+  #pal-input { width: 100%; box-sizing: border-box; border: none; border-bottom: 1px solid #32323c;
+    border-radius: 0; background: rgba(0,0,0,.18); padding: 13px 16px; font-size: 15px; }
+  #pal-input:focus { box-shadow: none; border-color: #32323c; }
+  #pal-list { max-height: 320px; overflow: auto; padding: 6px; }
+  .pal-item { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border-radius: 8px;
+    cursor: pointer; font-size: 13px; color: var(--ink); }
+  .pal-item .ic { color: var(--ink-muted); }
+  .pal-item .pal-k { margin-left: auto; flex: none; opacity: .75; }
+  .pal-item.sel { background: linear-gradient(to right, rgba(224,186,94,.14), rgba(224,186,94,.05));
+    box-shadow: inset 2px 0 0 var(--gold); color: var(--ink-strong); }
+  .pal-item.sel .ic { color: var(--gold); }
+  .pal-sect { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--ink-muted); padding: 8px 11px 3px; }
+  .pal-empty { padding: 22px; text-align: center; color: var(--ink-muted); font-size: 13px; }
+  .pal-foot { display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid #2c2c36;
+    background: rgba(0,0,0,.18); font-size: 11px; color: var(--ink-muted); }
 
   /* last match panel */
   .lm-banner { position: relative; border-radius: 10px; overflow: hidden; margin-bottom: 12px;
@@ -504,13 +573,14 @@
     <symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01"/><path d="M10 10h.01"/><path d="M14 10h.01"/><path d="M18 10h.01"/><path d="M8 14h8"/></symbol>
     <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3Z"/><path d="M9 3v15"/><path d="M15 6v15"/></symbol>
   </defs></svg>
-  <div id="tabs">
-    <span id="brand"><span class="crest">⚜️</span><span class="wordmark">AoE IV Overlay</span></span>
-    <button data-tab="settings" class="active"><svg class="ic"><use href="#i-gear"/></svg> Settings</button>
-    <button data-tab="games"><svg class="ic"><use href="#i-swords"/></svg> Games</button>
-    <button data-tab="buildorders"><svg class="ic"><use href="#i-scroll"/></svg> Build orders</button>
-    <button data-tab="override"><svg class="ic"><use href="#i-clapper"/></svg> Override</button>
-    <button data-tab="random"><svg class="ic"><use href="#i-dice"/></svg> Randomize</button>
+  <div id="tabs" role="tablist" aria-label="Sections">
+    <span id="brand"><svg class="crest" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 5.5 5 19h14l1.5-13.5-4.5 3.5L12 3 8 9z"/><path d="M5 19h14" opacity=".5"/></svg><span class="wordmark">AoE IV Overlay</span></span>
+    <button data-tab="settings" role="tab" aria-selected="true" class="active"><svg class="ic"><use href="#i-gear"/></svg> Settings</button>
+    <button data-tab="games" role="tab" aria-selected="false"><svg class="ic"><use href="#i-swords"/></svg> Games</button>
+    <button data-tab="buildorders" role="tab" aria-selected="false"><svg class="ic"><use href="#i-scroll"/></svg> Build orders<span class="chip" id="tab-bo-chip"></span></button>
+    <button data-tab="override" role="tab" aria-selected="false"><svg class="ic"><use href="#i-clapper"/></svg> Override</button>
+    <button data-tab="random" role="tab" aria-selected="false"><svg class="ic"><use href="#i-dice"/></svg> Randomize</button>
+    <div id="tab-ind"></div>
   </div>
 
   <!-- ============ SETTINGS ============ -->
@@ -819,8 +889,28 @@
     <div class="muted" style="text-align:center; margin-top:18px">Rerolls never repeat the previous result. The last few rolls stay listed under each card.</div>
   </div>
 
-  <div id="toast"></div>
-  <div id="status">Idle</div>
+  <div id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
+    <div class="pal-box">
+      <input id="pal-input" placeholder="Type a command…" autocomplete="off" spellcheck="false">
+      <div id="pal-list" role="listbox"></div>
+      <div class="pal-foot">
+        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+        <span><kbd>Enter</kbd> run</span>
+        <span><kbd>Esc</kbd> close</span>
+        <span style="margin-left:auto"><kbd>Ctrl</kbd>+<kbd>1…5</kbd> tabs &nbsp; <kbd>Ctrl</kbd>+<kbd>S</kbd> save</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"><span class="t-ic" aria-hidden="true"></span><span id="toast-msg"></span></div>
+  <div id="status">
+    <span class="sdot" id="status-dot"></span>
+    <span id="status-text">Idle</span>
+    <span class="status-right">
+      <button class="status-chip" id="palette-open" title="Command palette (Ctrl+K)"><kbd>Ctrl</kbd> <kbd>K</kbd> commands</button>
+      <span class="status-chip" id="app-ver"></span>
+    </span>
+  </div>
 
 <script>
 const { invoke } = window.__TAURI__.core;
@@ -834,7 +924,12 @@ const MAPS = ["Altai", "Ancient Spires", "Archipelago", "Black Forest", "Boulder
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const setStatus = t => $('status').textContent = t;
+// state: 'ok' | 'err' | 'busy' | '' (neutral)
+const setStatus = (t, state = '') => {
+  $('status-text').textContent = t;
+  $('status-text').title = t;
+  $('status-dot').className = 'sdot' + (state ? ' ' + state : '');
+};
 
 // Painted slider tracks: keep the filled portion in sync with the value
 function syncRangeFill(el) {
@@ -848,7 +943,8 @@ let toastTimer = null;
 function toast(msg, err = false) {
   const t = $('toast');
   const ms = err ? 4200 : 2200;  // errors stick around long enough to read
-  t.textContent = (err ? '⚠ ' : '✓ ') + msg;
+  t.querySelector('.t-ic').textContent = err ? '⚠' : '✓';
+  $('toast-msg').textContent = msg;
   t.style.setProperty('--toast-ms', ms + 'ms');
   t.className = '';
   void t.offsetWidth;  // restart the countdown animation on back-to-back toasts
@@ -904,21 +1000,63 @@ function updatePreview() {
 
 // ---------- tabs ----------
 const tabButtons = [...document.querySelectorAll('#tabs button')];
+function moveTabInd() {
+  const b = tabButtons.find(x => x.classList.contains('active'));
+  const ind = $('tab-ind');
+  if (!b) { ind.classList.remove('on'); return; }
+  ind.style.left = (b.offsetLeft + 14) + 'px';
+  ind.style.width = Math.max(0, b.offsetWidth - 28) + 'px';
+  ind.classList.add('on');
+}
+addEventListener('resize', moveTabInd);
+addEventListener('load', moveTabInd);  // re-measure once fonts have loaded
+addEventListener('scroll', () => document.body.classList.toggle('scrolled', scrollY > 4), { passive: true });
+// surface connectivity loss in the status bar instead of letting polls fail silently
+addEventListener('offline', () => setStatus('Offline — waiting for the connection to come back…', 'err'));
+addEventListener('online', () => setStatus('Back online.', 'ok'));
 tabButtons.forEach((b, i) => {
-  b.title = `Ctrl+${i + 1}`;
+  b.title = `${b.dataset.tab === 'buildorders' ? 'Build orders' : b.dataset.tab[0].toUpperCase() + b.dataset.tab.slice(1)} — Ctrl+${i + 1}`;
+  b.tabIndex = b.classList.contains('active') ? 0 : -1;
   b.onclick = () => {
-    tabButtons.forEach(x => x.classList.remove('active'));
+    const prev = tabButtons.findIndex(x => x.classList.contains('active'));
+    tabButtons.forEach(x => { x.classList.remove('active'); x.setAttribute('aria-selected', 'false'); x.tabIndex = -1; });
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
     b.classList.add('active');
-    $('tab-' + b.dataset.tab).classList.add('active');
+    b.setAttribute('aria-selected', 'true');
+    b.tabIndex = 0;
+    const pane = $('tab-' + b.dataset.tab);
+    pane.style.setProperty('--dir', i >= prev ? '14px' : '-14px');
+    pane.classList.add('active');
+    moveTabInd();
     if (b.dataset.tab === 'games') loadGames();
     try { localStorage.setItem('activeTab', b.dataset.tab); } catch (e) { /* storage unavailable */ }
   };
 });
-// Ctrl+1..5 jumps between tabs; the last open tab is restored on launch
+// roving focus: arrows / Home / End move between tabs when the tab bar has focus
+$('tabs').addEventListener('keydown', e => {
+  const cur = tabButtons.indexOf(document.activeElement);
+  if (cur < 0) return;
+  let next = null;
+  if (e.key === 'ArrowRight') next = (cur + 1) % tabButtons.length;
+  else if (e.key === 'ArrowLeft') next = (cur - 1 + tabButtons.length) % tabButtons.length;
+  else if (e.key === 'Home') next = 0;
+  else if (e.key === 'End') next = tabButtons.length - 1;
+  if (next === null) return;
+  e.preventDefault();
+  tabButtons[next].focus();
+  tabButtons[next].click();
+});
+// Ctrl+1..5 jumps between tabs; Ctrl+(Shift+)Tab cycles; the last open tab is restored on launch
 document.addEventListener('keydown', e => {
-  if (!e.ctrlKey || e.altKey || e.shiftKey) return;
+  if (!e.ctrlKey || e.altKey) return;
   if (e.target.classList?.contains('hotkey-input')) return;
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const cur = tabButtons.findIndex(x => x.classList.contains('active'));
+    tabButtons[(cur + (e.shiftKey ? -1 : 1) + tabButtons.length) % tabButtons.length].click();
+    return;
+  }
+  if (e.shiftKey) return;
   const i = '12345'.indexOf(e.key);
   if (i >= 0 && tabButtons[i]) { e.preventDefault(); tabButtons[i].click(); }
 });
@@ -929,6 +1067,65 @@ function restoreTab() {
     if (btn && !btn.classList.contains('active')) btn.click();
   } catch (e) { /* storage unavailable */ }
 }
+
+// ---------- command palette ----------
+const PAL_COMMANDS = [
+  { sect: 'Go to', name: 'Settings', icon: 'i-gear', key: 'Ctrl+1', run: () => tabButtons[0].click() },
+  { sect: 'Go to', name: 'Games', icon: 'i-swords', key: 'Ctrl+2', run: () => tabButtons[1].click() },
+  { sect: 'Go to', name: 'Build orders', icon: 'i-scroll', key: 'Ctrl+3', run: () => tabButtons[2].click() },
+  { sect: 'Go to', name: 'Override', icon: 'i-clapper', key: 'Ctrl+4', run: () => tabButtons[3].click() },
+  { sect: 'Go to', name: 'Randomize', icon: 'i-dice', key: 'Ctrl+5', run: () => tabButtons[4].click() },
+  { sect: 'Overlay', name: 'Show / hide overlay', icon: 'i-monitor', run: () => $('toggle-btn').click() },
+  { sect: 'Overlay', name: 'Reposition overlay', icon: 'i-monitor', run: () => $('edit-btn').click() },
+  { sect: 'Overlay', name: 'Refresh overlay data', icon: 'i-signal', run: () => $('refresh-btn').click() },
+  { sect: 'Overlay', name: 'Show / hide build order', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'toggle' }) },
+  { sect: 'Overlay', name: 'Next build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'next' }) },
+  { sect: 'Overlay', name: 'Previous build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'prev' }) },
+  { sect: 'Actions', name: 'Save settings', icon: 'i-gear', key: 'Ctrl+S', run: () => save() },
+  { sect: 'Actions', name: 'New build order', icon: 'i-pencil', run: () => { tabButtons[2].click(); $('bo-new').click(); } },
+  { sect: 'Actions', name: 'Refresh games list', icon: 'i-swords', run: () => { tabButtons[1].click(); $('games-refresh').click(); } },
+  { sect: 'Actions', name: 'Roll a random civilization', icon: 'i-dice', run: () => { tabButtons[4].click(); $('rand-civ').click(); } },
+  { sect: 'Actions', name: 'Roll a random map', icon: 'i-map', run: () => { tabButtons[4].click(); $('rand-map').click(); } },
+];
+let palSel = 0, palShown = [];
+function palRender() {
+  const q = $('pal-input').value.trim().toLowerCase();
+  palShown = PAL_COMMANDS.filter(c => !q || c.name.toLowerCase().includes(q) || c.sect.toLowerCase().includes(q));
+  palSel = Math.min(palSel, Math.max(0, palShown.length - 1));
+  if (!palShown.length) { $('pal-list').innerHTML = '<div class="pal-empty">No matching commands</div>'; return; }
+  let html = '', lastSect = null;
+  palShown.forEach((c, i) => {
+    if (c.sect !== lastSect) { html += `<div class="pal-sect">${c.sect}</div>`; lastSect = c.sect; }
+    html += `<div class="pal-item${i === palSel ? ' sel' : ''}" data-i="${i}" role="option" aria-selected="${i === palSel}">
+      <svg class="ic"><use href="#${c.icon}"/></svg>${esc(c.name)}${c.key ? `<kbd class="pal-k">${c.key}</kbd>` : ''}</div>`;
+  });
+  $('pal-list').innerHTML = html;
+  $('pal-list').querySelector('.pal-item.sel')?.scrollIntoView({ block: 'nearest' });
+}
+function palOpen() { $('palette').classList.add('open'); $('pal-input').value = ''; palSel = 0; palRender(); $('pal-input').focus(); }
+function palClose() { $('palette').classList.remove('open'); }
+function palRun(i) { const c = palShown[i]; if (c) { palClose(); c.run(); } }
+$('palette-open').onclick = palOpen;
+$('palette').addEventListener('mousedown', e => { if (e.target === $('palette')) palClose(); });
+$('pal-list').addEventListener('click', e => { const it = e.target.closest('.pal-item'); if (it) palRun(+it.dataset.i); });
+$('pal-list').addEventListener('mousemove', e => {
+  const it = e.target.closest('.pal-item');
+  if (it && +it.dataset.i !== palSel) { palSel = +it.dataset.i; palRender(); }
+});
+$('pal-input').addEventListener('input', () => { palSel = 0; palRender(); });
+$('pal-input').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown') { e.preventDefault(); palSel = Math.min(palSel + 1, palShown.length - 1); palRender(); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); palSel = Math.max(palSel - 1, 0); palRender(); }
+  else if (e.key === 'Enter') { e.preventDefault(); palRun(palSel); }
+  else if (e.key === 'Escape') { e.preventDefault(); palClose(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'k') {
+    if (e.target.classList?.contains('hotkey-input')) return;
+    e.preventDefault();
+    $('palette').classList.contains('open') ? palClose() : palOpen();
+  }
+});
 
 // ---------- color helpers ----------
 const toHex = c => '#' + [c[0], c[1], c[2]].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
@@ -1469,6 +1666,7 @@ function renderBoList() {
   const filter = ($('bo-filter').value || '').toLowerCase();
   let names = Object.keys(settings.buildorders || {});
   const total = names.length;
+  $('tab-bo-chip').textContent = total || '';
   const setCount = shown => $('bo-count').textContent =
     total ? (shown === total ? `(${total})` : `(${shown}/${total})`) : '';
   if (filter) {
@@ -2037,9 +2235,9 @@ $('ov-send').onclick = () => {
     }));
   const data = { map: $('ov-map').value, kind: 'override', started: '', server: '', match_id: 'override', ongoing: true, players };
   invoke('override_data', { data, prevent: $('ov-prevent').checked });
-  setStatus('Override sent to overlay.');
+  setStatus('Override sent to overlay.', 'ok');
 };
-$('ov-reset').onclick = () => { $('ov-prevent').checked = false; invoke('reset_override'); setStatus('Reverted to live data.'); };
+$('ov-reset').onclick = () => { $('ov-prevent').checked = false; invoke('reset_override'); setStatus('Reverted to live data.', 'ok'); };
 $('ov-prevent').onchange = () => { if (!$('ov-prevent').checked) invoke('reset_override'); };
 
 // ---------- random tab ----------
@@ -2111,7 +2309,7 @@ $('search').addEventListener('keydown', e => {
 });
 $('save-btn').onclick = save;
 $('toggle-btn').onclick = () => invoke('toggle_overlay');
-$('refresh-btn').onclick = () => { invoke('force_refresh'); setStatus('Refreshing…'); };
+$('refresh-btn').onclick = () => { invoke('force_refresh'); setStatus('Refreshing…', 'busy'); };
 $('edit-btn').onclick = () => {
   editMode = !editMode;
   invoke('set_edit_mode', { window: 'overlay', edit: editMode });
@@ -2119,11 +2317,11 @@ $('edit-btn').onclick = () => {
 };
 $('games-refresh').onclick = loadGames;
 
-listen('game_data', e => { renderMatch(e.payload); setStatus('Match data updated.'); });
+listen('game_data', e => { renderMatch(e.payload); setStatus('Match data updated.', 'ok'); });
 listen('poll_ok', e => {
   $('poll-dot').className = 'dot ' + (e.payload ? 'live' : 'ok');
   $('poll-dot').title = `Last successful poll: ${new Date().toLocaleTimeString()}`;
-  setStatus(`Polling OK ${e.payload ? '(game ongoing)' : ''} — ${new Date().toLocaleTimeString()}`);
+  setStatus(`Polling OK ${e.payload ? '(game ongoing)' : ''} — ${new Date().toLocaleTimeString()}`, 'ok');
 });
 listen('hotkey_error', e => {
   toast(`Could not register hotkey${e.payload.length > 1 ? 's' : ''}: ${e.payload.join(', ')} — already in use by another app?`, true);
@@ -2131,7 +2329,7 @@ listen('hotkey_error', e => {
 listen('poll_error', e => {
   $('poll-dot').className = 'dot err';
   $('poll-dot').title = `Poll failed at ${new Date().toLocaleTimeString()}: ${e.payload}`;
-  setStatus(`Poll error: ${e.payload}`);
+  setStatus(`Poll error: ${e.payload}`, 'err');
 });
 
 ['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next'].forEach(id => makeHotkeyRecorder($(id)));
@@ -2155,12 +2353,7 @@ buildOverrideGrid();
 loadSettings().then(async () => {
   $('gf-limit').value = String(settings.max_games_history ?? 50);
   restoreTab();
-  invoke('get_app_version').then(v => {
-    const span = document.createElement('span');
-    span.style.cssText = 'float:right; opacity:.8; background:rgba(255,255,255,.05); border:1px solid #2f2f3a; border-radius:8px; padding:0 8px; font-size:11px; line-height:16px';
-    span.textContent = 'v' + v;
-    $('status').appendChild(span);
-  }).catch(() => {});
+  invoke('get_app_version').then(v => { $('app-ver').textContent = 'v' + v; }).catch(() => {});
   const d = await invoke('get_current_data');
   if (d) renderMatch(d);
   try {
