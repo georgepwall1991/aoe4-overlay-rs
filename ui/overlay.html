@@ -77,7 +77,7 @@
 </head>
 <body>
   <div id="edit-hint" data-tauri-drag-region>Drag to move · drag edges to resize — click "Done repositioning" in the control panel</div>
-  <div id="score" data-tauri-drag-region>
+  <div id="score" style="visibility:hidden" data-tauri-drag-region>
     <table id="team1"></table>
     <div id="map" data-tauri-drag-region></div>
     <table id="team2"></table>
@@ -130,6 +130,7 @@ function playerRow(p, right) {
 function render(d) {
   if (!d || !d.players) return;
   lastData = d;
+  document.getElementById('score').style.visibility = 'visible';
   document.getElementById('map').textContent = d.map ?? '';
   const t1 = d.players.filter(p => p.team === 1);
   const t2 = d.players.filter(p => p.team !== 1);

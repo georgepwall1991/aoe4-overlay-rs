@@ -12,6 +12,7 @@ function connect_to_socket() {
     let socket = new WebSocket(`ws://localhost:${PORT}`);
     socket.onopen = function (e) {
         console.log("CONNECTED");
+        reconnect_delay = 500;
     };
     socket.onmessage = function (event) {
         let data = JSON.parse(event.data);
@@ -31,12 +32,16 @@ function connect_to_socket() {
     };
 }
 
+var reconnect_delay = 500;
+
 function reconnect_to_socket() {
-    console.log('Reconnecting..')
+    console.log('Reconnecting in ' + reconnect_delay + 'ms..')
     function_is_running = false;
     setTimeout(function () {
         connect_to_socket();
-    }, 500);
+    }, reconnect_delay);
+    // Back off up to 5s so a closed app doesn't spam the OBS console
+    reconnect_delay = Math.min(reconnect_delay * 2, 5000);
 }
 
 // Overlay functionality

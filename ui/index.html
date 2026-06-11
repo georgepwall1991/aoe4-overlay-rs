@@ -355,6 +355,7 @@
         <option value="win">Wins</option>
         <option value="loss">Losses</option>
       </select>
+      <input id="gf-text" placeholder="Filter by map or player…" style="width:180px">
       <select id="gf-limit" title="How many games to fetch">
         <option value="25">Last 25</option>
         <option value="50">Last 50</option>
@@ -750,6 +751,8 @@ async function doSearch() {
     }
     $('results').innerHTML = '';
     $('results').appendChild(list);
+    // Pre-highlight the first result so Enter selects it immediately
+    list.firstElementChild?.classList.add('kb');
   } catch (e) {
     toast('Search failed: ' + e, true);
   } finally {
@@ -869,7 +872,10 @@ function civFlag(civ) {
 }
 
 function timeAgo(iso) {
-  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  const t = new Date(iso).getTime();
+  if (!isFinite(t)) return '';
+  const s = (Date.now() - t) / 1000;
+  if (s < 60) return 'just now';
   if (s < 3600) return `${Math.max(1, Math.round(s / 60))} min ago`;
   if (s < 86400) return `${Math.round(s / 3600)} h ago`;
   if (s < 86400 * 7) return `${Math.round(s / 86400)} d ago`;
@@ -907,6 +913,7 @@ function gameResult(g, pid) {
 
 function applyGameFilters() {
   const mode = $('gf-mode').value, res = $('gf-result').value;
+  const text = $('gf-text').value.trim().toLowerCase();
   const pid = settings.profile_id;
   return allGames.filter(g => {
     const k = g.kind ?? '';
@@ -915,19 +922,34 @@ function applyGameFilters() {
     if (mode === '1v1' && !k.endsWith('1v1')) return false;
     if (mode === 'team' && (k.endsWith('1v1') || !/^(rm|qm)_/.test(k))) return false;
     if (res && gameResult(g, pid).result !== res) return false;
+    if (text) {
+      const players = (g.teams || []).flat().map(m => m.player || m);
+      const hay = [g.map, ...players.map(p => p.name), ...players.map(p => p.civilization)]
+        .filter(Boolean).join(' ').toLowerCase();
+      if (!hay.includes(text)) return false;
+    }
     return true;
   });
 }
 
 function drawSpark(diffs) {
   const cv = $('gs-spark'), ctx = cv.getContext('2d');
+  // Render at device resolution so the line is crisp on HiDPI screens
+  const dpr = window.devicePixelRatio || 1;
+  if (cv.width !== 220 * dpr) {
+    cv.width = 220 * dpr; cv.height = 44 * dpr;
+    cv.style.width = '220px'; cv.style.height = '44px';
+  }
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.scale(dpr, dpr);
   if (diffs.length < 2) return 0;
   let cum = 0;
   const pts = [0, ...diffs.map(d => (cum += d))];
+  const W = 220, H = 44;
   const min = Math.min(...pts), max = Math.max(...pts), span = (max - min) || 1;
-  const x = i => 4 + i * (cv.width - 8) / (pts.length - 1);
-  const y = v => 4 + (max - v) * (cv.height - 8) / span;
+  const x = i => 4 + i * (W - 8) / (pts.length - 1);
+  const y = v => 4 + (max - v) * (H - 8) / span;
   const net = pts[pts.length - 1];
   ctx.strokeStyle = net >= 0 ? '#6fe04a' : '#ff7b66';
   ctx.lineWidth = 2;
@@ -937,7 +959,7 @@ function drawSpark(diffs) {
   ctx.stroke();
   ctx.fillStyle = ctx.strokeStyle;
   ctx.globalAlpha = .15;
-  ctx.lineTo(x(pts.length - 1), cv.height); ctx.lineTo(x(0), cv.height); ctx.closePath(); ctx.fill();
+  ctx.lineTo(x(pts.length - 1), H); ctx.lineTo(x(0), H); ctx.closePath(); ctx.fill();
   ctx.globalAlpha = 1;
   return net;
 }
@@ -1001,7 +1023,7 @@ function renderGames() {
       html += `
       <div class="game-card res-${result}">
         <div class="ribbon"></div>
-        <img class="game-map" src="${mapImg}" onerror="mapPlaceholder(this, '${(g.map ?? '?').replace(/[^\w ]/g, '')}')">
+        <img class="game-map" loading="lazy" src="${encodeURI(mapImg)}" onerror="mapPlaceholder(this, '${(g.map ?? '?').replace(/[^\w ]/g, '')}')">
         <div class="game-main">
           <div class="game-head">
             <span class="map-name">${esc(g.map ?? '?')}</span>
@@ -1037,6 +1059,14 @@ async function loadGames() {
 }
 $('gf-mode').onchange = renderGames;
 $('gf-result').onchange = renderGames;
+let gfTextTimer = null;
+$('gf-text').addEventListener('input', () => {
+  clearTimeout(gfTextTimer);
+  gfTextTimer = setTimeout(renderGames, 150);
+});
+$('gf-text').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { $('gf-text').value = ''; renderGames(); }
+});
 $('gf-limit').onchange = async () => {
   settings.max_games_history = parseInt($('gf-limit').value);
   await invoke('save_settings', { newSettings: settings });
@@ -1058,7 +1088,16 @@ const FLAG_ALIASES = { "Zhu Xi's Legacy": 'Zhu Xis Legacy', "Jeanne d'Arc": 'Jea
 const flagName = civ => FLAG_ALIASES[civ] || civ;
 
 // Parse a BO body: returns {json, steps, civ, err} — json null for plain text.
+// Memoized: the library list re-parses every BO on each render/filter keystroke.
+const boParseCache = new Map();
 function parseBo(content) {
+  if (boParseCache.has(content)) return boParseCache.get(content);
+  const r = parseBoUncached(content);
+  if (boParseCache.size > 500) boParseCache.clear();
+  boParseCache.set(content, r);
+  return r;
+}
+function parseBoUncached(content) {
   const t = (content || '').trim();
   if (!t.startsWith('{')) {
     return { json: null, steps: t.split('\n').filter(l => l.trim()).length, civ: null, err: null };
@@ -1571,6 +1610,9 @@ $('bo-preview').addEventListener('keydown', e => {
 });
 $('bo-content').addEventListener('input', () => { setBoDirty(true); validateBoContent(); updateBoPreview(); });
 $('bo-name').addEventListener('input', () => { setBoDirty(true); updateBoPreview(); });
+$('bo-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); $('bo-add').onclick(); }
+});
 ['bo-fontsize', 'bo-opacity', 'bo-textcolor', 'bo-titlecolor', 'bo-bgcolor', 'bo-showtitle', 'bo-shownext'].forEach(id =>
   $(id).addEventListener('input', () => {
     $('bo-fontsize-val').textContent = $('bo-fontsize').value + 'pt';
@@ -1703,10 +1745,12 @@ $('games-refresh').onclick = loadGames;
 listen('game_data', e => { renderMatch(e.payload); setStatus('Match data updated.'); });
 listen('poll_ok', e => {
   $('poll-dot').className = 'dot ' + (e.payload ? 'live' : 'ok');
+  $('poll-dot').title = `Last successful poll: ${new Date().toLocaleTimeString()}`;
   setStatus(`Polling OK ${e.payload ? '(game ongoing)' : ''} — ${new Date().toLocaleTimeString()}`);
 });
 listen('poll_error', e => {
   $('poll-dot').className = 'dot err';
+  $('poll-dot').title = `Poll failed at ${new Date().toLocaleTimeString()}: ${e.payload}`;
   setStatus(`Poll error: ${e.payload}`);
 });
 
@@ -1719,12 +1763,23 @@ const NO_DIRTY = new Set(['search', 'bo-filter', 'bo-import-file']);
 ['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'ovscale', 'interval'].forEach(id => $(id).addEventListener('input', updatePreview));
 document.addEventListener('keydown', e => {
   if (e.target.classList?.contains('hotkey-input')) return;
-  if (e.ctrlKey && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+  if (e.ctrlKey && e.key.toLowerCase() === 's') {
+    e.preventDefault();
+    // In the BO editor, Ctrl+S saves the build order, not the app settings
+    if (e.target.id === 'bo-content' || e.target.id === 'bo-name') $('bo-add').onclick();
+    else save();
+  }
 });
 
 buildOverrideGrid();
 loadSettings().then(async () => {
   $('gf-limit').value = String(settings.max_games_history ?? 50);
+  invoke('get_app_version').then(v => {
+    const span = document.createElement('span');
+    span.style.cssText = 'float:right; opacity:.7';
+    span.textContent = 'v' + v;
+    $('status').appendChild(span);
+  }).catch(() => {});
   const d = await invoke('get_current_data');
   if (d) renderMatch(d);
   try {
