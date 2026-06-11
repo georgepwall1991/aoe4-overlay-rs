@@ -430,10 +430,10 @@
         <div class="field"><label>Previous step</label><input id="bo-hk-prev" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
         <div class="field"><label>Next step</label><input id="bo-hk-next" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
         <div class="btn-row">
-          <button onclick="invoke('bo_action',{action:'prev'})">◀ Prev step</button>
-          <button onclick="invoke('bo_action',{action:'next'})">Next step ▶</button>
-          <button onclick="invoke('bo_action',{action:'cycle'})">Cycle</button>
-          <button onclick="invoke('bo_action',{action:'toggle'})">Show / Hide</button>
+          <button id="bo-act-prev" onclick="invoke('bo_action',{action:'prev'})">◀ Prev step</button>
+          <button id="bo-act-next" onclick="invoke('bo_action',{action:'next'})">Next step ▶</button>
+          <button id="bo-act-cycle" onclick="invoke('bo_action',{action:'cycle'})">Cycle</button>
+          <button id="bo-act-toggle" onclick="invoke('bo_action',{action:'toggle'})">Show / Hide</button>
           <button id="bo-edit-btn">Reposition BO overlay</button>
         </div>
       </div>
@@ -467,7 +467,10 @@
             <div id="bo-preview"></div>
           </div>
         </div>
-        <div class="row" style="justify-content:flex-end"><button id="bo-save" class="primary">Save build order settings</button></div>
+        <div class="row" style="justify-content:flex-end">
+          <button id="bo-reset-style" title="Restore default font, colors and opacity">Reset appearance</button>
+          <button id="bo-save" class="primary">Save build order settings</button>
+        </div>
       </div>
 
     </div>
@@ -615,6 +618,10 @@ async function loadSettings() {
   $('bo-hk-cycle').value = settings.bo_hotkey_cycle;
   $('bo-hk-prev').value = settings.bo_hotkey_prev_step;
   $('bo-hk-next').value = settings.bo_hotkey_next_step;
+  $('bo-act-prev').title = settings.bo_hotkey_prev_step ? `Hotkey: ${settings.bo_hotkey_prev_step}` : 'No hotkey assigned';
+  $('bo-act-next').title = settings.bo_hotkey_next_step ? `Hotkey: ${settings.bo_hotkey_next_step}` : 'No hotkey assigned';
+  $('bo-act-cycle').title = settings.bo_hotkey_cycle ? `Hotkey: ${settings.bo_hotkey_cycle}` : 'No hotkey assigned';
+  $('bo-act-toggle').title = settings.bo_hotkey_show ? `Hotkey: ${settings.bo_hotkey_show}` : 'No hotkey assigned';
   $('bo-fontsize').value = settings.bo_font_size;
   $('bo-opacity').value = Math.round(settings.bo_opacity * 100);
   $('bo-textcolor').value = toHex(settings.bo_text_color);
@@ -1275,6 +1282,21 @@ $('bo-showbtn').onclick = () => {
   else toast('Save the build order first', true);
 };
 $('bo-save').onclick = save;
+// Mirrors the Rust-side defaults in settings.rs
+$('bo-reset-style').onclick = () => {
+  $('bo-fontsize').value = 12;
+  $('bo-opacity').value = 75;
+  $('bo-textcolor').value = '#ffffff';
+  $('bo-titlecolor').value = '#ffffff';
+  $('bo-bgcolor').value = '#1e1e1e';
+  $('bo-showtitle').checked = true;
+  $('bo-shownext').checked = true;
+  $('bo-fontsize-val').textContent = '12pt';
+  $('bo-opacity-val').textContent = '75%';
+  updateBoPreview();
+  markDirty();
+  toast('Appearance reset to defaults — click Save to apply');
+};
 $('bo-edit-btn').onclick = () => {
   boEditMode = !boEditMode;
   invoke('set_edit_mode', { window: 'buildorder', edit: boEditMode });
