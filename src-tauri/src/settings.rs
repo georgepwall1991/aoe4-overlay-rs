@@ -34,6 +34,8 @@ pub struct Settings {
     pub bo_hotkey_prev_step: String,
     pub bo_hotkey_next_step: String,
     pub bo_show_title: bool,
+    /// show a dimmed preview of the upcoming step under the notes
+    pub bo_show_next: bool,
     pub bo_font_size: u32,
     pub bo_text_color: [u8; 3],
     pub bo_title_color: [u8; 3],
@@ -70,6 +72,7 @@ impl Default for Settings {
             bo_hotkey_prev_step: String::new(),
             bo_hotkey_next_step: String::new(),
             bo_show_title: true,
+            bo_show_next: true,
             bo_font_size: 12,
             bo_text_color: [255, 255, 255],
             bo_title_color: [255, 255, 255],

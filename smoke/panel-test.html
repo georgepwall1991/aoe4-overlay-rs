@@ -32,37 +32,8 @@
   .win { color: #48bd21; } .loss { color: #ff6060; }
   a { color: #7ab6ff; }
   .hotkey-input { width: 130px; }
-  #bo-list { max-height: 320px; overflow: auto; border: 1px solid #32323c; border-radius: 8px; }
-  .bo-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; cursor: pointer;
-             border-bottom: 1px solid #2a2a32; }
-  .bo-item:last-child { border-bottom: none; }
-  .bo-item:hover { background: #2c2c36; }
-  .bo-item.sel { background: #2d3a4a; box-shadow: inset 3px 0 0 #3d7fb0; }
-  .bo-item .bo-meta { margin-left: auto; display: flex; gap: 6px; align-items: center; flex: none; }
-  .bo-item .bo-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-  .bo-item img.boflag { width: 24px; height: 15px; object-fit: cover; border-radius: 2px; flex: none; }
-  .bo-item .cyc { opacity: .5; flex: none; cursor: pointer; font-size: 14px; }
-  .bo-item .cyc.on { opacity: 1; color: #6fe04a; }
-  .bo-empty { padding: 18px 12px; text-align: center; }
-  #bo-content { width: 100%; height: 220px; font-family: Consolas, monospace; font-size: 12px; box-sizing: border-box;
-                margin: 8px 0; resize: vertical; }
-  #bo-content.invalid { border-color: #e0452f; }
-  #bo-format.ok { background: rgba(72,189,33,.18); color: #6fe04a; }
-  #bo-format.bad { background: rgba(224,69,47,.18); color: #ff7b66; }
-  #bo-preview { border-radius: 8px; padding: 10px 12px; min-height: 120px;
-                background: #000 center/cover; overflow: hidden; }
-  #bo-preview .pv-title { font-weight: 700; display: flex; align-items: center; gap: 7px; margin-bottom: 6px;
-                text-transform: uppercase; letter-spacing: .06em; border-bottom: 1px solid rgba(230,198,100,.4);
-                padding-bottom: 4px; }
-  #bo-preview .pv-title img { height: 1.3em; border-radius: 2px; }
-  #bo-preview .pv-res { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
-  #bo-preview .pv-res span { display: inline-flex; align-items: center; gap: 3px; font-weight: 600;
-                background: rgba(255,255,255,.08); border-radius: .4em; padding: 1px 6px; }
-  #bo-preview .pv-res img { height: 1.4em; }
-  #bo-preview .pv-note { margin: 2px 0; line-height: 1.35; }
-  #bo-preview .pv-note img { height: 1.4em; vertical-align: middle; border-radius: 2px;
-                background: rgba(0,0,0,.35); padding: 1px; }
-  #bo-preview .pv-next { opacity: .55; font-size: .85em; margin-top: 6px; border-top: 1px solid rgba(230,198,100,.25); padding-top: 4px; }
+  #bo-list { width: 100%; min-height: 90px; }
+  #bo-content { width: 100%; height: 220px; font-family: Consolas, monospace; font-size: 12px; box-sizing: border-box; }
   .ov-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; font-size: 12px; margin-top: 8px; }
   .ov-grid input, .ov-grid select { width: 100%; box-sizing: border-box; padding: 4px 6px; }
   .ov-head { color: #9bd; font-weight: 600; }
@@ -223,7 +194,21 @@
   .rk-conqueror { background: linear-gradient(90deg, rgba(232,74,106,.25), rgba(255,179,0,.25)); color: #ff9d7e; }
 </style>
 </head>
-<body>
+<body><script>
+window.__TAURI__ = { core: { invoke: async (cmd, args) => {
+  if (cmd === 'get_settings') return {
+    player_name: "beastyqt", profile_id: 10878926, interval: 15, overlay_hotkey: '',
+    show_overlay_on_new_game: true, font_scale: 100, websocket_port: 7307,
+    civ_stats_color: '#bc8aea', team_colors: [[61,127,176,.35],[224,69,47,.35],[72,189,33,.35]],
+    bo_hotkey_show:'', bo_hotkey_cycle:'', bo_hotkey_prev_step:'', bo_hotkey_next_step:'',
+    bo_font_size: 12, bo_opacity: .8, bo_text_color:[255,255,255], bo_title_color:[255,200,100],
+    bo_color_background:[30,30,30], bo_show_title:true, buildorders:{}, unchecked_buildorders:[],
+    max_games_history: 50 };
+  if (cmd === 'get_current_data') return {"avg_mmr": 1134, "avg_rating": 1134, "duration": 1533, "kind": "qm_3v3", "map": "Ancient Spires", "match_id": 58043753, "ongoing": false, "patch": 148, "players": [{"avatar": "https://avatars.akamai.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_medium.jpg", "civ": "Chinese", "civ_games": "", "civ_win_length_median": "", "civ_winrate": "", "country": "kr", "games_count": 33, "input_type": null, "losses": "10", "max_rating": 1257, "name": "beastyqt", "profile_id": 10878926, "random_civ": true, "rank": "", "rank_level": "conqueror_2", "rating": "1257", "rating_diff": 13, "rating_history": [1245, 1229, 1213, 1230, 1243, 1255, 1233, 1246, 1229, 1244, 1257], "result": "win", "streak": 2, "team": 1, "twitch": null, "winrate": "70%", "wins": "23"}, {"avatar": "https://avatars.akamai.steamstatic.com/2cd7d2a574ebdf9cb8cce3f3bfaa41c51e8d6d06_medium.jpg", "civ": "French", "civ_games": "", "civ_win_length_median": "", "civ_winrate": "", "country": "cn", "games_count": 297, "input_type": "controller", "losses": "122", "max_rating": 1628, "name": "\u56de\u9505\u8089\u597d\u597d\u5403", "profile_id": 9707428, "random_civ": false, "rank": "QM#763", "rank_level": "diamond_1", "rating": "1550", "rating_diff": 13, "rating_history": [1604, 1606, 1609, 1609, 1624, 1628, 1607, 1584, 1555, 1531, 1550], "result": "win", "streak": 1, "team": 1, "twitch": null, "winrate": "59%", "wins": "175"}, {"avatar": null, "civ": "English", "civ_games": "", "civ_win_length_median": "", "civ_winrate": "", "country": "cn", "games_count": 28, "input_type": null, "losses": "16", "max_rating": 1046, "name": "\u8d30\u96f6\u8d30\u96f6", "profile_id": 11958522, "random_civ": false, "rank": "", "rank_level": "platinum_3", "rating": "897", "rating_diff": 23, "rating_history": [930, 911, 925, 908, 893, 909, 924, 909, 895, 911, 897], "result": "win", "streak": -1, "team": 1, "twitch": "https://twitch.tv/example", "winrate": "43%", "wins": "12"}, {"avatar": "https://avatars.akamai.steamstatic.com/fef49e7fa7e1997310d705b2a6158ff8dc1cdfeb_medium.jpg", "civ": "Mongols", "civ_games": "", "civ_win_length_median": "", "civ_winrate": "", "country": "cn", "games_count": 305, "input_type": null, "losses": "146", "max_rating": 1363, "name": "WooGod", "profile_id": 545483, "random_civ": false, "rank": "", "rank_level": "gold_2", "rating": "1243", "rating_diff": -13, "rating_history": [1314, 1297, 1278, 1289, 1281, 1261, 1273, 1285, 1268, 1256, 1243], "result": "loss", "streak": -3, "team": 2, "twitch": null, "winrate": "52%", "wins": "159"}, {"avatar": null, "civ": "French", "civ_games": "", "civ_win_length_median": "", "civ_winrate": "", "country": "ar", "games_count": 301, "input_type": null, "losses": "130", "max_rating": 1422, "name": "chrisMAZDA", "profile_id": 10919808, "random_civ": false, "rank": "", "rank_level": "silver_1", "rating": "1391", "rating_diff": -13, "rating_history": [1304, 1317, 1331, 1346, 1357, 1367, 1379, 1364, 1372, 1383, 1391], "result": "loss", "streak": 3, "team": 2, "twitch": null, "winrate": "57%", "wins": "171"}, {"avatar": null, "civ": "Holy Roman Empire", "civ_games": "", "civ_win_length_median": "", "civ_winrate": "", "country": "ar", "games_count": 322, "input_type": null, "losses": "142", "max_rating": 1316, "name": "JessJuarez", "profile_id": 11251761, "random_civ": false, "rank": "", "rank_level": "bronze_3", "rating": "1316", "rating_diff": -13, "rating_history": [1228, 1242, 1257, 1268, 1278, 1292, 1304, 1289, 1297, 1308, 1316], "result": "loss", "streak": 3, "team": 2, "twitch": null, "winrate": "56%", "wins": "180"}], "season": 0, "server": "USA (E)", "started": "2022-12-31T19:21:25.000Z"};
+  if (cmd === 'check_update') return null;
+  return null;
+}}, event: { listen: () => {} } };
+</script>
   <div id="tabs">
     <button data-tab="settings" class="active">Settings</button>
     <button data-tab="games">Games</button>
@@ -268,11 +253,6 @@
           <label>Show overlay on new game</label>
           <label class="switch"><input id="autoshow" type="checkbox"><span></span></label>
         </div>
-        <div class="field">
-          <label>Overlay size <b id="ovscale-val"></b></label>
-          <input id="ovscale" type="range" min="60" max="200" step="5">
-        </div>
-        <div class="muted">You can also drag the overlay's edges while repositioning.</div>
       </div>
 
       <div class="card">
@@ -380,95 +360,41 @@
 
   <!-- ============ BUILD ORDERS ============ -->
   <div class="tab" id="tab-buildorders">
-    <div class="cards">
-
-      <div class="card">
-        <h3>📚 Library</h3>
-        <input id="bo-filter" placeholder="Filter…" style="width:100%; box-sizing:border-box; margin-bottom:8px">
-        <div id="bo-list"></div>
-        <div class="btn-row" style="margin-top:10px">
-          <button id="bo-new">＋ New</button>
-          <button id="bo-import">Import file…</button>
-          <input id="bo-import-file" type="file" accept=".json,.txt,.bo" multiple style="display:none">
-        </div>
-        <div class="tracked" style="margin-top:10px">
-          <span class="dot ok"></span>
-          <div class="tracked-info">
-            <div class="tracked-name" id="bo-now">—</div>
-            <div class="muted" id="bo-now-sub">Nothing shown on the overlay yet</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>✏️ Editor</h3>
-        <div class="row">
-          <input id="bo-name" placeholder="Build order name" style="flex:1">
-          <span id="bo-format" class="badge mode" title="">—</span>
-        </div>
-        <textarea id="bo-content" spellcheck="false" placeholder='Plain text (one step per line), or RTS_Overlay JSON ({"civilization": ..., "build_order": [...]})'></textarea>
-        <div class="row">
-          <button id="bo-add" class="primary">Save build order</button>
-          <button id="bo-dup">Duplicate</button>
-          <button id="bo-format-btn">Format JSON</button>
-          <button id="bo-export">Export</button>
-          <button id="bo-del">Delete</button>
-        </div>
-        <div class="row">
-          <button id="bo-showbtn">Show on overlay</button>
-          <label style="min-width:0; flex:1"><input id="bo-checked" type="checkbox" checked> include in hotkey cycle</label>
-        </div>
-        <div class="muted">JSON format is compatible with RTS_Overlay / age4builder. Use <code>@folder/image@</code> tokens in notes for icons. Ctrl+Enter saves.</div>
-      </div>
-
-      <div class="card">
-        <h3>⌨️ Hotkeys & step control</h3>
-        <div class="field"><label>Show/hide build order</label><input id="bo-hk-show" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
-        <div class="field"><label>Cycle build orders</label><input id="bo-hk-cycle" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
-        <div class="field"><label>Previous step</label><input id="bo-hk-prev" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
-        <div class="field"><label>Next step</label><input id="bo-hk-next" class="hotkey-input" readonly placeholder="Click, then press keys"></div>
-        <div class="btn-row">
-          <button onclick="invoke('bo_action',{action:'prev'})">◀ Prev step</button>
-          <button onclick="invoke('bo_action',{action:'next'})">Next step ▶</button>
-          <button onclick="invoke('bo_action',{action:'cycle'})">Cycle</button>
-          <button onclick="invoke('bo_action',{action:'toggle'})">Show / Hide</button>
-          <button id="bo-edit-btn">Reposition BO overlay</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>🎨 Appearance</h3>
-        <div class="appearance-grid">
-          <div>
-            <div class="field"><label>Font size <b id="bo-fontsize-val"></b></label>
-              <input id="bo-fontsize" type="range" min="6" max="40" step="1"></div>
-            <div class="field"><label>Opacity <b id="bo-opacity-val"></b></label>
-              <input id="bo-opacity" type="range" min="10" max="100"></div>
-            <div class="field"><label>Text / Title / Background</label>
-              <span class="color-set">
-                <input id="bo-textcolor" type="color" title="Text color"><input id="bo-titlecolor" type="color" title="Title color"><input id="bo-bgcolor" type="color" title="Background color">
-              </span>
-            </div>
-            <div class="field"><label>Show title</label>
-              <label class="switch"><input id="bo-showtitle" type="checkbox"><span></span></label></div>
-            <div class="field"><label>Show next-step preview</label>
-              <label class="switch"><input id="bo-shownext" type="checkbox"><span></span></label></div>
-          </div>
-          <div class="preview-wrap">
-            <div class="muted" style="margin-bottom:6px">Live preview
-              <span style="float:right">
-                <button id="bo-pv-prev" style="padding:0 8px">◀</button>
-                <span id="bo-pv-step" class="muted"></span>
-                <button id="bo-pv-next" style="padding:0 8px">▶</button>
-              </span>
-            </div>
-            <div id="bo-preview"></div>
-          </div>
-        </div>
-        <div class="row" style="justify-content:flex-end"><button id="bo-save" class="primary">Save build order settings</button></div>
-      </div>
-
+    <h2>Build orders</h2>
+    <div class="row">
+      <select id="bo-list" size="5" style="flex:1; min-height:110px"></select>
     </div>
+    <div class="row">
+      <input id="bo-name" placeholder="Build order name" style="flex:1">
+      <button id="bo-add" class="primary">Add / Update</button>
+      <button id="bo-del">Delete</button>
+      <button id="bo-showbtn">Show on overlay</button>
+      <label style="min-width:0"><input id="bo-checked" type="checkbox" checked> include in hotkey cycle</label>
+    </div>
+    <textarea id="bo-content" placeholder='Plain text, or RTS_Overlay JSON ({"civilization": ..., "build_order": [...]})'></textarea>
+    <div class="muted">JSON format is compatible with RTS_Overlay / age4builder. Use @folder/image@ tokens in notes for icons.</div>
+
+    <h2>Hotkeys & step control</h2>
+    <div class="row"><label>Show/hide build order</label><input id="bo-hk-show" class="hotkey-input"></div>
+    <div class="row"><label>Cycle build orders</label><input id="bo-hk-cycle" class="hotkey-input"></div>
+    <div class="row"><label>Previous step</label><input id="bo-hk-prev" class="hotkey-input"></div>
+    <div class="row"><label>Next step</label><input id="bo-hk-next" class="hotkey-input"></div>
+    <div class="row">
+      <button onclick="invoke('bo_action',{action:'prev'})">◀ Prev step</button>
+      <button onclick="invoke('bo_action',{action:'next'})">Next step ▶</button>
+      <button onclick="invoke('bo_action',{action:'cycle'})">Cycle</button>
+      <button onclick="invoke('bo_action',{action:'toggle'})">Show / Hide</button>
+      <button id="bo-edit-btn">Reposition BO overlay</button>
+    </div>
+
+    <h2>Appearance</h2>
+    <div class="row"><label>Font size (pt)</label><input id="bo-fontsize" type="number" min="6" max="50" style="width:70px"></div>
+    <div class="row"><label>Opacity</label><input id="bo-opacity" type="range" min="10" max="100" style="width:140px"></div>
+    <div class="row"><label>Text / Title / Background</label>
+      <input id="bo-textcolor" type="color"><input id="bo-titlecolor" type="color"><input id="bo-bgcolor" type="color">
+    </div>
+    <div class="row"><label>Show title</label><input id="bo-showtitle" type="checkbox"></div>
+    <div class="row"><button id="bo-save" class="primary">Save build order settings</button></div>
   </div>
 
   <!-- ============ OVERRIDE ============ -->
@@ -549,10 +475,10 @@ function updatePreview() {
   const a = ($('tcalpha').value | 0) / 100;
   const t1 = fromHex($('tc1').value), t2 = fromHex($('tc2').value);
   const civc = $('civstatcolor').value;
-  const fs = Math.round(12 * ($('fontscale').value | 0) / 100 * ($('ovscale').value | 0) / 100);
+  const fs = Math.round(12 * ($('fontscale').value | 0) / 100);
   const row = (civ, name, rating, wr, w, l, cw, c, dir) => {
     let cells = [
-      `<td><img src="flags/${civ}.webp"></td>`,
+      `<td><img src="../ui/../ui/flags/${civ}.webp"></td>`,
       `<td style="font-weight:600">${name}</td>`,
       `<td style="color:#7ab6ff">${rating}</td>`,
       `<td style="color:#fffb78">${wr}</td>`,
@@ -569,7 +495,6 @@ function updatePreview() {
   $('interval-val').textContent = $('interval').value + 's';
   $('alpha-val').textContent = $('tcalpha').value + '%';
   $('fontscale-val').textContent = $('fontscale').value + '%';
-  $('ovscale-val').textContent = $('ovscale').value + '%';
 }
 
 // ---------- tabs ----------
@@ -592,7 +517,6 @@ async function loadSettings() {
   $('interval').value = settings.interval;
   $('autoshow').checked = settings.show_overlay_on_new_game;
   $('fontscale').value = settings.font_scale;
-  $('ovscale').value = settings.overlay_scale ?? 100;
   $('wsport').value = settings.websocket_port;
   $('civstatcolor').value = settings.civ_stats_color;
   const tc = settings.team_colors;
@@ -619,12 +543,7 @@ async function loadSettings() {
   $('bo-titlecolor').value = toHex(settings.bo_title_color);
   $('bo-bgcolor').value = toHex(settings.bo_color_background);
   $('bo-showtitle').checked = settings.bo_show_title;
-  $('bo-shownext').checked = settings.bo_show_next ?? true;
-  $('bo-fontsize-val').textContent = settings.bo_font_size + 'pt';
-  $('bo-opacity-val').textContent = Math.round(settings.bo_opacity * 100) + '%';
   renderBoList();
-  validateBoContent();
-  updateBoPreview();
   clearDirty();
 }
 
@@ -635,7 +554,6 @@ function collectCommon() {
   settings.interval = clamp($('interval').value, 5, 600, 15);
   settings.show_overlay_on_new_game = $('autoshow').checked;
   settings.font_scale = clamp($('fontscale').value, 50, 300, 100);
-  settings.overlay_scale = clamp($('ovscale').value, 50, 200, 100);
   settings.websocket_port = clamp($('wsport').value, 1024, 65535, 7307);
   settings.civ_stats_color = $('civstatcolor').value;
   const a = ($('tcalpha').value | 0) / 100;
@@ -664,7 +582,6 @@ async function save() {
   settings.bo_hotkey_next_step = $('bo-hk-next').value.trim();
   settings.bo_font_size = parseInt($('bo-fontsize').value) || 12;
   settings.bo_opacity = ($('bo-opacity').value | 0) / 100;
-  settings.bo_show_next = $('bo-shownext').checked;
   settings.bo_text_color = fromHex($('bo-textcolor').value);
   settings.bo_title_color = fromHex($('bo-titlecolor').value);
   settings.bo_color_background = fromHex($('bo-bgcolor').value);
@@ -675,7 +592,6 @@ async function save() {
     $('interval').value = settings.interval;
     $('wsport').value = settings.websocket_port;
     $('fontscale').value = settings.font_scale;
-    $('ovscale').value = settings.overlay_scale;
     updatePreview();
     clearDirty();
     toast('Settings saved');
@@ -753,8 +669,8 @@ function lmPlayer(p) {
   const me = settings.player_name && p.name === settings.player_name;
   const res = p.result === 'win' ? 'res-win' : p.result === 'loss' ? 'res-loss' : '';
   const country = p.country
-    ? `<img class="country" src="countries/${String(p.country).toLowerCase()}.png" onerror="this.remove()">` : '';
-  const flag = `<img class="flag${p.avatar ? '' : ' solo'}" src="flags/${p.civ}.webp" title="${p.civ}" onerror="this.style.visibility='hidden'">`;
+    ? `<img class="country" src="../ui/../ui/countries/${String(p.country).toLowerCase()}.png" onerror="this.remove()">` : '';
+  const flag = `<img class="flag${p.avatar ? '' : ' solo'}" src="../ui/../ui/flags/${p.civ}.webp" title="${p.civ}" onerror="this.style.visibility='hidden'">`;
   const idbox = `<span class="idbox">${p.avatar ? `<img class="ava" src="${p.avatar}" onerror="this.remove()">` : ''}${flag}</span>`;
   const d = p.rating_diff;
   const diff = (d ?? null) !== null
@@ -800,7 +716,7 @@ function renderMatch(d) {
   ].filter(Boolean).join(' · ');
   const gameLink = settings.profile_id && d.match_id && d.match_id !== 'override'
     ? `<a href="https://aoe4world.com/players/${settings.profile_id}/games/${d.match_id}" target="_blank" class="lm-sub">details ↗</a>` : '';
-  const mapImg = `maps/${(d.map ?? '').replace(/ /g, '_')}.png`;
+  const mapImg = `../ui/maps/${(d.map ?? '').replace(/ /g, '_')}.png`;
   $('last-match').innerHTML = `
     <div class="lm-banner" style="background-image:url('${mapImg}')">
       <div class="lm-head">
@@ -826,8 +742,8 @@ function civFlag(civ) {
   // Flag filenames are inconsistent about particle casing ("House of Lancaster"
   // vs "Order Of The Dragon") — fall back through both, then hide.
   const alt = t.replace(/ Of /g, ' of ');
-  return `<img src="flags/${t}.webp" title="${t}"
-    onerror="if(!this.dataset.r){this.dataset.r=1;this.src='flags/${alt}.webp'}else{this.style.display='none'}">`;
+  return `<img src="../ui/../ui/flags/${t}.webp" title="${t}"
+    onerror="if(!this.dataset.r){this.dataset.r=1;this.src='../ui/flags/${alt}.webp'}else{this.style.display='none'}">`;
 }
 
 function timeAgo(iso) {
@@ -957,7 +873,7 @@ function renderGames() {
       const rdiff = live ? '' : (d ?? null) !== null
         ? `<div class="rdiff ${d >= 0 ? 'pos' : 'neg'}">${d >= 0 ? '+' : ''}${d}</div>`
         : '<div class="rdiff na">—</div>';
-      const mapImg = `maps/${(g.map ?? '').replace(/ /g, '_')}.png`;
+      const mapImg = `../ui/maps/${(g.map ?? '').replace(/ /g, '_')}.png`;
       const badge = live ? '<span class="badge live">Live</span>'
         : result ? `<span class="badge ${result}">${result}</span>` : '';
       html += `
@@ -1006,218 +922,43 @@ $('gf-limit').onchange = async () => {
 };
 
 // ---------- build orders tab ----------
-const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let boSelected = null;   // name of the BO loaded in the editor
-let boPvStep = 0;        // preview step index
-let boShownName = null;  // BO currently on the overlay (from bo_data)
-
-// Parse a BO body: returns {json, steps, civ, err} — json null for plain text.
-function parseBo(content) {
-  const t = (content || '').trim();
-  if (!t.startsWith('{')) {
-    return { json: null, steps: t.split('\n').filter(l => l.trim()).length, civ: null, err: null };
-  }
-  try {
-    const j = JSON.parse(t);
-    if (!Array.isArray(j.build_order)) return { json: j, steps: 0, civ: null, err: 'missing "build_order" array' };
-    const civ = Array.isArray(j.civilization) ? j.civilization[0] : j.civilization;
-    return { json: j, steps: j.build_order.length, civ, err: null };
-  } catch (e) {
-    return { json: null, steps: 0, civ: null, err: e.message };
-  }
-}
-
 function renderBoList() {
-  const list = $('bo-list');
-  const filter = ($('bo-filter').value || '').toLowerCase();
-  let names = Object.keys(settings.buildorders || {});
-  if (filter) {
-    names = names.filter(n =>
-      n.toLowerCase().includes(filter) ||
-      (parseBo(settings.buildorders[n]).civ || '').toLowerCase().includes(filter));
-    if (!names.length) { list.innerHTML = '<div class="bo-empty muted">No build orders match the filter.</div>'; return; }
-  }
-  if (!names.length) {
-    list.innerHTML = '<div class="bo-empty muted">No build orders yet.<br>Paste one from age4builder.com or aoe4guides.com, or click ＋ New.</div>';
-    return;
-  }
-  list.innerHTML = names.map(name => {
+  const sel = $('bo-list');
+  sel.innerHTML = '';
+  for (const name of Object.keys(settings.buildorders || {})) {
+    const o = document.createElement('option');
     const checked = !(settings.unchecked_buildorders || []).includes(name);
-    const p = parseBo(settings.buildorders[name]);
-    const flag = p.civ ? `<img class="boflag" src="flags/${esc(p.civ)}.webp" title="${esc(p.civ)}" onerror="this.remove()">` : '';
-    return `<div class="bo-item${name === boSelected ? ' sel' : ''}" data-name="${esc(name)}">
-      ${flag}<span class="bo-title">${esc(name)}</span>
-      <span class="bo-meta">
-        ${p.err ? '<span class="badge loss" title="' + esc(p.err) + '">invalid</span>' : ''}
-        <span class="muted">${p.steps} step${p.steps === 1 ? '' : 's'}</span>
-        <span class="cyc${checked ? ' on' : ''}" title="Include in hotkey cycle">${checked ? '✓' : '✗'}</span>
-      </span>
-    </div>`;
-  }).join('');
-  list.querySelectorAll('.bo-item').forEach(el => {
-    el.onclick = e => {
-      if (e.target.classList.contains('cyc')) { toggleCycle(el.dataset.name); return; }
-      selectBo(el.dataset.name);
-    };
-  });
+    o.value = name;
+    o.textContent = (checked ? '✓ ' : '✗ ') + name;
+    sel.appendChild(o);
+  }
 }
-
-async function toggleCycle(name) {
-  const un = settings.unchecked_buildorders = settings.unchecked_buildorders || [];
-  const i = un.indexOf(name);
-  if (i >= 0) un.splice(i, 1); else un.push(name);
-  if (name === boSelected) $('bo-checked').checked = i >= 0;
-  await persistBo();
-  renderBoList();
-}
-
-function selectBo(name) {
-  boSelected = name;
-  boPvStep = 0;
+$('bo-list').onchange = () => {
+  const name = $('bo-list').value;
   $('bo-name').value = name;
-  $('bo-content').value = settings.buildorders[name] ?? '';
+  $('bo-content').value = settings.buildorders[name] || '';
   $('bo-checked').checked = !(settings.unchecked_buildorders || []).includes(name);
-  renderBoList();
-  validateBoContent();
-  updateBoPreview();
-}
-
-function validateBoContent() {
-  const p = parseBo($('bo-content').value);
-  const badge = $('bo-format');
-  $('bo-content').classList.toggle('invalid', !!p.err);
-  if (p.err) { badge.className = 'badge bad'; badge.textContent = 'invalid JSON'; badge.title = p.err; }
-  else if (p.json) { badge.className = 'badge ok'; badge.textContent = `JSON · ${p.steps} steps`; badge.title = p.civ || ''; }
-  else { badge.className = 'badge mode'; badge.textContent = `text · ${p.steps} steps`; badge.title = ''; }
-  return p;
-}
-
-// Save settings without the full validate/collect cycle of save() when only BOs changed.
-async function persistBo() {
-  try { await invoke('save_settings', { newSettings: settings }); }
-  catch (e) { toast('Failed to save: ' + e, true); }
-}
-
+};
 $('bo-add').onclick = async () => {
   const name = $('bo-name').value.trim();
-  if (!name) { toast('Enter a build order name', true); return; }
-  const renamed = boSelected && boSelected !== name && settings.buildorders[boSelected] !== undefined;
-  if (renamed) {
-    delete settings.buildorders[boSelected];
-    settings.unchecked_buildorders = (settings.unchecked_buildorders || []).map(n => n === boSelected ? name : n);
-  }
+  if (!name) { setStatus('Enter a build order name.'); return; }
   settings.buildorders[name] = $('bo-content').value;
   settings.unchecked_buildorders = (settings.unchecked_buildorders || []).filter(n => n !== name);
   if (!$('bo-checked').checked) settings.unchecked_buildorders.push(name);
-  await persistBo();
-  const wasShown = boShownName && (boShownName === name || boShownName === boSelected);
-  boSelected = name;
+  await save();
   renderBoList();
-  updateBoPreview();
-  if (wasShown) invoke('bo_select', { name });  // refresh the overlay with the edited content
-  toast(renamed ? `Renamed to "${name}" and saved` : `Build order "${name}" saved`);
+  setStatus(`Build order "${name}" saved.`);
 };
-
-$('bo-new').onclick = () => {
-  boSelected = null;
-  boPvStep = 0;
-  $('bo-name').value = '';
-  $('bo-content').value = '';
-  $('bo-checked').checked = true;
-  renderBoList();
-  validateBoContent();
-  updateBoPreview();
-  $('bo-name').focus();
-};
-
-$('bo-dup').onclick = async () => {
-  const src = boSelected;
-  if (!src || settings.buildorders[src] === undefined) { toast('Select a build order first', true); return; }
-  let copy = src + ' (copy)';
-  for (let i = 2; settings.buildorders[copy] !== undefined; i++) copy = `${src} (copy ${i})`;
-  settings.buildorders[copy] = settings.buildorders[src];
-  await persistBo();
-  selectBo(copy);
-  toast(`Duplicated as "${copy}"`);
-};
-
 $('bo-del').onclick = async () => {
-  const name = boSelected;
-  if (!name || settings.buildorders[name] === undefined) { toast('Select a build order first', true); return; }
-  if (!confirm(`Delete build order "${name}"?`)) return;
+  const name = $('bo-list').value;
+  if (!name) return;
   delete settings.buildorders[name];
-  settings.unchecked_buildorders = (settings.unchecked_buildorders || []).filter(n => n !== name);
-  await persistBo();
-  $('bo-new').onclick();
-  toast(`Deleted "${name}"`);
+  await save();
+  renderBoList();
 };
-
-$('bo-format-btn').onclick = () => {
-  const p = parseBo($('bo-content').value);
-  if (!p.json) { toast(p.err ? 'Cannot format: ' + p.err : 'Not JSON content', true); return; }
-  $('bo-content').value = JSON.stringify(p.json, null, 2);
-  validateBoContent();
-  markDirty();
-};
-
-$('bo-export').onclick = () => {
-  const name = $('bo-name').value.trim() || 'build-order';
-  const content = $('bo-content').value;
-  if (!content.trim()) { toast('Nothing to export', true); return; }
-  const isJson = content.trim().startsWith('{');
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content], { type: isJson ? 'application/json' : 'text/plain' }));
-  a.download = name.replace(/[\\/:*?"<>|]/g, '_') + (isJson ? '.json' : '.txt');
-  a.click();
-  URL.revokeObjectURL(a.href);
-};
-
-$('bo-import').onclick = () => $('bo-import-file').click();
-// Drag & drop .json/.txt files anywhere on the build orders tab to import them
-const boTab = $('tab-buildorders');
-boTab.addEventListener('dragover', e => { e.preventDefault(); boTab.style.outline = '2px dashed #3d7fb0'; });
-boTab.addEventListener('dragleave', () => boTab.style.outline = '');
-boTab.addEventListener('drop', async e => {
-  e.preventDefault();
-  boTab.style.outline = '';
-  const files = [...(e.dataTransfer?.files || [])].filter(f => /\.(json|txt|bo)$/i.test(f.name));
-  if (!files.length) return;
-  let last = null;
-  for (const f of files) {
-    const text = await f.text();
-    let name = f.name.replace(/\.\w+$/, '');
-    const p = parseBo(text);
-    if (p.json?.name) name = p.json.name;
-    while (settings.buildorders[name] !== undefined && settings.buildorders[name] !== text) name += ' (imported)';
-    settings.buildorders[name] = text;
-    last = name;
-  }
-  await persistBo();
-  selectBo(last);
-  toast(`Imported ${files.length} build order${files.length > 1 ? 's' : ''}`);
-});
-$('bo-import-file').onchange = async e => {
-  let last = null;
-  for (const f of e.target.files) {
-    const text = await f.text();
-    let name = f.name.replace(/\.\w+$/, '');
-    const p = parseBo(text);
-    if (p.json?.name) name = p.json.name;
-    while (settings.buildorders[name] !== undefined && settings.buildorders[name] !== text) name += ' (imported)';
-    settings.buildorders[name] = text;
-    last = name;
-  }
-  e.target.value = '';
-  if (!last) return;
-  await persistBo();
-  selectBo(last);
-  toast(`Imported ${last}`);
-};
-
 $('bo-showbtn').onclick = () => {
-  const name = boSelected || $('bo-name').value.trim();
-  if (name && settings.buildorders[name] !== undefined) invoke('bo_select', { name });
-  else toast('Save the build order first', true);
+  const name = $('bo-list').value || $('bo-name').value.trim();
+  if (name) invoke('bo_select', { name });
 };
 $('bo-save').onclick = save;
 $('bo-edit-btn').onclick = () => {
@@ -1225,90 +966,6 @@ $('bo-edit-btn').onclick = () => {
   invoke('set_edit_mode', { window: 'buildorder', edit: boEditMode });
   $('bo-edit-btn').textContent = boEditMode ? 'Done repositioning' : 'Reposition BO overlay';
 };
-
-// ---------- BO live preview ----------
-const BO_RES_ICONS = {
-  food: 'bo_img/resource/resource_food.webp', wood: 'bo_img/resource/resource_wood.webp',
-  gold: 'bo_img/resource/resource_gold.webp', stone: 'bo_img/resource/resource_stone.webp',
-  villager: 'bo_img/unit_worker/villager.webp', population: 'bo_img/building_economy/house.webp',
-  time: 'bo_img/time/time.png',
-};
-function boRenderLine(line) {
-  return String(line).split('@').map((part, i) => {
-    if (!part) return '';
-    if (i % 2 === 1) {
-      let clean = part.replace(/['"<>]/g, '');
-      if (!/\.\w+$/.test(clean)) clean += '.webp';
-      return `<img src="bo_img/${esc(clean)}" onerror="this.outerHTML=this.alt" alt="${esc(part.split('/').pop().split('.')[0])}">`;
-    }
-    return `<span>${esc(part)}</span>`;
-  }).join('');
-}
-
-function updateBoPreview() {
-  const pv = $('bo-preview');
-  const p = parseBo($('bo-content').value);
-  const fs = parseInt($('bo-fontsize').value) || 12;
-  const op = ($('bo-opacity').value | 0) / 100;
-  const [br, bg, bb] = fromHex($('bo-bgcolor').value);
-  pv.style.background = `rgba(${br},${bg},${bb},${op})`;
-  pv.style.color = $('bo-textcolor').value;
-  pv.style.fontSize = fs + 'pt';
-  const name = $('bo-name').value.trim() || 'Build order';
-
-  if (p.json && Array.isArray(p.json.build_order) && p.steps) {
-    boPvStep = Math.min(Math.max(boPvStep, 0), p.steps - 1);
-    const s = p.json.build_order[boPvStep];
-    const r = s.resources || {};
-    const res = [];
-    for (const k of ['food', 'wood', 'gold', 'stone'])
-      if ((r[k] ?? -1) >= 0) res.push(`<span><img src="${BO_RES_ICONS[k]}">${r[k]}</span>`);
-    if (s.villager_count >= 0) res.push(`<span><img src="${BO_RES_ICONS.villager}">${s.villager_count}</span>`);
-    if (s.population_count >= 0) res.push(`<span><img src="${BO_RES_ICONS.population}">${s.population_count}</span>`);
-    if (s.time) res.push(`<span><img src="${BO_RES_ICONS.time}">${esc(s.time)}</span>`);
-    const next = p.json.build_order[boPvStep + 1];
-    pv.innerHTML =
-      ($('bo-showtitle').checked ? `<div class="pv-title" style="color:${$('bo-titlecolor').value}">
-        ${p.civ ? `<img src="flags/${esc(p.civ)}.webp" onerror="this.remove()">` : ''}${esc(name)}</div>` : '') +
-      (res.length ? `<div class="pv-res">${res.join('')}</div>` : '') +
-      (s.notes || []).map(n => `<div class="pv-note">${boRenderLine(n)}</div>`).join('') +
-      ($('bo-shownext').checked && next && (next.notes || []).length
-        ? `<div class="pv-next">Next: ${boRenderLine(next.notes[0])}</div>` : '');
-    $('bo-pv-step').textContent = `${boPvStep + 1}/${p.steps}`;
-  } else {
-    const lines = ($('bo-content').value || '').split('\n').filter(l => l.trim());
-    boPvStep = Math.min(Math.max(boPvStep, 0), Math.max(lines.length - 1, 0));
-    pv.innerHTML =
-      ($('bo-showtitle').checked ? `<div class="pv-title" style="color:${$('bo-titlecolor').value}">${esc(name)}</div>` : '') +
-      (lines.length
-        ? lines.map((l, i) => `<div class="pv-note" style="${i === boPvStep ? '' : 'opacity:.45'}">${esc(l)}</div>`).join('')
-        : '<div class="muted">Paste or type a build order to preview it</div>');
-    $('bo-pv-step').textContent = lines.length ? `${boPvStep + 1}/${lines.length}` : '';
-  }
-}
-$('bo-filter').addEventListener('input', renderBoList);
-$('bo-pv-prev').onclick = () => { boPvStep--; updateBoPreview(); };
-$('bo-pv-next').onclick = () => { boPvStep++; updateBoPreview(); };
-$('bo-content').addEventListener('input', () => { validateBoContent(); updateBoPreview(); });
-$('bo-name').addEventListener('input', updateBoPreview);
-['bo-fontsize', 'bo-opacity', 'bo-textcolor', 'bo-titlecolor', 'bo-bgcolor', 'bo-showtitle', 'bo-shownext'].forEach(id =>
-  $(id).addEventListener('input', () => {
-    $('bo-fontsize-val').textContent = $('bo-fontsize').value + 'pt';
-    $('bo-opacity-val').textContent = $('bo-opacity').value + '%';
-    updateBoPreview();
-  }));
-$('bo-content').addEventListener('keydown', e => {
-  if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); $('bo-add').onclick(); }
-});
-
-listen('bo_data', e => {
-  const b = e.payload;
-  if (!b) return;
-  boShownName = b.name;
-  $('bo-now').textContent = b.name;
-  const p = parseBo(b.content);
-  $('bo-now-sub').textContent = `On overlay — step ${(b.step ?? 0) + 1}${p.steps ? '/' + p.steps : ''}`;
-});
 
 // ---------- override tab ----------
 const OV_ROWS = 8;
@@ -1371,7 +1028,7 @@ $('rand-civ').onclick = () => {
   lastCiv = c;
   $('rand-civ-name').textContent = c;
   const img = $('rand-civ-img');
-  img.src = `flags/${c}.webp`; img.style.display = '';
+  img.src = `../ui/flags/${c}.webp`; img.style.display = '';
 };
 $('rand-map').onclick = () => {
   let m;
@@ -1379,7 +1036,7 @@ $('rand-map').onclick = () => {
   lastMap = m;
   $('rand-map-name').textContent = m;
   const img = $('rand-map-img');
-  img.src = `maps/${m.replace(/ /g, '_')}.png`; img.style.display = '';
+  img.src = `../ui/maps/${m.replace(/ /g, '_')}.png`; img.style.display = '';
 };
 
 // ---------- wiring ----------
@@ -1429,12 +1086,11 @@ listen('poll_error', e => {
 });
 
 ['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next'].forEach(id => makeHotkeyRecorder($(id)));
-const NO_DIRTY = new Set(['search', 'bo-filter', 'bo-import-file']);
 ['tab-settings', 'tab-buildorders'].forEach(id => {
-  $(id).addEventListener('input', e => { if (!NO_DIRTY.has(e.target.id)) markDirty(); });
-  $(id).addEventListener('change', e => { if (!NO_DIRTY.has(e.target.id)) markDirty(); });
+  $(id).addEventListener('input', e => { if (e.target.id !== 'search') markDirty(); });
+  $(id).addEventListener('change', e => { if (e.target.id !== 'search') markDirty(); });
 });
-['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'ovscale', 'interval'].forEach(id => $(id).addEventListener('input', updatePreview));
+['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'interval'].forEach(id => $(id).addEventListener('input', updatePreview));
 document.addEventListener('keydown', e => {
   if (e.target.classList?.contains('hotkey-input')) return;
   if (e.ctrlKey && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }

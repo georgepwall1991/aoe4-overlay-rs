@@ -260,7 +260,9 @@ fn bo_step_count(content: &str) -> usize {
     serde_json::from_str::<Value>(content)
         .ok()
         .and_then(|v| v["build_order"].as_array().map(|a| a.len()))
-        .unwrap_or(1)
+        // plain TXT: each non-empty line is a step (matches buildorder.html)
+        .unwrap_or_else(|| content.lines().filter(|l| !l.trim().is_empty()).count())
+        .max(1)
 }
 
 /// Current BO payload sent to the buildorder window + control panel.
