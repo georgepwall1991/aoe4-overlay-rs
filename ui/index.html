@@ -390,6 +390,7 @@
           <button id="bo-new">＋ New</button>
           <button id="bo-template" title="New build order from a JSON skeleton">＋ JSON template</button>
           <button id="bo-import">Import file…</button>
+          <button id="bo-export-all" title="Download every build order as one JSON backup">Export all</button>
           <input id="bo-import-file" type="file" accept=".json,.txt,.bo" multiple style="display:none">
         </div>
         <div class="tracked" style="margin-top:10px">
@@ -1208,7 +1209,50 @@ $('bo-export').onclick = () => {
   URL.revokeObjectURL(a.href);
 };
 
+$('bo-export-all').onclick = () => {
+  const names = Object.keys(settings.buildorders || {});
+  if (!names.length) { toast('No build orders to export', true); return; }
+  const payload = { aoe4_overlay_backup: 1, buildorders: settings.buildorders,
+                    unchecked_buildorders: settings.unchecked_buildorders || [] };
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
+  a.download = 'build-orders-backup.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(`Exported ${names.length} build order${names.length > 1 ? 's' : ''}`);
+};
+
 $('bo-import').onclick = () => $('bo-import-file').click();
+
+// Shared import for the file picker and drag & drop; also restores "Export all" backups.
+async function importBoFiles(files) {
+  let last = null, count = 0;
+  for (const f of files) {
+    const text = await f.text();
+    let backup = null;
+    try { backup = JSON.parse(text); } catch (e) { /* not JSON */ }
+    if (backup && backup.aoe4_overlay_backup && backup.buildorders) {
+      for (const [name, content] of Object.entries(backup.buildorders)) {
+        settings.buildorders[name] = content;
+        last = name; count++;
+      }
+      const un = new Set([...(settings.unchecked_buildorders || []), ...(backup.unchecked_buildorders || [])]);
+      settings.unchecked_buildorders = [...un].filter(n => settings.buildorders[n] !== undefined);
+      continue;
+    }
+    let name = f.name.replace(/\.\w+$/, '');
+    const p = parseBo(text);
+    if (p.json?.name) name = p.json.name;
+    while (settings.buildorders[name] !== undefined && settings.buildorders[name] !== text) name += ' (imported)';
+    settings.buildorders[name] = text;
+    last = name; count++;
+  }
+  if (!last) return;
+  await persistBo();
+  selectBo(last);
+  toast(`Imported ${count} build order${count > 1 ? 's' : ''}`);
+}
+
 // Drag & drop .json/.txt files anywhere on the build orders tab to import them
 const boTab = $('tab-buildorders');
 boTab.addEventListener('dragover', e => { e.preventDefault(); boTab.style.outline = '2px dashed #3d7fb0'; });
@@ -1217,37 +1261,12 @@ boTab.addEventListener('drop', async e => {
   e.preventDefault();
   boTab.style.outline = '';
   const files = [...(e.dataTransfer?.files || [])].filter(f => /\.(json|txt|bo)$/i.test(f.name));
-  if (!files.length) return;
-  let last = null;
-  for (const f of files) {
-    const text = await f.text();
-    let name = f.name.replace(/\.\w+$/, '');
-    const p = parseBo(text);
-    if (p.json?.name) name = p.json.name;
-    while (settings.buildorders[name] !== undefined && settings.buildorders[name] !== text) name += ' (imported)';
-    settings.buildorders[name] = text;
-    last = name;
-  }
-  await persistBo();
-  selectBo(last);
-  toast(`Imported ${files.length} build order${files.length > 1 ? 's' : ''}`);
+  if (files.length) await importBoFiles(files);
 });
 $('bo-import-file').onchange = async e => {
-  let last = null;
-  for (const f of e.target.files) {
-    const text = await f.text();
-    let name = f.name.replace(/\.\w+$/, '');
-    const p = parseBo(text);
-    if (p.json?.name) name = p.json.name;
-    while (settings.buildorders[name] !== undefined && settings.buildorders[name] !== text) name += ' (imported)';
-    settings.buildorders[name] = text;
-    last = name;
-  }
+  const files = [...e.target.files];
   e.target.value = '';
-  if (!last) return;
-  await persistBo();
-  selectBo(last);
-  toast(`Imported ${last}`);
+  await importBoFiles(files);
 };
 
 $('bo-showbtn').onclick = () => {
