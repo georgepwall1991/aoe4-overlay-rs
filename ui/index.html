@@ -560,6 +560,13 @@
   .field label b { color: #7ab6ff; font-weight: 600; margin-left: 4px; }
   .field input[type=range] { flex: 1; max-width: 180px; accent-color: #3d7fb0; }
   .btn-row { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
+  .preset-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 9px 0 4px;
+    color: var(--ink-muted); font-size: 11px; }
+  .preset-row > span { margin-right: 2px; text-transform: uppercase; letter-spacing: .08em; }
+  .preset-row button { padding: 4px 9px; font-size: 11px; border-radius: 999px; box-shadow: none;
+    background: rgba(255,255,255,.045); border-color: #353541; color: #cfd0d8; }
+  .preset-row button:hover { background: rgba(122,182,255,.12); border-color: rgba(122,182,255,.35); color: #fff; }
+  .preset-row button.on { color: var(--gold-bright); border-color: rgba(224,186,94,.38); background: var(--gold-faint); }
   .searchbar { display: flex; gap: 8px; }
   .searchbar input, #gf-text, #bo-filter { padding-left: 30px !important;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="%236b6d78" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>');
@@ -944,6 +951,12 @@
           <button id="edit-btn">Reposition</button>
           <button id="refresh-btn">Refresh now</button>
         </div>
+        <div class="preset-row" aria-label="Display presets">
+          <span>Display preset</span>
+          <button type="button" data-display-preset="compact" title="Smaller window and type">Compact</button>
+          <button type="button" data-display-preset="default" title="Default window and type">Default</button>
+          <button type="button" data-display-preset="readable" title="Larger type without oversizing the window">Readable</button>
+        </div>
         <div class="field">
           <label>Show / hide hotkey</label>
           <input id="hotkey" class="hotkey-input" readonly placeholder="Click, then press keys">
@@ -961,6 +974,12 @@
 
       <div class="card">
         <h3><svg class="ic"><use href="#i-signal"/></svg> Polling & streaming</h3>
+        <div class="preset-row" aria-label="Polling interval presets">
+          <span>Polling preset</span>
+          <button type="button" data-poll-preset="5" title="Check as often as allowed">Live 5s</button>
+          <button type="button" data-poll-preset="15" title="Default polling interval">Default 15s</button>
+          <button type="button" data-poll-preset="30" title="Lower API and battery usage">Quiet 30s</button>
+        </div>
         <div class="field">
           <label>Poll interval <b id="interval-val"></b></label>
           <input id="interval" type="range" min="5" max="60" step="1">
@@ -1420,6 +1439,7 @@ function updatePreview() {
   $('fontscale-val').textContent = $('fontscale').value + '%';
   $('ovscale-val').textContent = $('ovscale').value + '%';
   updateSettingsSummary();
+  updatePresetButtons();
 }
 
 function updateSettingsSummary() {
@@ -1427,6 +1447,44 @@ function updateSettingsSummary() {
   if ($('sum-player')) $('sum-player').textContent = player && player !== 'No player tracked' ? player : 'No profile';
   if ($('sum-poll')) $('sum-poll').textContent = `${$('interval').value || 15}s${$('autoshow').checked ? ' auto-show' : ' manual'}`;
   if ($('sum-display')) $('sum-display').textContent = `${$('fontscale').value || 100}% type / ${$('ovscale').value || 100}% window`;
+}
+
+const DISPLAY_PRESETS = {
+  compact: { fontscale: 90, ovscale: 85 },
+  default: { fontscale: 100, ovscale: 100 },
+  readable: { fontscale: 115, ovscale: 110 },
+};
+function setSettingInput(id, value) {
+  const el = $(id);
+  el.value = String(value);
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+function applyDisplayPreset(name) {
+  const p = DISPLAY_PRESETS[name];
+  if (!p) return;
+  setSettingInput('fontscale', p.fontscale);
+  setSettingInput('ovscale', p.ovscale);
+  toast(`Display preset: ${name[0].toUpperCase()}${name.slice(1)}`);
+}
+function applyPollPreset(seconds) {
+  setSettingInput('interval', seconds);
+  toast(`Polling preset: ${seconds}s`);
+}
+function updatePresetButtons() {
+  const font = parseInt($('fontscale')?.value), size = parseInt($('ovscale')?.value);
+  document.querySelectorAll('[data-display-preset]').forEach(btn => {
+    const p = DISPLAY_PRESETS[btn.dataset.displayPreset];
+    const on = !!p && p.fontscale === font && p.ovscale === size;
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', String(on));
+  });
+  const interval = String(parseInt($('interval')?.value));
+  document.querySelectorAll('[data-poll-preset]').forEach(btn => {
+    const on = btn.dataset.pollPreset === interval;
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', String(on));
+  });
 }
 
 // ---------- tabs ----------
@@ -1548,6 +1606,12 @@ const PAL_COMMANDS = [
   { sect: 'Overlay', name: 'Show / hide overlay', icon: 'i-monitor', run: () => $('toggle-btn').click() },
   { sect: 'Overlay', name: 'Reposition overlay', icon: 'i-monitor', run: () => $('edit-btn').click() },
   { sect: 'Overlay', name: 'Refresh overlay data', icon: 'i-signal', run: () => $('refresh-btn').click() },
+  { sect: 'Settings', name: 'Display preset: Compact', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('compact'); } },
+  { sect: 'Settings', name: 'Display preset: Default', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('default'); } },
+  { sect: 'Settings', name: 'Display preset: Readable', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('readable'); } },
+  { sect: 'Settings', name: 'Polling preset: Live 5s', icon: 'i-signal', run: () => { tabButtons[0].click(); applyPollPreset(5); } },
+  { sect: 'Settings', name: 'Polling preset: Default 15s', icon: 'i-signal', run: () => { tabButtons[0].click(); applyPollPreset(15); } },
+  { sect: 'Settings', name: 'Polling preset: Quiet 30s', icon: 'i-signal', run: () => { tabButtons[0].click(); applyPollPreset(30); } },
   { sect: 'Overlay', name: 'Show / hide build order', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'toggle' }) },
   { sect: 'Overlay', name: 'Next build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'next' }) },
   { sect: 'Overlay', name: 'Previous build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'prev' }) },
@@ -3164,6 +3228,12 @@ const NO_DIRTY = new Set(['search', 'bo-filter', 'bo-import-file']);
 ['autoshow', 'wsport', 'hotkey'].forEach(id => {
   $(id).addEventListener('input', updateSettingsSummary);
   $(id).addEventListener('change', updateSettingsSummary);
+});
+document.querySelectorAll('[data-display-preset]').forEach(btn => {
+  btn.onclick = () => applyDisplayPreset(btn.dataset.displayPreset);
+});
+document.querySelectorAll('[data-poll-preset]').forEach(btn => {
+  btn.onclick = () => applyPollPreset(parseInt(btn.dataset.pollPreset));
 });
 function syncPortValidity() {
   const v = parseInt($('wsport').value);
