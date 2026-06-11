@@ -380,6 +380,9 @@
                box-shadow: var(--shadow-card);
                transition: border-color .15s, transform .15s, box-shadow .15s;
                content-visibility: auto; contain-intrinsic-size: auto 104px; }
+  .game-card[data-url] { cursor: pointer; }
+  .gp .pname[data-pfilter] { cursor: pointer; }
+  .gp .pname[data-pfilter]:hover { text-decoration: underline; text-decoration-color: rgba(255,255,255,.35); }
   .game-card:hover { border-color: #4a4a58; transform: translateY(-1px);
                box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 12px 26px -12px rgba(0,0,0,.7); }
   #games-list .game-card { animation: card-in .3s ease-out backwards; }
@@ -390,6 +393,17 @@
   #games-list .game-card:nth-child(5) { animation-delay: .16s; }
   @keyframes card-in { from { opacity: 0; transform: translateY(7px); } }
   .game-card .ribbon { width: 5px; flex: none; }
+  /* a faint wash of the result colour bleeds in from the ribbon so win/loss reads
+     peripherally, before you've focused on any one card */
+  .game-card.res-win { background: linear-gradient(90deg, rgba(72,189,33,.07), transparent 240px),
+    linear-gradient(180deg, #26262e, #232229); }
+  .game-card.res-loss { background: linear-gradient(90deg, rgba(224,69,47,.07), transparent 240px),
+    linear-gradient(180deg, #26262e, #232229); }
+  .game-card.res-live { background: linear-gradient(90deg, rgba(255,179,0,.08), transparent 240px),
+    linear-gradient(180deg, #26262e, #232229);
+    border-color: rgba(255,179,0,.3); animation: live-glow 2.2s ease-in-out infinite; }
+  @keyframes live-glow {
+    50% { box-shadow: 0 0 14px -3px rgba(255,179,0,.35), var(--shadow-card); } }
   .game-card.res-win .ribbon { background: linear-gradient(180deg, #5ad32f, #3a9c18); box-shadow: 1px 0 6px -1px rgba(72,189,33,.5); }
   .game-card.res-loss .ribbon { background: linear-gradient(180deg, #ef5840, #c0341f); box-shadow: 1px 0 6px -1px rgba(224,69,47,.5); }
   .game-card.res-live .ribbon { background: linear-gradient(180deg, #ffc845, #e09b00); box-shadow: 1px 0 6px -1px rgba(255,179,0,.5); }
@@ -406,11 +420,18 @@
   .badge.loss { background: rgba(224,69,47,.16); color: #ff7b66; box-shadow: inset 0 0 0 1px rgba(224,69,47,.3); }
   .badge.live { background: rgba(255,179,0,.18); color: #ffc845; animation: pulse 1.6s infinite; }
   .badge.mode { background: rgba(122,182,255,.14); color: #9cc6ff; }
+  .badge.mode.ranked { background: var(--gold-faint); color: var(--gold);
+    box-shadow: inset 0 0 0 1px var(--gold-dim); }
   @keyframes pulse { 50% { opacity: .55; } }
   .game-teams { display: flex; align-items: center; gap: 14px; }
   .team-col { flex: 1; min-width: 0; }
-  .team-col.right .gp { flex-direction: row-reverse; }
-  .vs { color: var(--gold-dim); font-size: 11px; font-weight: 800; letter-spacing: .08em; flex: none; }
+  .team-col.right .gp { flex-direction: row-reverse; text-align: right; }
+  /* the VS divider gets short flanking rules so the two teams read as opposing columns */
+  .vs { color: var(--gold-dim); font-size: 10px; font-weight: 800; letter-spacing: .08em; flex: none;
+    display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .vs::before, .vs::after { content: ""; width: 1px; height: 9px;
+    background: linear-gradient(180deg, transparent, var(--gold-faint)); }
+  .vs::after { background: linear-gradient(0deg, transparent, var(--gold-faint)); }
   .gp { display: flex; align-items: center; gap: 6px; margin: 2px 0; font-size: 12.5px; white-space: nowrap; }
   .gp img { width: 22px; height: 14px; object-fit: cover; border-radius: 2px; flex: none; }
   .gp .pname { overflow: hidden; text-overflow: ellipsis; }
@@ -421,6 +442,7 @@
   .rdiff { font-size: 20px; font-weight: 800; }
   .rdiff.pos { color: #6fe04a; } .rdiff.neg { color: #ff7b66; } .rdiff.na { color: #555; font-size: 14px; }
   .game-side .when, .game-side .dur { font-size: 11px; color: #888; font-variant-numeric: tabular-nums; }
+  .game-side .dur:not(:empty)::before { content: "⏱ "; font-size: 10px; opacity: .7; }
   .game-side a { font-size: 11px; text-decoration: none; padding: 2px 8px; border-radius: 8px;
     background: rgba(122,182,255,.08); box-shadow: inset 0 0 0 1px rgba(122,182,255,.18);
     opacity: .55; transition: opacity .15s, background .15s; }
@@ -431,8 +453,48 @@
   .games-day::after { content: ""; flex: 1; height: 1px;
     background: linear-gradient(to right, #30303b, transparent); }
   .games-day:first-child { margin-top: 4px; }
-  .games-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  /* toolbar stays pinned while you scroll a long history */
+  .games-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap;
+    position: sticky; top: 0; z-index: 5; padding: 10px 12px; margin: -8px -12px 10px;
+    background: linear-gradient(180deg, rgba(24,24,29,.96), rgba(24,24,29,.88));
+    backdrop-filter: blur(6px); border-bottom: 1px solid rgba(255,255,255,.04); border-radius: 0 0 10px 10px; }
   .games-toolbar select { background-color: #2a2a33; }
+  .chip-group { display: inline-flex; background: #232229; border: 1px solid #34343f; border-radius: 9px;
+    padding: 2px; gap: 2px; }
+  .chip-group button { border: none; background: transparent; box-shadow: none; border-radius: 7px;
+    padding: 4px 12px; font-size: 12px; color: var(--ink-muted); }
+  .chip-group button:hover { background: rgba(255,255,255,.05); color: var(--ink); }
+  .chip-group button.on { background: linear-gradient(180deg, #3a3a46, #32323d); color: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.07); }
+  .chip-group button.on[data-v=win] { color: #6fe04a; }
+  .chip-group button.on[data-v=loss] { color: #ff7b66; }
+  #gf-clearbar { font-size: 11px; padding: 4px 10px; color: #ffd97a;
+    border-color: rgba(255,200,69,.35); animation: tab-in .2s ease-out; }
+  #gf-text.filter-on { border-color: rgba(224,186,94,.5); box-shadow: 0 0 0 2px rgba(224,186,94,.1); }
+  button.busy::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 7px;
+    border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%;
+    vertical-align: -1px; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  /* loading skeletons mimic the real card anatomy: ribbon, map slab, text bars */
+  .skel-card { position: relative; }
+  .skel-card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px;
+    background: rgba(255,255,255,.05); border-radius: 10px 0 0 10px; }
+  .skel-card::after { content: ""; position: absolute; left: 5px; top: 0; bottom: 0; width: 105px;
+    background: rgba(255,255,255,.03); }
+  #games-stats { animation: tab-in .25s ease-out; }
+  #map-peek { position: fixed; left: 0; top: 0; z-index: 60; pointer-events: none;
+    opacity: 0; transition: opacity .15s; will-change: transform; }
+  #map-peek.show { opacity: 1; }
+  #map-peek img { width: 220px; height: 220px; object-fit: cover; border-radius: 12px; display: block;
+    box-shadow: 0 0 0 1px rgba(230,198,100,.4), 0 18px 44px -10px rgba(0,0,0,.85);
+    animation: rand-pop .18s ease-out; }
+  .game-card.fresh { animation: fresh-flash 1.6s ease-out; }
+  @keyframes fresh-flash {
+    0% { border-color: rgba(255,200,69,.9); box-shadow: 0 0 22px -2px rgba(255,179,0,.55); }
+    100% { border-color: #32323c; } }
+  @media (prefers-reduced-motion: reduce) {
+    .game-card, #games-stats, .civ-row .bar i, .wr-ring, .game-map, #map-peek img,
+    .badge.live, .game-card.res-live { animation: none !important; transition: none !important; } }
   input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; width: 13px; height: 13px;
     cursor: pointer; opacity: .55; transition: opacity .15s;
     background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="%239094a0" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>') center/contain no-repeat; }
@@ -446,9 +508,25 @@
   .stat-block:hover { border-color: #43434f; transform: translateY(-1px); }
   .stat-big { font-size: 21px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
   .stat-big.pos { color: #6fe04a; } .stat-big.neg { color: #ff7b66; }
+  /* winrate renders inside a conic progress ring — % of the circle = % of wins */
+  @property --p { syntax: "<number>"; inherits: false; initial-value: 0; }
+  .wr-ring { --p: 0; --rc: #6fe04a; width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center;
+    background: conic-gradient(var(--rc) calc(var(--p) * 1%), rgba(255,255,255,.07) 0);
+    transition: --p .4s; position: relative; }
+  .wr-ring::before { content: ""; position: absolute; inset: 4px; border-radius: 50%;
+    background: linear-gradient(180deg, #26262e, #232229); }
+  .wr-ring .stat-big { position: relative; font-size: 14px; }
+  .stat-big .fire { font-size: 14px; vertical-align: 1px; margin-left: 2px;
+    filter: drop-shadow(0 0 4px rgba(255,140,0,.6)); }
+  .games-day .day-rec { font-weight: 600; letter-spacing: 0; text-transform: none; color: #777; }
+  .games-day .day-rec b.w { color: #6fe04a; } .games-day .day-rec b.l { color: #ff7b66; }
   .stat-sub { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: .08em; }
   .stat-block.civs { align-items: stretch; gap: 3px; }
   .civ-row { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+  .civ-row[data-filter] { cursor: pointer; border-radius: 6px; margin: 0 -5px; padding: 1px 5px;
+    transition: background .12s; }
+  .civ-row[data-filter]:hover { background: rgba(255,255,255,.06); }
+  .civ-row[data-filter]:hover .pct { color: #fff; }
   .civ-row img { width: 20px; height: 13px; object-fit: cover; border-radius: 2px;
     box-shadow: 0 0 0 1px rgba(255,255,255,.1); }
   .gp img { box-shadow: 0 0 0 1px rgba(255,255,255,.1); }
@@ -916,12 +994,12 @@
         <option value="1v1">1v1</option>
         <option value="team">Team games</option>
       </select>
-      <select id="gf-result">
-        <option value="">All results</option>
-        <option value="win">Wins</option>
-        <option value="loss">Losses</option>
-      </select>
-      <input id="gf-text" type="search" placeholder="Filter by map or player…" style="width:200px">
+      <div class="chip-group" id="gf-result" data-value="" role="group" aria-label="Filter by result">
+        <button data-v="" class="on" aria-pressed="true">All</button>
+        <button data-v="win" aria-pressed="false">Wins</button>
+        <button data-v="loss" aria-pressed="false">Losses</button>
+      </div>
+      <input id="gf-text" type="search" placeholder="Filter by map, civ or player…  ( / )" style="width:200px">
       <select id="gf-limit" title="How many games to fetch">
         <option value="25">Last 25</option>
         <option value="50">Last 50</option>
@@ -929,6 +1007,7 @@
         <option value="200">Last 200</option>
       </select>
       <span style="flex:1"></span>
+      <button id="gf-clearbar" style="display:none" title="Reset all filters">✕ Clear filters</button>
       <span id="gf-count" class="muted"></span>
       <button id="games-refresh" class="primary">Refresh</button>
     </div>
@@ -938,7 +1017,7 @@
         <div class="stat-sub">record</div>
       </div>
       <div class="stat-block" title="Winrate across the games below">
-        <div class="stat-big" id="gs-winrate">—</div>
+        <div class="wr-ring" id="gs-ring"><div class="stat-big" id="gs-winrate">—</div></div>
         <div class="stat-sub">winrate</div>
       </div>
       <div class="stat-block" title="Current win / loss streak">
@@ -1871,7 +1950,7 @@ function playerLine(p, pid, right) {
   const diff = (d ?? null) !== null
     ? `<span class="pdiff ${d >= 0 ? 'win' : 'loss'}">${d >= 0 ? '+' : ''}${d}</span>` : '';
   return `<div class="gp ${me ? 'me' : ''}">${civFlag(p.civilization)}
-    <span class="pname" title="${esc(p.name ?? '?')}">${esc(p.name ?? '?')}</span>${me ? diff : ''}</div>`;
+    <span class="pname" data-pfilter="${esc(p.name ?? '')}" title="${esc(p.name ?? '?')} — click to see all games with them">${esc(p.name ?? '?')}</span>${me ? diff : ''}</div>`;
 }
 
 // Inline SVG placeholder for maps we have no art for
@@ -1892,7 +1971,7 @@ function gameResult(g, pid) {
 }
 
 function applyGameFilters() {
-  const mode = $('gf-mode').value, res = $('gf-result').value;
+  const mode = $('gf-mode').value, res = $('gf-result').dataset.value;
   const text = $('gf-text').value.trim().toLowerCase();
   const pid = settings.profile_id;
   return allGames.filter(g => {
@@ -1969,15 +2048,19 @@ function renderGameStats(games, pid) {
   const wr = Math.round(wins / finished.length * 100);
   $('gs-winrate').textContent = wr + '%';
   $('gs-winrate').className = 'stat-big ' + (wr >= 50 ? 'pos' : 'neg');
-  // current streak (games are newest-first)
+  $('gs-ring').style.setProperty('--p', wr);
+  $('gs-ring').style.setProperty('--rc', wr >= 50 ? '#6fe04a' : '#ff7b66');
+  // current streak (games are newest-first); a hot streak earns a flame
   let streak = 0;
   for (const r of finished) { if (r.result === finished[0].result) streak++; else break; }
-  $('gs-streak').textContent = (finished[0].result === 'win' ? 'W' : 'L') + streak;
+  $('gs-streak').innerHTML = (finished[0].result === 'win' ? 'W' : 'L') + streak
+    + (streak >= 3 ? `<span class="fire">${finished[0].result === 'win' ? '🔥' : '❄️'}</span>` : '');
   $('gs-streak').className = 'stat-big ' + (finished[0].result === 'win' ? 'pos' : 'neg');
   // rating trend, oldest -> newest
   const diffs = finished.map(r => r.me?.rating_diff).filter(d => (d ?? null) !== null).reverse();
   const net = drawSpark(diffs);
   $('gs-net').textContent = diffs.length > 1 ? `(${net >= 0 ? '+' : ''}${net})` : '(n/a)';
+  $('gs-net').style.color = diffs.length > 1 ? (net >= 0 ? '#6fe04a' : '#ff7b66') : '';
   // my civs breakdown
   const byCiv = {};
   finished.forEach(r => {
@@ -1991,7 +2074,7 @@ function renderGameStats(games, pid) {
   const top = Object.entries(byCiv).sort((a, b) => b[1].n - a[1].n).slice(0, 4);
   $('gs-civs').innerHTML = top.map(([c, v]) => {
     const p = Math.round(v.w / v.n * 100);
-    return `<div class="civ-row">${civFlag(c)}<span class="bar"><i${barCls(p)} style="width:${p}%"></i></span>
+    return `<div class="civ-row" data-filter="${esc(civTitle(c))}" title="Click to filter the list to ${esc(civTitle(c))} games">${civFlag(c)}<span class="bar"><i${barCls(p)} style="width:${p}%"></i></span>
       <span class="pct">${p}% · ${v.n}g</span></div>`;
   }).join('') || '';
   // winrate by map, most-played first
@@ -2007,7 +2090,7 @@ function renderGameStats(games, pid) {
   const topMaps = Object.entries(byMap).sort((a, b) => b[1].n - a[1].n).slice(0, 4);
   $('gs-maps').innerHTML = topMaps.map(([m, v]) => {
     const p = Math.round(v.w / v.n * 100);
-    return `<div class="civ-row"><span style="width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${esc(m)}">${esc(m)}</span>
+    return `<div class="civ-row" data-filter="${esc(m)}" title="Click to filter the list to ${esc(m)}"><span style="width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${esc(m)}</span>
       <span class="bar"><i${barCls(p)} style="width:${p}%"></i></span><span class="pct">${p}% · ${v.n}g</span></div>`;
   }).join('') || '';
 }
@@ -2016,8 +2099,11 @@ function renderGames() {
   const list = $('games-list');
   const pid = settings.profile_id;
   const games = applyGameFilters();
+  const filtered = games.length !== allGames.length || $('gf-text').value.trim() !== '';
   $('gf-count').textContent = allGames.length
     ? (games.length === allGames.length ? `${games.length} games` : `${games.length}/${allGames.length} games`) : '';
+  $('gf-clearbar').style.display = filtered && allGames.length ? '' : 'none';
+  $('gf-text').classList.toggle('filter-on', !!$('gf-text').value.trim());
   renderGameStats(games, pid);
   let wins = 0, losses = 0, html = '';
   {
@@ -2031,11 +2117,21 @@ function renderGames() {
       if (days < 7) return 'This week';
       return 'Earlier';
     };
+    // per-bucket W–L so each day header doubles as a mini scoreboard
+    const bucketRec = {};
+    for (const g of games) {
+      const b = dayBucket(g.started_at), r = gameResult(g, pid).result;
+      if (!b || (r !== 'win' && r !== 'loss')) continue;
+      bucketRec[b] = bucketRec[b] || { w: 0, l: 0 };
+      bucketRec[b][r === 'win' ? 'w' : 'l']++;
+    }
     let lastBucket = null;
     for (const g of games) {
       const bucket = dayBucket(g.started_at);
       if (bucket && bucket !== lastBucket) {
-        html += `<div class="games-day">${bucket}</div>`;
+        const rec = bucketRec[bucket];
+        html += `<div class="games-day">${bucket}${rec
+          ? ` <span class="day-rec"><b class="w">${rec.w}W</b>–<b class="l">${rec.l}L</b></span>` : ''}</div>`;
         lastBucket = bucket;
       }
       const teams = (g.teams || []).map(t => t.map(m => m.player || m));
@@ -2045,20 +2141,20 @@ function renderGames() {
       if (result === 'win') wins++; else if (result === 'loss') losses++;
       const d = me?.rating_diff;
       const rdiff = live ? '' : (d ?? null) !== null
-        ? `<div class="rdiff ${d >= 0 ? 'pos' : 'neg'}">${d >= 0 ? '+' : ''}${d}</div>`
-        : '<div class="rdiff na">—</div>';
+        ? `<div class="rdiff ${d >= 0 ? 'pos' : 'neg'}" title="Rating ${d >= 0 ? 'gained' : 'lost'}${me?.rating ? ` — now ${me.rating}` : ''}">${d >= 0 ? '+' : ''}${d}</div>`
+        : '<div class="rdiff na" title="Unrated game">—</div>';
       const mapImg = `maps/${(g.map ?? '').replace(/ /g, '_')}.png`;
       const badge = live ? '<span class="badge live">Live</span>'
         : result ? `<span class="badge ${result}">${result}</span>` : '';
       html += `
-      <div class="game-card res-${result}">
+      <div class="game-card res-${result}" data-url="https://aoe4world.com/players/${pid}/games/${g.game_id}">
         <div class="ribbon"></div>
         <img class="game-map" loading="lazy" src="${encodeURI(mapImg)}" onerror="mapPlaceholder(this, '${(g.map ?? '?').replace(/[^\w ]/g, '')}')">
         <div class="game-main">
           <div class="game-head">
             <span class="map-name">${esc(g.map ?? '?')}</span>
             ${badge}
-            <span class="badge mode">${fmtMode(g.kind)}</span>
+            <span class="badge mode${(g.kind ?? '').startsWith('rm_') ? ' ranked' : ''}">${fmtMode(g.kind)}</span>
           </div>
           <div class="game-teams">
             <div class="team-col">${(teams[0] || []).map(p => playerLine(p, pid)).join('')}</div>
@@ -2080,7 +2176,7 @@ function renderGames() {
     : 'No games yet. Track a player and your match history will appear here.<br><button id="gf-goto-settings" style="margin-top:10px">Find your profile</button>'}</div>`;
   const clr = $('gf-clear');
   if (clr) clr.onclick = () => {
-    $('gf-mode').value = ''; $('gf-result').value = ''; $('gf-text').value = '';
+    $('gf-mode').value = ''; setResultChip(''); $('gf-text').value = '';
     renderGames();
   };
   const goto = $('gf-goto-settings');
@@ -2090,18 +2186,82 @@ function renderGames() {
 async function loadGames() {
   const list = $('games-list'), btn = $('games-refresh');
   list.innerHTML = '<div class="skel-card"></div>'.repeat(4);
-  btn.disabled = true; btn.textContent = 'Refreshing…';
+  btn.disabled = true; btn.textContent = 'Refreshing…'; btn.classList.add('busy');
+  const prevTop = allGames[0]?.game_id;
   try {
     const data = await invoke('get_match_history');
     allGames = data.games || [];
     renderGames();
+    // a game that wasn't there last refresh gets a one-off golden flash
+    if (prevTop && allGames[0] && allGames[0].game_id !== prevTop)
+      list.querySelector('.game-card')?.classList.add('fresh');
   } catch (e) {
     list.innerHTML = `<div class="bo-empty muted">Could not load the match history.<br>${esc(String(e))}<br><button id="gf-retry" style="margin-top:10px">Try again</button></div>`;
     $('gf-retry').onclick = loadGames;
-  } finally { btn.disabled = false; btn.textContent = 'Refresh'; }
+  } finally { btn.disabled = false; btn.textContent = 'Refresh'; btn.classList.remove('busy'); }
 }
 $('gf-mode').onchange = renderGames;
-$('gf-result').onchange = renderGames;
+// hovering a card's map thumbnail floats a large preview of the map art
+const mapPeek = document.createElement('div');
+mapPeek.id = 'map-peek';
+document.body.appendChild(mapPeek);
+$('games-list').addEventListener('mouseover', e => {
+  const img = e.target.closest('.game-map');
+  if (!img || img.src.startsWith('data:')) return;
+  mapPeek.innerHTML = `<img src="${img.src}">`;
+  mapPeek.classList.add('show');
+});
+$('games-list').addEventListener('mousemove', e => {
+  if (!mapPeek.classList.contains('show')) return;
+  const x = Math.min(e.clientX + 18, window.innerWidth - 240);
+  const y = Math.min(e.clientY + 14, window.innerHeight - 240);
+  mapPeek.style.transform = `translate(${x}px, ${y}px)`;
+});
+$('games-list').addEventListener('mouseout', e => {
+  if (e.target.closest('.game-map')) mapPeek.classList.remove('show');
+});
+// the whole card is a click target for match details; player names filter instead
+$('games-list').addEventListener('click', e => {
+  const name = e.target.closest('[data-pfilter]');
+  if (name) {
+    const f = name.dataset.pfilter;
+    if (f) {
+      $('gf-text').value = $('gf-text').value.toLowerCase() === f.toLowerCase() ? '' : f;
+      renderGames();
+    }
+    return;
+  }
+  if (e.target.closest('a, button')) return;
+  const card = e.target.closest('.game-card[data-url]');
+  if (card) window.open(card.dataset.url, '_blank');
+});
+$('gf-clearbar').onclick = () => {
+  $('gf-mode').value = ''; setResultChip(''); $('gf-text').value = '';
+  renderGames();
+};
+// stat rows double as one-click filters: clicking a civ/map narrows the list to it
+['gs-civs', 'gs-maps'].forEach(id => $(id).addEventListener('click', e => {
+  const row = e.target.closest('[data-filter]');
+  if (!row) return;
+  const f = row.dataset.filter;
+  $('gf-text').value = $('gf-text').value.toLowerCase() === f.toLowerCase() ? '' : f;
+  renderGames();
+}));
+function setResultChip(v) {
+  const grp = $('gf-result');
+  grp.dataset.value = v;
+  grp.querySelectorAll('button').forEach(b => {
+    const on = b.dataset.v === v;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+}
+$('gf-result').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  setResultChip(b.dataset.v);
+  renderGames();
+});
 let gfTextTimer = null;
 $('gf-text').addEventListener('input', () => {
   clearTimeout(gfTextTimer);
@@ -2920,9 +3080,11 @@ $('wsport').addEventListener('input', () => {
   $('wsport').classList.toggle('invalid', bad);
   $('wsport').title = bad ? 'Port must be between 1024 and 65535' : '';
 });
-// Ctrl+F focuses whichever search/filter box the active tab offers
+// Ctrl+F (or a bare "/", like GitHub) focuses whichever search/filter box the active tab offers
 document.addEventListener('keydown', e => {
-  if (!e.ctrlKey || e.altKey || e.shiftKey || e.key.toLowerCase() !== 'f') return;
+  const slash = e.key === '/' && !e.ctrlKey && !e.altKey
+    && !/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) && !e.target.isContentEditable;
+  if (!slash && (!e.ctrlKey || e.altKey || e.shiftKey || e.key.toLowerCase() !== 'f')) return;
   if (e.target.classList?.contains('hotkey-input')) return;
   const active = document.querySelector('.tab.active')?.id;
   const target = { 'tab-settings': 'search', 'tab-games': 'gf-text', 'tab-buildorders': 'bo-filter' }[active];
