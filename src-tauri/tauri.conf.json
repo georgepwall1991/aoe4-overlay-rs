@@ -13,8 +13,11 @@
         "label": "main",
         "title": "AoE4 Overlay — Control Panel",
         "url": "index.html",
-        "width": 760,
-        "height": 640,
+        "width": 1100,
+        "height": 760,
+        "minWidth": 700,
+        "minHeight": 520,
+        "center": true,
         "resizable": true
       },
       {
