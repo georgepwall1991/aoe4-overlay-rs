@@ -388,6 +388,7 @@
         <div id="bo-list"></div>
         <div class="btn-row" style="margin-top:10px">
           <button id="bo-new">＋ New</button>
+          <button id="bo-template" title="New build order from a JSON skeleton">＋ JSON template</button>
           <button id="bo-import">Import file…</button>
           <input id="bo-import-file" type="file" accept=".json,.txt,.bo" multiple style="display:none">
         </div>
@@ -1008,6 +1009,11 @@ $('gf-limit').onchange = async () => {
 // ---------- build orders tab ----------
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let boSelected = null;   // name of the BO loaded in the editor
+let boDirty = false;     // editor has unsaved changes
+function setBoDirty(d) {
+  boDirty = d;
+  $('bo-add').textContent = d ? 'Save build order •' : 'Save build order';
+}
 let boPvStep = 0;        // preview step index
 let boShownName = null;  // BO currently on the overlay (from bo_data)
 
@@ -1073,6 +1079,9 @@ async function toggleCycle(name) {
 }
 
 function selectBo(name) {
+  if (boDirty && name !== boSelected &&
+      !confirm('Discard unsaved changes in the editor?')) return;
+  setBoDirty(false);
   boSelected = name;
   boPvStep = 0;
   $('bo-name').value = name;
@@ -1111,6 +1120,7 @@ $('bo-add').onclick = async () => {
   settings.unchecked_buildorders = (settings.unchecked_buildorders || []).filter(n => n !== name);
   if (!$('bo-checked').checked) settings.unchecked_buildorders.push(name);
   await persistBo();
+  setBoDirty(false);
   const wasShown = boShownName && (boShownName === name || boShownName === boSelected);
   boSelected = name;
   renderBoList();
@@ -1120,10 +1130,34 @@ $('bo-add').onclick = async () => {
 };
 
 $('bo-new').onclick = () => {
+  if (boDirty && !confirm('Discard unsaved changes in the editor?')) return;
+  setBoDirty(false);
   boSelected = null;
   boPvStep = 0;
   $('bo-name').value = '';
   $('bo-content').value = '';
+  $('bo-checked').checked = true;
+  renderBoList();
+  validateBoContent();
+  updateBoPreview();
+  $('bo-name').focus();
+};
+
+$('bo-template').onclick = () => {
+  if (boDirty && !confirm('Discard unsaved changes in the editor?')) return;
+  setBoDirty(false);
+  boSelected = null;
+  boPvStep = 0;
+  $('bo-name').value = '';
+  $('bo-content').value = JSON.stringify({
+    civilization: 'English',
+    build_order: [
+      { age: 1, villager_count: 6, resources: { food: 6, wood: 0, gold: 0, stone: 0 },
+        notes: ['Send first @unit_worker/villager@ to sheep'] },
+      { age: 1, villager_count: 8, resources: { food: 6, wood: 2, gold: 0, stone: 0 },
+        notes: ['2 villagers to wood', 'Build a @building_economy/house@'] },
+    ],
+  }, null, 2);
   $('bo-checked').checked = true;
   renderBoList();
   validateBoContent();
@@ -1157,6 +1191,7 @@ $('bo-format-btn').onclick = () => {
   const p = parseBo($('bo-content').value);
   if (!p.json) { toast(p.err ? 'Cannot format: ' + p.err : 'Not JSON content', true); return; }
   $('bo-content').value = JSON.stringify(p.json, null, 2);
+  setBoDirty(true);
   validateBoContent();
   markDirty();
 };
@@ -1308,8 +1343,8 @@ $('bo-filter').addEventListener('keydown', e => {
 });
 $('bo-pv-prev').onclick = () => { boPvStep--; updateBoPreview(); };
 $('bo-pv-next').onclick = () => { boPvStep++; updateBoPreview(); };
-$('bo-content').addEventListener('input', () => { validateBoContent(); updateBoPreview(); });
-$('bo-name').addEventListener('input', updateBoPreview);
+$('bo-content').addEventListener('input', () => { setBoDirty(true); validateBoContent(); updateBoPreview(); });
+$('bo-name').addEventListener('input', () => { setBoDirty(true); updateBoPreview(); });
 ['bo-fontsize', 'bo-opacity', 'bo-textcolor', 'bo-titlecolor', 'bo-bgcolor', 'bo-showtitle', 'bo-shownext'].forEach(id =>
   $(id).addEventListener('input', () => {
     $('bo-fontsize-val').textContent = $('bo-fontsize').value + 'pt';
