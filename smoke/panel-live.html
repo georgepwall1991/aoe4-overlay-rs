@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<!-- Loads the real ui/index.html with a mocked Tauri API for visual smoke-testing.
+     Serve the repo root (e.g. `python -m http.server 8741`) and open /smoke/panel-live.html. -->
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+<script>
+const PLAYERS = [
+  { avatar: null, civ: 'English', civ_games: '41', civ_win_length_median: '22:41', civ_winrate: '61%',
+    country: 'gb', input_type: null, losses: '101', max_rating: 1310, name: 'George', profile_id: 1,
+    random_civ: false, rank: '#1204', rank_level: 'diamond_2', rating: '1244', rating_diff: 12,
+    rating_history: [1190, 1204, 1186, 1199, 1212, 1226, 1215, 1231, 1244], result: 'win', streak: 3,
+    team: 1, twitch: null, winrate: '54%', wins: '120' },
+  { avatar: null, civ: 'Mongols', civ_games: '21', civ_win_length_median: '18:02', civ_winrate: '48%',
+    country: 'fr', input_type: 'controller', losses: '95', max_rating: 1250, name: 'Opponent', profile_id: 2,
+    random_civ: true, rank: '#1888', rank_level: 'gold_1', rating: '1198', rating_diff: -12,
+    rating_history: [1230, 1221, 1235, 1224, 1210, 1219, 1207, 1211, 1198], result: 'loss', streak: -2,
+    team: 2, twitch: 'https://twitch.tv/example', winrate: '51%', wins: '98' },
+];
+const MATCH = { avg_rating: 1221, duration: 1533, kind: 'rm_1v1', map: 'Dry Arabia', match_id: 1234,
+  ongoing: false, players: PLAYERS, season: 14, server: 'Western Europe', started: new Date(Date.now() - 36e5).toISOString() };
+const mkGame = (i, win, map, kind) => ({
+  game_id: 1000 + i, map, kind, ongoing: false, duration: 900 + i * 137,
+  started_at: new Date(Date.now() - i * 9e6).toISOString(),
+  teams: [[{ player: { profile_id: 1, name: 'George', civilization: 'english', result: win ? 'win' : 'loss', rating_diff: win ? 9 + i : -(8 + i) } }],
+          [{ player: { profile_id: 2, name: 'Enemy' + i, civilization: ['mongols', 'french', 'rus', 'ottomans'][i % 4], result: win ? 'loss' : 'win' } }]],
+});
+const SETTINGS = {
+  player_name: 'George', profile_id: 1, interval: 15, overlay_hotkey: 'Alt+O',
+  show_overlay_on_new_game: true, font_scale: 100, overlay_scale: 100, websocket_port: 7307,
+  civ_stats_color: '#bc8aea', team_colors: [[61, 127, 176, .35], [224, 69, 47, .35], [72, 189, 33, .35]],
+  bo_hotkey_show: '', bo_hotkey_cycle: '', bo_hotkey_prev_step: '', bo_hotkey_next_step: '',
+  bo_font_size: 12, bo_opacity: .8, bo_text_color: [255, 255, 255], bo_title_color: [255, 200, 100],
+  bo_color_background: [30, 30, 30], bo_show_title: true, bo_show_next: true,
+  unchecked_buildorders: [], max_games_history: 50,
+  buildorders: {
+    'English longbow rush': '{"civilization":"English","build_order":[{"age":1,"villager_count":6,"resources":{"food":6,"wood":0,"gold":0,"stone":0},"notes":["Send first @unit_worker/villager@ to sheep"]},{"age":2,"villager_count":12,"resources":{"food":7,"wood":5,"gold":0,"stone":0},"time":"4:30","notes":["Age up with council hall","Make @unit_archer/longbowman@"]}]}',
+    'Mongol tower rush': 'Build ger on gold\n6 vills to sheep\nTower their wood line',
+  },
+};
+window.__TAURI__ = {
+  core: { invoke: async (cmd) => {
+    if (cmd === 'get_settings') return SETTINGS;
+    if (cmd === 'get_current_data') return MATCH;
+    if (cmd === 'get_match_history') return { games: Array.from({ length: 8 }, (_, i) => mkGame(i, i % 3 !== 1, ['Dry Arabia', 'Black Forest', 'Four Lakes'][i % 3], i % 2 ? 'rm_1v1' : 'qm_2v2')) };
+    if (cmd === 'get_app_version') return '9.9.9-dev';
+    if (cmd === 'get_bo') return { name: 'English longbow rush', content: SETTINGS.buildorders['English longbow rush'], step: 0 };
+    return null;
+  } },
+  event: { listen: async () => () => {} },
+};
+fetch('../ui/index.html').then(r => r.text()).then(t => {
+  t = t.replace('<head>', '<head><base href="../ui/">');
+  document.open(); document.write(t); document.close();
+});
+</script>
+</body>
+</html>
