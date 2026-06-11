@@ -542,14 +542,14 @@
   .civ-row .pct { width: 64px; text-align: right; color: #aaa; }
 
   /* ---- settings tab ---- */
-  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   @media (max-width: 880px) {
-    .cards { grid-template-columns: 1fr; }
+    .cards { grid-template-columns: minmax(0, 1fr); }
     .cards .card { grid-column: auto !important; }
     .appearance-grid { grid-template-columns: 1fr; }
   }
   .card { background: linear-gradient(180deg, #26262e, #222129); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow-card); position: relative; }
+    border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow-card); position: relative; min-width: 0; }
   .card::before { content: ""; position: absolute; inset: 0 0 auto; height: 1px; border-radius: inherit;
     background: linear-gradient(90deg, transparent 5%, rgba(255,255,255,.07) 50%, transparent 95%); pointer-events: none; }
   .card h3 { margin: 0 0 12px; font-size: 12px; color: var(--gold); letter-spacing: .09em; text-transform: uppercase;
@@ -602,6 +602,19 @@
     box-shadow: inset 0 0 0 1px rgba(224,186,94,.35), 0 2px 6px -2px rgba(0,0,0,.6);
     text-transform: uppercase; user-select: none; }
   .tracked-ava .ic { width: 15px; height: 15px; color: var(--ink-muted); }
+  .settings-summary { grid-column: span 2; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); min-width: 0;
+    gap: 1px; overflow: hidden; border: 1px solid #2e2e38; border-radius: 11px;
+    background: #2e2e38; box-shadow: var(--shadow-card); }
+  .sum-item { min-width: 0; padding: 10px 12px; background: linear-gradient(180deg, #24242b, #202027); }
+  .sum-item span { display: block; margin-bottom: 3px; color: var(--ink-muted); font-size: 10px;
+    text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sum-item b { display: block; color: var(--ink-strong); font-size: 13px; font-weight: 650;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sum-item.dirty b { color: #ffc845; }
+  .sum-item.good b { color: #8ae86a; }
+  @media (max-width: 880px) { .settings-summary { grid-column: auto; } }
+  @media (max-width: 760px) { .settings-summary { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 430px) { .settings-summary { grid-template-columns: minmax(0, 1fr); } }
   .dot { width: 9px; height: 9px; border-radius: 50%; background: #555; flex: none; transition: background .3s; }
   .dot.ok { background: #48bd21; box-shadow: 0 0 6px #48bd21aa; }
   .dot.err { background: #e0452f; box-shadow: 0 0 6px #e0452faa; }
@@ -630,8 +643,9 @@
   .switch span:active::after { width: 19px; }
   .switch input:checked + span:active::after { left: 18px; }
   .color-set { display: flex; gap: 6px; }
-  .appearance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-  .preview-wrap { align-self: center; }
+  .appearance-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  .preview-wrap { align-self: center; min-width: 0; }
+  @media (max-width: 880px) { .appearance-grid { grid-template-columns: minmax(0, 1fr); } }
   #ov-preview { background: #000 url() center/cover; border-radius: 8px; padding: 10px 6px; overflow: hidden;
     box-shadow: inset 0 0 0 1px rgba(230,198,100,.3), 0 4px 14px -6px rgba(0,0,0,.6); }
   #ov-preview table { border-collapse: collapse; margin: 0 auto; width: auto; }
@@ -901,6 +915,25 @@
           </div>
           <span class="dot" id="poll-dot" title="Poll status"></span>
           <a id="profile-link" href="#" target="_blank" style="display:none">aoe4world ↗</a>
+        </div>
+      </div>
+
+      <div class="settings-summary" aria-label="Current settings summary">
+        <div class="sum-item">
+          <span>Tracking</span>
+          <b id="sum-player">No profile</b>
+        </div>
+        <div class="sum-item">
+          <span>Polling</span>
+          <b id="sum-poll">15s</b>
+        </div>
+        <div class="sum-item">
+          <span>Display</span>
+          <b id="sum-display">100% / 100%</b>
+        </div>
+        <div class="sum-item good" id="sum-save-box">
+          <span>State</span>
+          <b id="sum-save">Saved</b>
         </div>
       </div>
 
@@ -1260,9 +1293,17 @@ const { listen } = window.__TAURI__.event;
 window.invoke = invoke;
 let settings = {};
 let editMode = false, boEditMode = false;
+let savedSettingsSnapshot = '';
 
 const CIVS = ["Abbasid Dynasty","Ayyubids","Byzantines","Chinese","Delhi Sultanate","English","French","Golden Horde","Holy Roman Empire","House of Lancaster","Japanese","Jeanne Darc","Jin Dynasty","Knights Templar","Macedonian Dynasty","Malians","Mongols","Order Of The Dragon","Ottomans","Rus","Sengoku Daimyo","Tughlaq Dynasty","Zhu Xis Legacy"];
 const MAPS = ["Altai", "Ancient Spires", "Archipelago", "Black Forest", "Boulder Bay", "Confluence", "Continental", "Danube River", "Dry Arabia", "Four Lakes", "French Pass", "High View", "Hill and Dale", "King of The Hill", "Lipany", "Marshland", "Mega Random", "Mongolian Heights", "Mountain Pass", "Nagari", "Warring Islands"];
+const SETTINGS_DIRTY_IDS = new Set([
+  'hotkey', 'interval', 'autoshow', 'fontscale', 'ovscale', 'wsport', 'civstatcolor',
+  'tc1', 'tc2', 'tc3', 'tcalpha',
+  'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next',
+  'bo-fontsize', 'bo-opacity', 'bo-textcolor', 'bo-titlecolor', 'bo-bgcolor',
+  'bo-showtitle', 'bo-shownext',
+]);
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1329,7 +1370,13 @@ function makeHotkeyRecorder(el) {
   el.addEventListener('keydown', e => {
     e.preventDefault();
     if (e.key === 'Escape') { el.value = el.dataset.prev ?? ''; el.blur(); return; }
-    if (e.key === 'Backspace' || e.key === 'Delete') { el.value = ''; el.dataset.prev = ''; el.blur(); return; }
+    if (e.key === 'Backspace' || e.key === 'Delete') {
+      el.value = '';
+      el.dataset.prev = '';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.blur();
+      return;
+    }
     const mods = [e.ctrlKey && 'Ctrl', e.altKey && 'Alt', e.shiftKey && 'Shift', e.metaKey && 'Super'].filter(Boolean);
     // held modifiers show live while the combo is still incomplete
     if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) { el.value = mods.length ? mods.join('+') + '+…' : ''; return; }
@@ -1337,6 +1384,7 @@ function makeHotkeyRecorder(el) {
     if (key === ' ') key = 'Space';
     el.value = [...mods, key].join('+');
     el.dataset.prev = el.value;
+    el.dispatchEvent(new Event('input', { bubbles: true }));
     el.blur();
   });
   el.addEventListener('keyup', e => {
@@ -1371,6 +1419,14 @@ function updatePreview() {
   $('alpha-val').textContent = $('tcalpha').value + '%';
   $('fontscale-val').textContent = $('fontscale').value + '%';
   $('ovscale-val').textContent = $('ovscale').value + '%';
+  updateSettingsSummary();
+}
+
+function updateSettingsSummary() {
+  const player = settings.player_name || $('current-player')?.textContent || '';
+  if ($('sum-player')) $('sum-player').textContent = player && player !== 'No player tracked' ? player : 'No profile';
+  if ($('sum-poll')) $('sum-poll').textContent = `${$('interval').value || 15}s${$('autoshow').checked ? ' auto-show' : ' manual'}`;
+  if ($('sum-display')) $('sum-display').textContent = `${$('fontscale').value || 100}% type / ${$('ovscale').value || 100}% window`;
 }
 
 // ---------- tabs ----------
@@ -1660,6 +1716,7 @@ async function loadSettings() {
   $('fontscale').value = settings.font_scale;
   $('ovscale').value = settings.overlay_scale ?? 100;
   $('wsport').value = settings.websocket_port;
+  syncPortValidity();
   $('civstatcolor').value = settings.civ_stats_color;
   const tc = settings.team_colors;
   ['tc1', 'tc2', 'tc3'].forEach((id, i) => { if (tc[i]) $(id).value = toHex(tc[i]); });
@@ -1715,24 +1772,54 @@ function collectCommon() {
   settings.team_colors = ['tc1', 'tc2', 'tc3'].map(id => [...fromHex($(id).value), a]);
 }
 
+function settingsControlValue(id) {
+  const el = $(id);
+  if (!el) return null;
+  return el.type === 'checkbox' ? !!el.checked : String(el.value ?? '');
+}
+function settingsSnapshot() {
+  const out = {};
+  [...SETTINGS_DIRTY_IDS].sort().forEach(id => { out[id] = settingsControlValue(id); });
+  return JSON.stringify(out);
+}
+function setSettingsDirty(dirty) {
+  $('savebar').classList.toggle('dirty', dirty);
+  $('save-btn').disabled = !dirty;
+  $('revert-btn').style.display = dirty ? '' : 'none';
+  tabButtons[0].classList.toggle('unsaved', dirty);
+  if ($('sum-save')) $('sum-save').textContent = dirty ? 'Unsaved' : 'Saved';
+  $('sum-save-box')?.classList.toggle('dirty', dirty);
+  $('sum-save-box')?.classList.toggle('good', !dirty);
+}
 function markDirty() {
-  $('savebar').classList.add('dirty');
-  $('save-btn').disabled = false;
-  $('revert-btn').style.display = '';
-  tabButtons[0].classList.add('unsaved');
+  setSettingsDirty(savedSettingsSnapshot ? settingsSnapshot() !== savedSettingsSnapshot : true);
 }
 function clearDirty() {
-  $('savebar').classList.remove('dirty');
-  $('save-btn').disabled = true;
-  $('revert-btn').style.display = 'none';
-  tabButtons[0].classList.remove('unsaved');
+  savedSettingsSnapshot = settingsSnapshot();
+  setSettingsDirty(false);
 }
 
 function validateSettings() {
-  const keys = ['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next']
-    .map(id => $(id).value.trim()).filter(Boolean);
-  if (new Set(keys.map(k => k.toLowerCase())).size !== keys.length) {
+  const hotkeyIds = ['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next'];
+  hotkeyIds.forEach(id => { $(id).classList.remove('invalid'); $(id).title = ''; });
+  const seen = new Map(), duplicates = new Set();
+  for (const id of hotkeyIds) {
+    const key = $(id).value.trim();
+    if (!key) continue;
+    const norm = key.toLowerCase();
+    if (seen.has(norm)) { duplicates.add(id); duplicates.add(seen.get(norm)); }
+    else seen.set(norm, id);
+  }
+  duplicates.forEach(id => { $(id).classList.add('invalid'); $(id).title = 'Duplicate hotkey'; });
+  if (duplicates.size) {
     toast('Two hotkeys use the same key combo', true);
+    return false;
+  }
+  const port = parseInt($('wsport').value);
+  if (isNaN(port) || port < 1024 || port > 65535) {
+    $('wsport').classList.add('invalid');
+    $('wsport').title = 'Port must be between 1024 and 65535';
+    toast('OBS websocket port must be between 1024 and 65535', true);
     return false;
   }
   return true;
@@ -1759,6 +1846,7 @@ async function save() {
     $('wsport').value = settings.websocket_port;
     $('fontscale').value = settings.font_scale;
     $('ovscale').value = settings.overlay_scale;
+    syncPortValidity();
     updatePreview();
     syncAllRanges();
     clearDirty();
@@ -3069,17 +3157,22 @@ listen('poll_error', e => {
 ['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next'].forEach(id => makeHotkeyRecorder($(id)));
 const NO_DIRTY = new Set(['search', 'bo-filter', 'bo-import-file']);
 ['tab-settings', 'tab-buildorders'].forEach(id => {
-  $(id).addEventListener('input', e => { if (!NO_DIRTY.has(e.target.id)) markDirty(); });
-  $(id).addEventListener('change', e => { if (!NO_DIRTY.has(e.target.id)) markDirty(); });
+  $(id).addEventListener('input', e => { if (!NO_DIRTY.has(e.target.id) && SETTINGS_DIRTY_IDS.has(e.target.id)) markDirty(); });
+  $(id).addEventListener('change', e => { if (!NO_DIRTY.has(e.target.id) && SETTINGS_DIRTY_IDS.has(e.target.id)) markDirty(); });
 });
 ['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'ovscale', 'interval'].forEach(id => $(id).addEventListener('input', updatePreview));
-// flag an out-of-range port as you type instead of silently clamping at save
-$('wsport').addEventListener('input', () => {
+['autoshow', 'wsport', 'hotkey'].forEach(id => {
+  $(id).addEventListener('input', updateSettingsSummary);
+  $(id).addEventListener('change', updateSettingsSummary);
+});
+function syncPortValidity() {
   const v = parseInt($('wsport').value);
   const bad = isNaN(v) || v < 1024 || v > 65535;
   $('wsport').classList.toggle('invalid', bad);
   $('wsport').title = bad ? 'Port must be between 1024 and 65535' : '';
-});
+}
+// flag an out-of-range port as you type instead of silently clamping at save
+$('wsport').addEventListener('input', syncPortValidity);
 // Ctrl+F (or a bare "/", like GitHub) focuses whichever search/filter box the active tab offers
 document.addEventListener('keydown', e => {
   const slash = e.key === '/' && !e.ctrlKey && !e.altKey
