@@ -28,11 +28,17 @@
     --shadow-card: 0 1px 0 rgba(255,255,255,.03) inset, 0 8px 22px -12px rgba(0,0,0,.6);
   }
   ::selection { background: rgba(224,186,94,.3); color: #fff; }
-  body { font-family: "Segoe UI", sans-serif; color: var(--ink); margin: 0; min-height: 100vh;
+  body { font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; color: var(--ink); margin: 0; min-height: 100vh;
+    -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
     background:
       radial-gradient(900px 420px at 85% -10%, rgba(224,186,94,.05), transparent 60%),
       radial-gradient(800px 500px at -10% 110%, rgba(61,127,176,.06), transparent 60%),
       linear-gradient(180deg, #17171d, var(--bg) 320px); }
+  #brand { display: flex; align-items: center; gap: 7px; padding: 10px 10px 9px 2px; margin-right: 8px;
+    font-size: 13px; font-weight: 800; letter-spacing: .06em; user-select: none; white-space: nowrap; }
+  #brand .crest { filter: drop-shadow(0 1px 2px rgba(0,0,0,.6)); }
+  #brand .wordmark { background: linear-gradient(180deg, #fff6cf 15%, #ecc75d 55%, #c79a2e);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   #tabs { display: flex; gap: 2px; padding: 0 14px; background: rgba(16,16,21,.92);
     border-bottom: 1px solid #2b2b34; position: sticky; top: 0; z-index: 20;
     backdrop-filter: blur(8px);
@@ -45,7 +51,7 @@
     transform: scaleX(0); opacity: 0; transition: transform .22s cubic-bezier(.22,1,.36,1), opacity .18s; }
   #tabs button.active { color: var(--ink-strong); }
   #tabs button.active::after { transform: none; opacity: 1; box-shadow: 0 0 8px rgba(224,186,94,.45); }
-  .tab { display: none; padding: 18px 22px 22px; }
+  .tab { display: none; padding: 18px 22px 22px; max-width: 1180px; margin: 0 auto; box-sizing: border-box; }
   .tab.active { display: block; animation: tab-in .22s ease-out; }
   @keyframes tab-in { from { opacity: 0; transform: translateY(4px); } }
   h2 { font-size: 13px; margin: 18px 0 8px; color: var(--gold); text-transform: uppercase; letter-spacing: .08em;
@@ -57,9 +63,19 @@
   input:focus, select:focus, textarea:focus { outline: none; border-color: var(--blue);
     box-shadow: 0 0 0 2px rgba(61,127,176,.25); }
   input[type=color] { padding: 1px; width: 40px; height: 26px; cursor: pointer; }
-  input[type=range] { padding: 0; border: none; background: none; }
+  input[type=range] { padding: 0; border: none; background: none; -webkit-appearance: none; height: 18px; }
+  input[type=range]::-webkit-slider-runnable-track { height: 5px; border-radius: 3px;
+    background: linear-gradient(90deg, #3d7fb0 var(--fill, 50%), #33333d var(--fill, 50%));
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.4); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; margin-top: -5px; width: 15px; height: 15px;
+    border-radius: 50%; background: linear-gradient(180deg, #7ab6ff, #3d7fb0); cursor: pointer;
+    box-shadow: 0 1px 4px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.35); transition: transform .12s; }
+  input[type=range]:hover::-webkit-slider-thumb { transform: scale(1.18); }
+  input[type=range]:focus-visible { outline: none; }
+  input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px rgba(61,127,176,.35), 0 1px 4px rgba(0,0,0,.55); }
   button { cursor: pointer; }
-  button:hover { background: #353541; border-color: #515160; }
+  button:not(.primary) { background: linear-gradient(180deg, #2e2e37, #26262e); }
+  button:not(.primary):hover { background: linear-gradient(180deg, #373741, #2e2e38); border-color: #515160; }
   button:active { transform: translateY(1px); }
   button.primary { background: linear-gradient(180deg, #36719f, #2a587f); border-color: #4a8cbd;
     color: #fff; font-weight: 600; box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 2px 6px -2px rgba(0,0,0,.5); }
@@ -94,16 +110,17 @@
   .bo-item .cyc { opacity: .5; flex: none; cursor: pointer; font-size: 14px; }
   .bo-item .cyc.on { opacity: 1; color: #6fe04a; }
   .bo-item .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #6fe04a; flex: none;
-                       box-shadow: 0 0 5px #6fe04a; }
+                       box-shadow: 0 0 5px #6fe04a; animation: pulse 1.6s infinite; }
   .bo-empty { padding: 22px 12px; text-align: center; line-height: 1.6; }
   .bo-empty::before { content: "📜"; display: block; font-size: 22px; opacity: .5; margin-bottom: 6px; }
+  .bo-empty.match::before { content: "⚔️"; }
   #bo-g-results { max-height: 280px; overflow: auto; border: 1px solid #32323c; border-radius: 8px; margin-top: 8px; }
   #bo-g-results:empty { display: none; }
   .bo-item .bo-sub { font-weight: 400; font-size: 12px; }
   .bo-item .imp-btn { flex: none; padding: 2px 10px; }
   .bo-sub a.by-author { color: #7ab6ff; text-decoration: none; }
   .bo-sub a.by-author:hover { text-decoration: underline; }
-  #bo-content { width: 100%; height: 220px; font-family: Consolas, monospace; font-size: 12px; box-sizing: border-box;
+  #bo-content { width: 100%; height: 220px; font-family: "Cascadia Code", "Cascadia Mono", Consolas, monospace; font-size: 12px; box-sizing: border-box;
                 margin: 8px 0; resize: vertical; }
   #bo-content.invalid { border-color: #e0452f; }
   #bo-format.ok { background: rgba(72,189,33,.18); color: #6fe04a; }
@@ -133,6 +150,7 @@
   .rand-box { display: inline-block; text-align: center; margin: 0 24px 24px 0; vertical-align: top;
     background: linear-gradient(180deg, #26262e, #222129); border: 1px solid var(--card-border);
     border-radius: var(--radius); padding: 20px 26px; box-shadow: var(--shadow-card); min-width: 300px; }
+  .rand-box > button { padding: 10px 20px; font-size: 14px; border-radius: 9px; }
   .rand-box img { display: block; margin: 14px auto 4px; max-width: 270px; max-height: 270px; border-radius: 8px;
     box-shadow: 0 0 0 1px rgba(230,198,100,.35), 0 8px 22px -8px rgba(0,0,0,.7);
     animation: rand-pop .3s cubic-bezier(.22,1,.36,1); }
@@ -160,7 +178,9 @@
   .game-card.res-loss .ribbon { background: linear-gradient(180deg, #ef5840, #c0341f); box-shadow: 1px 0 6px -1px rgba(224,69,47,.5); }
   .game-card.res-live .ribbon { background: linear-gradient(180deg, #ffc845, #e09b00); box-shadow: 1px 0 6px -1px rgba(255,179,0,.5); }
   .game-map { width: 110px; flex: none; object-fit: cover; align-self: stretch;
-              -webkit-mask-image: linear-gradient(to left, transparent, #000 70%); }
+              -webkit-mask-image: linear-gradient(to left, transparent, #000 70%);
+              transition: transform .35s cubic-bezier(.22,1,.36,1); }
+  .game-card:hover .game-map { transform: scale(1.06); }
   .game-main { flex: 1; padding: 10px 14px; min-width: 0; }
   .game-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; flex-wrap: wrap; }
   .game-head .map-name { font-weight: 700; font-size: 14px; color: #fff; }
@@ -267,6 +287,13 @@
   #ov-preview img { height: 16px; vertical-align: middle; border-radius: 2px; }
   .savebar { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin: 14px 0 4px; }
   code { background: #1a1a20; padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+  kbd { font: 600 10px/1.5 "Segoe UI Variable Text", "Segoe UI", sans-serif; color: #cfd0d8;
+    background: linear-gradient(180deg, #2e2e38, #26262e); border: 1px solid #41414d; border-bottom-width: 2px;
+    border-radius: 4px; padding: 1px 5px; box-shadow: 0 1px 1px rgba(0,0,0,.35); }
+  .skel-card { height: 88px; border-radius: 10px; margin: 10px 0; border: 1px solid #2c2c35;
+    background: linear-gradient(110deg, #22222a 30%, #2b2b34 45%, #22222a 60%) 0 0 / 200% 100%;
+    animation: skel 1.2s linear infinite; }
+  @keyframes skel { to { background-position: -200% 0; } }
   #toast { position: fixed; right: 18px; bottom: 44px; background: linear-gradient(180deg, #36719f, #2a587f);
     color: #fff; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 600;
     border: 1px solid rgba(255,255,255,.14);
@@ -283,7 +310,7 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-corner { background: transparent; }
   .card { transition: border-color .18s, box-shadow .18s; }
-  .card:hover { border-color: var(--card-border-hover); }
+  .card:hover, .card:focus-within { border-color: var(--card-border-hover); }
   input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid #3d7fb0; outline-offset: 1px; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
   input.invalid { border-color: #e0452f; background: #34201e; }
@@ -350,6 +377,7 @@
 </head>
 <body>
   <div id="tabs">
+    <span id="brand"><span class="crest">⚜️</span><span class="wordmark">AoE IV Overlay</span></span>
     <button data-tab="settings" class="active">⚙️ Settings</button>
     <button data-tab="games">⚔️ Games</button>
     <button data-tab="buildorders">📜 Build orders</button>
@@ -447,13 +475,13 @@
 
     <div class="savebar" id="savebar">
       <span class="dirty-pill" id="dirty-pill">● Unsaved changes</span>
-      <span class="muted">Ctrl+S</span>
+      <span class="muted"><kbd>Ctrl</kbd>+<kbd>S</kbd></span>
       <button id="save-btn" class="primary" disabled>Save settings</button>
     </div>
 
     <div class="card" style="margin-top:12px">
       <h3>⚔️ Last match</h3>
-      <div id="last-match"><div class="muted">No match data yet — waiting for the first poll…</div></div>
+      <div id="last-match"><div class="bo-empty match muted">No match data yet — your latest game will appear here after the first poll.</div></div>
     </div>
   </div>
 
@@ -626,6 +654,7 @@
   <!-- ============ OVERRIDE ============ -->
   <div class="tab" id="tab-override">
     <h2>Caster override</h2>
+    <div class="muted" style="margin: -2px 0 10px">Hand-edit what the overlay shows — perfect for casting games you're not playing in.</div>
     <div class="row"><label>Map</label><input id="ov-map" style="width:200px"></div>
     <div class="ov-grid" id="ov-grid">
       <span class="ov-head">Name</span><span class="ov-head">Civ</span><span class="ov-head">Team</span>
@@ -671,10 +700,18 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const setStatus = t => $('status').textContent = t;
 
+// Painted slider tracks: keep the filled portion in sync with the value
+function syncRangeFill(el) {
+  const min = +el.min || 0, max = +el.max || 100;
+  el.style.setProperty('--fill', ((el.value - min) / (max - min) * 100) + '%');
+}
+function syncAllRanges() { document.querySelectorAll('input[type=range]').forEach(syncRangeFill); }
+document.addEventListener('input', e => { if (e.target.type === 'range') syncRangeFill(e.target); });
+
 let toastTimer = null;
 function toast(msg, err = false) {
   const t = $('toast');
-  t.textContent = msg;
+  t.textContent = (err ? '⚠ ' : '✓ ') + msg;
   t.className = (err ? 'err ' : '') + 'show';
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
@@ -726,13 +763,32 @@ function updatePreview() {
 }
 
 // ---------- tabs ----------
-document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
-  document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-  b.classList.add('active');
-  $('tab-' + b.dataset.tab).classList.add('active');
-  if (b.dataset.tab === 'games') loadGames();
+const tabButtons = [...document.querySelectorAll('#tabs button')];
+tabButtons.forEach((b, i) => {
+  b.title = `Ctrl+${i + 1}`;
+  b.onclick = () => {
+    tabButtons.forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    $('tab-' + b.dataset.tab).classList.add('active');
+    if (b.dataset.tab === 'games') loadGames();
+    try { localStorage.setItem('activeTab', b.dataset.tab); } catch (e) { /* storage unavailable */ }
+  };
 });
+// Ctrl+1..5 jumps between tabs; the last open tab is restored on launch
+document.addEventListener('keydown', e => {
+  if (!e.ctrlKey || e.altKey || e.shiftKey) return;
+  if (e.target.classList?.contains('hotkey-input')) return;
+  const i = '12345'.indexOf(e.key);
+  if (i >= 0 && tabButtons[i]) { e.preventDefault(); tabButtons[i].click(); }
+});
+function restoreTab() {
+  try {
+    const last = localStorage.getItem('activeTab');
+    const btn = last && tabButtons.find(b => b.dataset.tab === last);
+    if (btn && !btn.classList.contains('active')) btn.click();
+  } catch (e) { /* storage unavailable */ }
+}
 
 // ---------- color helpers ----------
 const toHex = c => '#' + [c[0], c[1], c[2]].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
@@ -782,6 +838,7 @@ async function loadSettings() {
   renderBoList();
   validateBoContent();
   updateBoPreview();
+  syncAllRanges();
   clearDirty();
 }
 
@@ -834,6 +891,7 @@ async function save() {
     $('fontscale').value = settings.font_scale;
     $('ovscale').value = settings.overlay_scale;
     updatePreview();
+    syncAllRanges();
     clearDirty();
     toast('Settings saved');
   } catch (e) {
@@ -1179,12 +1237,19 @@ function renderGames() {
       </div>`;
     }
   }
-  list.innerHTML = html || '<div class="muted">No games match the current filters.</div>';
+  list.innerHTML = html || `<div class="bo-empty muted">${allGames.length
+    ? 'No games match the current filters.<br><button id="gf-clear" style="margin-top:10px">Clear filters</button>'
+    : 'No games yet. Track a player on the ⚙️ Settings tab and your match history will appear here.'}</div>`;
+  const clr = $('gf-clear');
+  if (clr) clr.onclick = () => {
+    $('gf-mode').value = ''; $('gf-result').value = ''; $('gf-text').value = '';
+    renderGames();
+  };
 }
 
 async function loadGames() {
   const list = $('games-list');
-  list.innerHTML = '<div class="muted">Loading…</div>';
+  list.innerHTML = '<div class="skel-card"></div>'.repeat(4);
   try {
     const data = await invoke('get_match_history');
     allGames = data.games || [];
@@ -1645,6 +1710,7 @@ $('bo-reset-style').onclick = () => {
   $('bo-shownext').checked = true;
   $('bo-fontsize-val').textContent = '12pt';
   $('bo-opacity-val').textContent = '75%';
+  syncAllRanges();
   updateBoPreview();
   markDirty();
   toast('Appearance reset to defaults — click Save to apply');
@@ -1827,7 +1893,9 @@ $('rand-civ').onclick = () => {
   let c;
   do { c = CIVS[Math.floor(Math.random() * CIVS.length)]; } while (c === lastCiv && CIVS.length > 1);
   lastCiv = c;
-  $('rand-civ-name').textContent = c;
+  const nm = $('rand-civ-name');
+  nm.textContent = c;
+  nm.style.animation = 'none'; void nm.offsetWidth; nm.style.animation = 'rand-pop .3s cubic-bezier(.22,1,.36,1)';
   const img = $('rand-civ-img');
   img.src = `flags/${c}.webp`; img.style.display = '';
   img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
@@ -1836,7 +1904,9 @@ $('rand-map').onclick = () => {
   let m;
   do { m = MAPS[Math.floor(Math.random() * MAPS.length)]; } while (m === lastMap && MAPS.length > 1);
   lastMap = m;
-  $('rand-map-name').textContent = m;
+  const nm = $('rand-map-name');
+  nm.textContent = m;
+  nm.style.animation = 'none'; void nm.offsetWidth; nm.style.animation = 'rand-pop .3s cubic-bezier(.22,1,.36,1)';
   const img = $('rand-map-img');
   img.src = `maps/${m.replace(/ /g, '_')}.png`; img.style.display = '';
   img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
@@ -1913,6 +1983,7 @@ document.addEventListener('keydown', e => {
 buildOverrideGrid();
 loadSettings().then(async () => {
   $('gf-limit').value = String(settings.max_games_history ?? 50);
+  restoreTab();
   invoke('get_app_version').then(v => {
     const span = document.createElement('span');
     span.style.cssText = 'float:right; opacity:.7';
