@@ -391,6 +391,7 @@ fn toggle_window(app: &AppHandle, label: &str) {
 fn register_hotkeys(app: &AppHandle, s: &Settings) {
     let gs = app.global_shortcut();
     let _ = gs.unregister_all();
+    let mut failed: Vec<String> = Vec::new();
     for (key, action) in s.hotkeys() {
         let result = gs.on_shortcut(key.as_str(), move |app, _shortcut, event| {
             if event.state() == ShortcutState::Pressed {
@@ -399,7 +400,13 @@ fn register_hotkeys(app: &AppHandle, s: &Settings) {
         });
         if let Err(e) = result {
             log::error!("failed to register hotkey '{key}': {e}");
+            failed.push(key);
         }
+    }
+    // Surface failures in the control panel — a silently dead hotkey is
+    // indistinguishable from a working one until mid-game.
+    if !failed.is_empty() {
+        let _ = app.emit("hotkey_error", failed);
     }
 }
 
@@ -508,8 +515,12 @@ pub fn run() {
                 use tauri::tray::TrayIconBuilder;
                 let open = MenuItemBuilder::with_id("open", "Open control panel").build(app)?;
                 let ovl = MenuItemBuilder::with_id("overlay", "Show / hide overlay").build(app)?;
+                let bo =
+                    MenuItemBuilder::with_id("buildorder", "Show / hide build order").build(app)?;
                 let quit = MenuItemBuilder::with_id("quit", "Quit").build(app)?;
-                let menu = MenuBuilder::new(app).items(&[&open, &ovl, &quit]).build()?;
+                let menu = MenuBuilder::new(app)
+                    .items(&[&open, &ovl, &bo, &quit])
+                    .build()?;
                 TrayIconBuilder::new()
                     .icon(app.default_window_icon().unwrap().clone())
                     .tooltip("AoE4 Overlay")
@@ -524,6 +535,7 @@ pub fn run() {
                             }
                         }
                         "overlay" => toggle_window(app, "overlay"),
+                        "buildorder" => toggle_window(app, "buildorder"),
                         "quit" => app.exit(0),
                         _ => {}
                     })

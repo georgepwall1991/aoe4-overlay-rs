@@ -22,6 +22,21 @@ powered by the [aoe4world.com](https://aoe4world.com) API.
   automatically), or browse/search aoe4guides by civ and rating right in the app.
 - **Auto-detection** — polls `https://aoe4world.com/api/v0/players/{id}/games/last`
   (default every 15 s) and pushes new-match data to the overlay automatically.
+  Backs off automatically while the API is unreachable.
+- **Games tab** — match history with mode/result/text filters, record, streak,
+  rating trend sparkline, and winrate breakdowns by civ and by map.
+- **Tray menu** — open the panel or toggle either overlay from the system tray.
+
+### Handy shortcuts
+
+| Where | Keys | Action |
+| --- | --- | --- |
+| Anywhere | `Ctrl+S` | Save settings |
+| BO editor | `Ctrl+S` / `Ctrl+Enter` | Save the build order |
+| BO name field | `Enter` | Save the build order |
+| BO library filter | `↑` `↓` / `Enter` / `Esc` | Browse / show on overlay / clear |
+| Player search | `↑` `↓` / `Enter` / `Esc` | Pick a result / close |
+| Games filter box | `Esc` | Clear the text filter |
 
 ## Build & run
 

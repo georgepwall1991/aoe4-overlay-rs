@@ -383,6 +383,7 @@
         <div class="stat-sub">rating trend <span id="gs-net"></span></div>
       </div>
       <div class="stat-block civs" id="gs-civs" style="flex:2"></div>
+      <div class="stat-block civs" id="gs-maps" style="flex:2"></div>
     </div>
     <div id="games-list"></div>
   </div>
@@ -997,6 +998,22 @@ function renderGameStats(games, pid) {
     const p = Math.round(v.w / v.n * 100);
     return `<div class="civ-row">${civFlag(c)}<span class="bar"><i style="width:${p}%"></i></span>
       <span class="pct">${p}% · ${v.n}g</span></div>`;
+  }).join('') || '';
+  // winrate by map, most-played first
+  const byMap = {};
+  games.forEach(g => {
+    const r = gameResult(g, pid);
+    if (r.result !== 'win' && r.result !== 'loss') return;
+    const m = g.map || '?';
+    byMap[m] = byMap[m] || { n: 0, w: 0 };
+    byMap[m].n++;
+    if (r.result === 'win') byMap[m].w++;
+  });
+  const topMaps = Object.entries(byMap).sort((a, b) => b[1].n - a[1].n).slice(0, 4);
+  $('gs-maps').innerHTML = topMaps.map(([m, v]) => {
+    const p = Math.round(v.w / v.n * 100);
+    return `<div class="civ-row"><span style="width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap" title="${esc(m)}">${esc(m)}</span>
+      <span class="bar"><i style="width:${p}%"></i></span><span class="pct">${p}% · ${v.n}g</span></div>`;
   }).join('') || '';
 }
 
@@ -1747,6 +1764,9 @@ listen('poll_ok', e => {
   $('poll-dot').className = 'dot ' + (e.payload ? 'live' : 'ok');
   $('poll-dot').title = `Last successful poll: ${new Date().toLocaleTimeString()}`;
   setStatus(`Polling OK ${e.payload ? '(game ongoing)' : ''} — ${new Date().toLocaleTimeString()}`);
+});
+listen('hotkey_error', e => {
+  toast(`Could not register hotkey${e.payload.length > 1 ? 's' : ''}: ${e.payload.join(', ')} — already in use by another app?`, true);
 });
 listen('poll_error', e => {
   $('poll-dot').className = 'dot err';
