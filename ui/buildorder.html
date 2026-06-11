@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; height: 100%; }
+  #panel { box-sizing: border-box; height: 100%; padding: 10px 14px; border-radius: 8px;
+           font-family: Arial, sans-serif; overflow: hidden; }
+  #title { font-weight: bold; display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  #title img { height: 1.6em; border-radius: 2px; }
+  #resources { display: flex; gap: 14px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .res { display: flex; align-items: center; gap: 4px; }
+  .res img { height: var(--imgh, 24px); }
+  #notes div { margin: 3px 0; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  #notes img { height: var(--imgh, 24px); vertical-align: middle; }
+  body.edit #panel { outline: 3px dashed #ffb300; outline-offset: -3px; }
+  #edit-hint { display: none; position: absolute; top: 2px; left: 50%; transform: translateX(-50%);
+               background: #ffb300; color: #000; font-size: 12px; padding: 2px 10px; border-radius: 4px; z-index: 10; }
+  body.edit #edit-hint { display: block; }
+</style>
+</head>
+<body>
+  <div id="edit-hint" data-tauri-drag-region>Drag to move / resize from edges</div>
+  <div id="panel" data-tauri-drag-region>
+    <div id="title"></div>
+    <div id="resources"></div>
+    <div id="notes"></div>
+  </div>
+
+<script>
+const { invoke } = window.__TAURI__.core;
+const { listen } = window.__TAURI__.event;
+let settings = null;
+let current = null;
+
+const RES_ICONS = {
+  food: 'bo_img/resource/resource_food.webp',
+  wood: 'bo_img/resource/resource_wood.webp',
+  gold: 'bo_img/resource/resource_gold.webp',
+  stone: 'bo_img/resource/resource_stone.webp',
+  villager: 'bo_img/unit_worker/villager.webp',
+  population: 'bo_img/building_economy/house.webp',
+  time: 'bo_img/time/time.png',
+};
+const AGE_ICONS = {
+  1: 'bo_img/age/age_1.webp', 2: 'bo_img/age/age_2.webp',
+  3: 'bo_img/age/age_3.webp', 4: 'bo_img/age/age_4.webp',
+};
+
+// Try alternate extensions before giving up and showing the raw token as text.
+function imgFallback(img, token) {
+  const order = ['.webp', '.png', '.jpg'];
+  const cur = img.src.slice(img.src.lastIndexOf('.'));
+  const next = order[order.indexOf(cur) + 1];
+  if (next) img.src = img.src.slice(0, img.src.lastIndexOf('.')) + next;
+  else img.outerHTML = token;
+}
+
+function rgb(c) { return `rgb(${c[0]},${c[1]},${c[2]})`; }
+
+function applyStyle() {
+  if (!settings) return;
+  const p = document.getElementById('panel');
+  const [r, g, b] = settings.bo_color_background;
+  p.style.background = `rgba(${r},${g},${b},${settings.bo_opacity})`;
+  p.style.color = rgb(settings.bo_text_color);
+  p.style.fontSize = settings.bo_font_size + 'pt';
+  document.body.style.setProperty('--imgh', Math.round(settings.bo_font_size * 2) + 'px');
+  document.getElementById('title').style.color = rgb(settings.bo_title_color);
+  document.getElementById('title').style.display = settings.bo_show_title ? '' : 'none';
+}
+
+// Original @image@ token syntax: image path relative to img/build_order/
+function renderLine(line) {
+  const parts = String(line).split('@');
+  let html = '';
+  parts.forEach((part, i) => {
+    if (!part) return;
+    if (i % 2 === 1) {
+      let clean = part.replace(/['"<>]/g, '');
+      if (!/\.\w+$/.test(clean)) clean += '.webp';
+      html += `<img src="bo_img/${clean}" onerror="imgFallback(this, '${clean.split('/').pop().split('.')[0]}')">`;
+    } else {
+      html += `<span>${part}</span>`;
+    }
+  });
+  return html;
+}
+
+function render() {
+  const titleEl = document.getElementById('title');
+  const resEl = document.getElementById('resources');
+  const notesEl = document.getElementById('notes');
+  titleEl.innerHTML = ''; resEl.innerHTML = ''; notesEl.innerHTML = '';
+  if (!current) { titleEl.textContent = 'No build order selected'; return; }
+
+  let bo = null;
+  try { bo = JSON.parse(current.content); } catch (e) { /* TXT format */ }
+
+  if (bo && Array.isArray(bo.build_order)) {
+    const steps = bo.build_order;
+    const step = Math.min(current.step ?? 0, steps.length - 1);
+    const s = steps[step];
+    const civ = Array.isArray(bo.civilization) ? bo.civilization[0] : bo.civilization;
+    titleEl.innerHTML =
+      (civ ? `<img src="flags/${civ}.webp" onerror="this.style.display='none'">` : '') +
+      `<span>${current.name} — ${step + 1}/${steps.length}</span>`;
+    const r = s.resources || {};
+    const res = [];
+    for (const k of ['food', 'wood', 'gold', 'stone']) {
+      if ((r[k] ?? -1) >= 0) res.push(`<span class="res"><img src="${RES_ICONS[k]}">${r[k]}</span>`);
+    }
+    if (s.villager_count >= 0)
+      res.push(`<span class="res"><img src="${RES_ICONS.villager}">${s.villager_count}</span>`);
+    if (s.population_count >= 0)
+      res.push(`<span class="res"><img src="${RES_ICONS.population}">${s.population_count}</span>`);
+    if (s.age >= 1 && s.age <= 4)
+      res.push(`<span class="res"><img src="${AGE_ICONS[s.age]}"></span>`);
+    if (s.time)
+      res.push(`<span class="res"><img src="${RES_ICONS.time}">${s.time}</span>`);
+    resEl.innerHTML = res.join('');
+    notesEl.innerHTML = (s.notes || []).map(n => `<div>${renderLine(n)}</div>`).join('');
+  } else {
+    // Plain TXT build order
+    titleEl.textContent = current.name;
+    notesEl.innerHTML = current.content.split('\n').map(l => `<div>${l || '&nbsp;'}</div>`).join('');
+  }
+}
+
+listen('bo_data', e => { current = e.payload; render(); });
+listen('settings_changed', e => { settings = e.payload; applyStyle(); render(); });
+listen('edit_mode', e => {
+  if (e.payload.window === 'buildorder') document.body.classList.toggle('edit', !!e.payload.edit);
+});
+invoke('get_settings').then(s => { settings = s; applyStyle(); render(); });
+invoke('get_bo').then(b => { if (b && !current) { current = b; render(); } });
+</script>
+</body>
+</html>

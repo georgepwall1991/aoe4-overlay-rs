@@ -56,6 +56,26 @@ pub async fn get_last_game(client: &reqwest::Client, profile_id: u64) -> Result<
     Ok(data)
 }
 
+pub async fn get_match_history(
+    client: &reqwest::Client,
+    profile_id: u64,
+    limit: u32,
+) -> Result<Value, String> {
+    let url = format!("{BASE}/players/{profile_id}/games?limit={limit}");
+    let data: Value = client
+        .get(&url)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .json()
+        .await
+        .map_err(|e| e.to_string())?;
+    if data.get("error").is_some() {
+        return Err(data["error"].to_string());
+    }
+    Ok(data)
+}
+
 /// Transform a raw /games/last response into the overlay payload.
 /// Mirrors `process_game()` from the original Python app.
 pub fn process_game(game: &Value, main_profile_id: u64) -> Value {

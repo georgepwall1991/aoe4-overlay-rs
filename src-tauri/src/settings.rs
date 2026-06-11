@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -13,6 +14,34 @@ pub struct Settings {
     /// Saved overlay geometry: [x, y, w, h]
     pub overlay_geometry: Option<[i32; 4]>,
     pub show_overlay_on_new_game: bool,
+    pub max_games_history: u32,
+
+    // Appearance
+    /// RGBA team colors (0-255 rgb, 0-1 alpha), team 1 first
+    pub team_colors: Vec<[f64; 4]>,
+    pub civ_stats_color: String,
+    /// Overlay font scale percent (100 = default)
+    pub font_scale: u32,
+
+    // OBS websocket streaming
+    pub websocket_port: u16,
+
+    // Build order overlay
+    pub bo_hotkey_show: String,
+    pub bo_hotkey_cycle: String,
+    pub bo_hotkey_prev_step: String,
+    pub bo_hotkey_next_step: String,
+    pub bo_show_title: bool,
+    pub bo_font_size: u32,
+    pub bo_text_color: [u8; 3],
+    pub bo_title_color: [u8; 3],
+    pub bo_color_background: [u8; 3],
+    pub bo_opacity: f64,
+    pub bo_geometry: Option<[i32; 4]>,
+    /// name -> raw TXT or RTS_Overlay JSON content
+    pub buildorders: BTreeMap<String, String>,
+    /// build order names excluded from hotkey cycling
+    pub unchecked_buildorders: Vec<String>,
 }
 
 impl Default for Settings {
@@ -24,9 +53,58 @@ impl Default for Settings {
             overlay_hotkey: "Alt+O".into(),
             overlay_geometry: None,
             show_overlay_on_new_game: true,
+            max_games_history: 50,
+            team_colors: vec![
+                [74.0, 255.0, 2.0, 0.35],
+                [3.0, 179.0, 255.0, 0.35],
+                [255.0, 0.0, 0.0, 0.35],
+            ],
+            civ_stats_color: "#BC8AEA".into(),
+            font_scale: 100,
+            websocket_port: 7307,
+            bo_hotkey_show: String::new(),
+            bo_hotkey_cycle: String::new(),
+            bo_hotkey_prev_step: String::new(),
+            bo_hotkey_next_step: String::new(),
+            bo_show_title: true,
+            bo_font_size: 12,
+            bo_text_color: [255, 255, 255],
+            bo_title_color: [255, 255, 255],
+            bo_color_background: [30, 30, 30],
+            bo_opacity: 0.75,
+            bo_geometry: None,
+            buildorders: BTreeMap::from([(
+                "Example: villagers".into(),
+                DEFAULT_BO.trim().into(),
+            )]),
+            unchecked_buildorders: Vec::new(),
         }
     }
 }
+
+const DEFAULT_BO: &str = r#"
+{
+  "civilization": "English",
+  "name": "Example: villagers",
+  "build_order": [
+    {
+      "population_count": 7,
+      "villager_count": 6,
+      "age": 1,
+      "resources": { "food": 6, "wood": 0, "gold": 0, "stone": 0 },
+      "notes": ["Send @unit_worker/villager@ to sheep", "Build a house with first villager"]
+    },
+    {
+      "population_count": 12,
+      "villager_count": 11,
+      "age": 1,
+      "resources": { "food": 8, "wood": 3, "gold": 0, "stone": 0 },
+      "notes": ["3 villagers to wood", "Take map control with scout"],
+      "time": "3:00"
+    }
+  ]
+}
+"#;
 
 impl Settings {
     pub fn path(config_dir: &PathBuf) -> PathBuf {
@@ -47,5 +125,20 @@ impl Settings {
                 log::error!("failed to save settings: {e}");
             }
         }
+    }
+
+    pub fn hotkeys(&self) -> Vec<(String, crate::HotkeyAction)> {
+        use crate::HotkeyAction::*;
+        [
+            (&self.overlay_hotkey, ToggleOverlay),
+            (&self.bo_hotkey_show, BoToggle),
+            (&self.bo_hotkey_cycle, BoCycle),
+            (&self.bo_hotkey_prev_step, BoPrevStep),
+            (&self.bo_hotkey_next_step, BoNextStep),
+        ]
+        .into_iter()
+        .filter(|(k, _)| !k.is_empty())
+        .map(|(k, a)| (k.clone(), a))
+        .collect()
     }
 }

@@ -5,82 +5,256 @@
 <title>AoE4 Overlay — Control Panel</title>
 <style>
   :root { color-scheme: dark; }
-  body { font-family: "Segoe UI", sans-serif; background: #1e1e24; color: #ddd; margin: 0; padding: 18px 22px; }
-  h1 { font-size: 18px; margin: 0 0 14px; }
-  h2 { font-size: 14px; margin: 22px 0 8px; color: #9bd; border-bottom: 1px solid #333; padding-bottom: 4px; }
-  input, button, select { background: #2a2a32; color: #eee; border: 1px solid #444; border-radius: 4px; padding: 6px 10px; font-size: 13px; }
+  body { font-family: "Segoe UI", sans-serif; background: #1e1e24; color: #ddd; margin: 0; }
+  #tabs { display: flex; background: #15151a; border-bottom: 1px solid #333; }
+  #tabs button { background: none; border: none; color: #aaa; padding: 10px 18px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; }
+  #tabs button.active { color: #fff; border-bottom-color: #3d7fb0; }
+  .tab { display: none; padding: 16px 22px; }
+  .tab.active { display: block; }
+  h2 { font-size: 14px; margin: 18px 0 8px; color: #9bd; border-bottom: 1px solid #333; padding-bottom: 4px; }
+  h2:first-child { margin-top: 0; }
+  input, button, select, textarea { background: #2a2a32; color: #eee; border: 1px solid #444; border-radius: 4px; padding: 6px 10px; font-size: 13px; }
+  input[type=color] { padding: 1px; width: 40px; height: 26px; }
+  input[type=range] { padding: 0; }
   button { cursor: pointer; }
   button:hover { background: #3a3a44; }
   button.primary { background: #2d5f8a; border-color: #3d7fb0; }
-  #results { margin-top: 8px; }
   .result { padding: 6px 10px; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; }
   .result:hover { background: #33333d; }
   .muted { color: #888; font-size: 12px; }
   #current-player { color: #8f8; }
-  #status { font-size: 12px; color: #888; margin-top: 4px; }
-  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 13px; }
-  td, th { padding: 4px 8px; text-align: left; border-bottom: 1px solid #2c2c34; }
+  #status { font-size: 12px; color: #888; padding: 6px 22px; border-top: 1px solid #2a2a30; position: sticky; bottom: 0; background: #1e1e24; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 12px; }
+  td, th { padding: 4px 8px; text-align: left; border-bottom: 1px solid #2c2c34; vertical-align: top; }
   th { color: #9bd; font-weight: 600; }
   .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
-  label { font-size: 13px; min-width: 180px; }
+  label { font-size: 13px; min-width: 200px; }
+  .win { color: #48bd21; } .loss { color: #ff6060; }
+  a { color: #7ab6ff; }
+  .hotkey-input { width: 130px; }
+  #bo-list { width: 100%; min-height: 90px; }
+  #bo-content { width: 100%; height: 220px; font-family: Consolas, monospace; font-size: 12px; box-sizing: border-box; }
+  .ov-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; font-size: 12px; margin-top: 8px; }
+  .ov-grid input, .ov-grid select { width: 100%; box-sizing: border-box; padding: 4px 6px; }
+  .ov-head { color: #9bd; font-weight: 600; }
+  .rand-box { display: inline-block; text-align: center; margin-right: 40px; vertical-align: top; }
+  .rand-box img { display: block; margin: 10px auto; max-width: 270px; max-height: 270px; border-radius: 6px; }
+  .rand-name { font-size: 20px; font-weight: bold; }
 </style>
 </head>
 <body>
-  <h1>AoE4 Overlay <span class="muted">(Rust / Tauri)</span></h1>
+  <div id="tabs">
+    <button data-tab="settings" class="active">Settings</button>
+    <button data-tab="games">Games</button>
+    <button data-tab="buildorders">Build orders</button>
+    <button data-tab="override">Override</button>
+    <button data-tab="random">Randomize</button>
+  </div>
 
-  <h2>Player</h2>
-  <div class="row">
-    <input id="search" placeholder="Search player name or profile ID…" style="flex:1">
-    <button id="search-btn" class="primary">Search</button>
-  </div>
-  <div id="results"></div>
-  <div class="row">Tracking: <span id="current-player">none</span></div>
+  <!-- ============ SETTINGS ============ -->
+  <div class="tab active" id="tab-settings">
+    <h2>Player</h2>
+    <div class="row">
+      <input id="search" placeholder="Search player name or profile ID…" style="flex:1">
+      <button id="search-btn" class="primary">Search</button>
+    </div>
+    <div id="results"></div>
+    <div class="row">Tracking: <span id="current-player">none</span>&nbsp;<a id="profile-link" href="#" target="_blank" style="display:none">aoe4world profile</a></div>
 
-  <h2>Overlay</h2>
-  <div class="row">
-    <button id="toggle-btn">Show / Hide overlay</button>
-    <button id="edit-btn">Reposition overlay</button>
-    <button id="refresh-btn">Refresh now</button>
+    <h2>Overlay</h2>
+    <div class="row">
+      <button id="toggle-btn">Show / Hide overlay</button>
+      <button id="edit-btn">Reposition overlay</button>
+      <button id="refresh-btn">Refresh now</button>
+    </div>
+    <div class="row"><label>Hotkey: show/hide overlay</label><input id="hotkey" class="hotkey-input" placeholder="e.g. Alt+O"></div>
+    <div class="row"><label>Poll interval (seconds)</label><input id="interval" type="number" min="5" style="width:80px"></div>
+    <div class="row"><label>Show overlay on new game</label><input id="autoshow" type="checkbox"></div>
+    <div class="row"><label>Overlay font scale (%)</label><input id="fontscale" type="number" min="50" max="300" style="width:80px"></div>
+    <div class="row"><label>Team 1 / 2 / 3 colors</label>
+      <input id="tc1" type="color"><input id="tc2" type="color"><input id="tc3" type="color">
+      <span class="muted">opacity</span><input id="tcalpha" type="range" min="0" max="100" style="width:100px">
+    </div>
+    <div class="row"><label>Civ stats color</label><input id="civstatcolor" type="color"></div>
+    <div class="row"><label>OBS websocket port</label><input id="wsport" type="number" style="width:90px">
+      <span class="muted">browser-source: obs-html\overlay.html (restart app after change)</span></div>
+    <div class="row"><button id="save-btn" class="primary">Save settings</button></div>
+
+    <h2>Last match</h2>
+    <div id="match-info" class="muted">No match data yet.</div>
+    <table id="match-table" style="display:none">
+      <thead><tr><th>Team</th><th>Player</th><th>Civ</th><th>Rating</th><th>Rank</th><th>Winrate</th><th>W/L</th><th>Civ WR</th></tr></thead>
+      <tbody></tbody>
+    </table>
   </div>
-  <div class="row">
-    <label>Hotkey (show/hide)</label>
-    <input id="hotkey" style="width:120px">
+
+  <!-- ============ GAMES ============ -->
+  <div class="tab" id="tab-games">
+    <div class="row"><button id="games-refresh" class="primary">Refresh match history</button></div>
+    <table id="games-table">
+      <thead><tr><th>Team 1</th><th>Team 2</th><th>Map</th><th>Started</th><th>Mode</th><th>Result</th><th>±Rating</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
   </div>
-  <div class="row">
-    <label>Poll interval (seconds)</label>
-    <input id="interval" type="number" min="5" style="width:80px">
+
+  <!-- ============ BUILD ORDERS ============ -->
+  <div class="tab" id="tab-buildorders">
+    <h2>Build orders</h2>
+    <div class="row">
+      <select id="bo-list" size="5" style="flex:1; min-height:110px"></select>
+    </div>
+    <div class="row">
+      <input id="bo-name" placeholder="Build order name" style="flex:1">
+      <button id="bo-add" class="primary">Add / Update</button>
+      <button id="bo-del">Delete</button>
+      <button id="bo-showbtn">Show on overlay</button>
+      <label style="min-width:0"><input id="bo-checked" type="checkbox" checked> include in hotkey cycle</label>
+    </div>
+    <textarea id="bo-content" placeholder='Plain text, or RTS_Overlay JSON ({"civilization": ..., "build_order": [...]})'></textarea>
+    <div class="muted">JSON format is compatible with RTS_Overlay / age4builder. Use @folder/image@ tokens in notes for icons.</div>
+
+    <h2>Hotkeys & step control</h2>
+    <div class="row"><label>Show/hide build order</label><input id="bo-hk-show" class="hotkey-input"></div>
+    <div class="row"><label>Cycle build orders</label><input id="bo-hk-cycle" class="hotkey-input"></div>
+    <div class="row"><label>Previous step</label><input id="bo-hk-prev" class="hotkey-input"></div>
+    <div class="row"><label>Next step</label><input id="bo-hk-next" class="hotkey-input"></div>
+    <div class="row">
+      <button onclick="invoke('bo_action',{action:'prev'})">◀ Prev step</button>
+      <button onclick="invoke('bo_action',{action:'next'})">Next step ▶</button>
+      <button onclick="invoke('bo_action',{action:'cycle'})">Cycle</button>
+      <button onclick="invoke('bo_action',{action:'toggle'})">Show / Hide</button>
+      <button id="bo-edit-btn">Reposition BO overlay</button>
+    </div>
+
+    <h2>Appearance</h2>
+    <div class="row"><label>Font size (pt)</label><input id="bo-fontsize" type="number" min="6" max="50" style="width:70px"></div>
+    <div class="row"><label>Opacity</label><input id="bo-opacity" type="range" min="10" max="100" style="width:140px"></div>
+    <div class="row"><label>Text / Title / Background</label>
+      <input id="bo-textcolor" type="color"><input id="bo-titlecolor" type="color"><input id="bo-bgcolor" type="color">
+    </div>
+    <div class="row"><label>Show title</label><input id="bo-showtitle" type="checkbox"></div>
+    <div class="row"><button id="bo-save" class="primary">Save build order settings</button></div>
   </div>
-  <div class="row">
-    <label>Show overlay on new game</label>
-    <input id="autoshow" type="checkbox">
+
+  <!-- ============ OVERRIDE ============ -->
+  <div class="tab" id="tab-override">
+    <h2>Caster override</h2>
+    <div class="row"><label>Map</label><input id="ov-map" style="width:200px"></div>
+    <div class="ov-grid" id="ov-grid">
+      <span class="ov-head">Name</span><span class="ov-head">Civ</span><span class="ov-head">Team</span>
+      <span class="ov-head">Rating</span><span class="ov-head">Rank</span><span class="ov-head">Winrate</span>
+      <span class="ov-head">Wins</span><span class="ov-head">Losses</span><span class="ov-head">Civ WR</span>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="ov-load">Load current data</button>
+      <button id="ov-send" class="primary">Send to overlay</button>
+      <button id="ov-reset">Reset to live data</button>
+      <label style="min-width:0"><input id="ov-prevent" type="checkbox"> prevent automatic updates</label>
+    </div>
   </div>
-  <div class="row"><button id="save-btn" class="primary">Save settings</button></div>
+
+  <!-- ============ RANDOM ============ -->
+  <div class="tab" id="tab-random">
+    <div class="rand-box">
+      <button class="primary" id="rand-civ">Randomize civilization</button>
+      <div class="rand-name" id="rand-civ-name">—</div>
+      <img id="rand-civ-img" style="display:none">
+    </div>
+    <div class="rand-box">
+      <button class="primary" id="rand-map">Randomize map</button>
+      <div class="rand-name" id="rand-map-name">—</div>
+      <img id="rand-map-img" style="display:none">
+    </div>
+  </div>
+
   <div id="status">Idle</div>
-
-  <h2>Last match</h2>
-  <div id="match-info" class="muted">No match data yet.</div>
-  <table id="match-table" style="display:none">
-    <thead><tr><th>Team</th><th>Player</th><th>Civ</th><th>Rating</th><th>Rank</th><th>Winrate</th><th>W/L</th></tr></thead>
-    <tbody></tbody>
-  </table>
 
 <script>
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
+window.invoke = invoke;
 let settings = {};
-let editMode = false;
+let editMode = false, boEditMode = false;
+
+const CIVS = ["Abbasid Dynasty","Ayyubids","Byzantines","Chinese","Delhi Sultanate","English","French","Golden Horde","Holy Roman Empire","House of Lancaster","Japanese","Jeanne Darc","Jin Dynasty","Knights Templar","Macedonian Dynasty","Malians","Mongols","Order Of The Dragon","Ottomans","Rus","Sengoku Daimyo","Tughlaq Dynasty","Zhu Xis Legacy"];
+const MAPS = ["Altai", "Ancient Spires", "Archipelago", "Black Forest", "Boulder Bay", "Confluence", "Continental", "Danube River", "Dry Arabia", "Four Lakes", "French Pass", "High View", "Hill and Dale", "King of The Hill", "Lipany", "Marshland", "Mega Random", "Mongolian Heights", "Mountain Pass", "Nagari", "Warring Islands"];
 
 const $ = id => document.getElementById(id);
+const setStatus = t => $('status').textContent = t;
 
+// ---------- tabs ----------
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#tabs button').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  $('tab-' + b.dataset.tab).classList.add('active');
+  if (b.dataset.tab === 'games') loadGames();
+});
+
+// ---------- color helpers ----------
+const toHex = c => '#' + [c[0], c[1], c[2]].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+const fromHex = h => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+
+// ---------- settings ----------
 async function loadSettings() {
   settings = await invoke('get_settings');
   $('hotkey').value = settings.overlay_hotkey || '';
   $('interval').value = settings.interval;
   $('autoshow').checked = settings.show_overlay_on_new_game;
+  $('fontscale').value = settings.font_scale;
+  $('wsport').value = settings.websocket_port;
+  $('civstatcolor').value = settings.civ_stats_color;
+  const tc = settings.team_colors;
+  ['tc1', 'tc2', 'tc3'].forEach((id, i) => { if (tc[i]) $(id).value = toHex(tc[i]); });
+  $('tcalpha').value = Math.round((tc[0]?.[3] ?? 0.35) * 100);
   $('current-player').textContent = settings.player_name
     ? `${settings.player_name} (#${settings.profile_id})` : 'none';
+  if (settings.profile_id) {
+    $('profile-link').href = `https://aoe4world.com/players/${settings.profile_id}`;
+    $('profile-link').style.display = '';
+  }
+  // build order
+  $('bo-hk-show').value = settings.bo_hotkey_show;
+  $('bo-hk-cycle').value = settings.bo_hotkey_cycle;
+  $('bo-hk-prev').value = settings.bo_hotkey_prev_step;
+  $('bo-hk-next').value = settings.bo_hotkey_next_step;
+  $('bo-fontsize').value = settings.bo_font_size;
+  $('bo-opacity').value = Math.round(settings.bo_opacity * 100);
+  $('bo-textcolor').value = toHex(settings.bo_text_color);
+  $('bo-titlecolor').value = toHex(settings.bo_title_color);
+  $('bo-bgcolor').value = toHex(settings.bo_color_background);
+  $('bo-showtitle').checked = settings.bo_show_title;
+  renderBoList();
 }
 
+function collectCommon() {
+  settings.overlay_hotkey = $('hotkey').value.trim();
+  settings.interval = parseInt($('interval').value) || 15;
+  settings.show_overlay_on_new_game = $('autoshow').checked;
+  settings.font_scale = parseInt($('fontscale').value) || 100;
+  settings.websocket_port = parseInt($('wsport').value) || 7307;
+  settings.civ_stats_color = $('civstatcolor').value;
+  const a = ($('tcalpha').value | 0) / 100;
+  settings.team_colors = ['tc1', 'tc2', 'tc3'].map(id => [...fromHex($(id).value), a]);
+}
+
+async function save() {
+  collectCommon();
+  settings.bo_hotkey_show = $('bo-hk-show').value.trim();
+  settings.bo_hotkey_cycle = $('bo-hk-cycle').value.trim();
+  settings.bo_hotkey_prev_step = $('bo-hk-prev').value.trim();
+  settings.bo_hotkey_next_step = $('bo-hk-next').value.trim();
+  settings.bo_font_size = parseInt($('bo-fontsize').value) || 12;
+  settings.bo_opacity = ($('bo-opacity').value | 0) / 100;
+  settings.bo_text_color = fromHex($('bo-textcolor').value);
+  settings.bo_title_color = fromHex($('bo-titlecolor').value);
+  settings.bo_color_background = fromHex($('bo-bgcolor').value);
+  settings.bo_show_title = $('bo-showtitle').checked;
+  await invoke('save_settings', { newSettings: settings });
+  setStatus('Settings saved.');
+}
+
+// ---------- player search ----------
 async function doSearch() {
   const q = $('search').value.trim();
   if (!q) return;
@@ -93,31 +267,20 @@ async function doSearch() {
       const div = document.createElement('div');
       div.className = 'result';
       div.innerHTML = `<span>${p.name}</span><span class="muted">#${p.profile_id}${p.rating ? ' · ' + p.rating : ''}</span>`;
-      div.onclick = () => selectPlayer(p);
+      div.onclick = async () => {
+        settings.profile_id = p.profile_id;
+        settings.player_name = p.name;
+        await invoke('save_settings', { newSettings: settings });
+        $('results').innerHTML = '';
+        await loadSettings();
+        setStatus('Player saved — polling for matches…');
+      };
       $('results').appendChild(div);
     }
-  } catch (e) {
-    $('results').innerHTML = `<span class="muted">Search failed: ${e}</span>`;
-  }
+  } catch (e) { $('results').innerHTML = `<span class="muted">Search failed: ${e}</span>`; }
 }
 
-async function selectPlayer(p) {
-  settings.profile_id = p.profile_id;
-  settings.player_name = p.name;
-  await invoke('save_settings', { newSettings: settings });
-  $('results').innerHTML = '';
-  await loadSettings();
-  $('status').textContent = 'Player saved — polling for matches…';
-}
-
-async function saveSettings() {
-  settings.overlay_hotkey = $('hotkey').value.trim();
-  settings.interval = parseInt($('interval').value) || 15;
-  settings.show_overlay_on_new_game = $('autoshow').checked;
-  await invoke('save_settings', { newSettings: settings });
-  $('status').textContent = 'Settings saved.';
-}
-
+// ---------- last match table ----------
 function renderMatch(d) {
   $('match-info').textContent =
     `${d.map ?? '?'} — ${d.kind ?? ''} — ${d.ongoing ? 'ongoing' : 'finished'} — started ${d.started ?? ''}`;
@@ -126,31 +289,179 @@ function renderMatch(d) {
   for (const p of d.players || []) {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${p.team}</td><td>${p.name ?? '?'}</td><td>${p.civ}</td>
-      <td>${p.rating}</td><td>${p.rank}</td><td>${p.winrate}</td><td>${p.wins}/${p.losses}</td>`;
+      <td>${p.rating}</td><td>${p.rank}</td><td>${p.winrate}</td><td>${p.wins}/${p.losses}</td>
+      <td>${p.civ_winrate ?? ''}${p.civ_games ? ' (' + p.civ_games + ')' : ''}</td>`;
     tbody.appendChild(tr);
   }
   $('match-table').style.display = '';
 }
 
-$('search-btn').onclick = doSearch;
-$('search').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
-$('save-btn').onclick = saveSettings;
-$('toggle-btn').onclick = () => invoke('toggle_overlay');
-$('refresh-btn').onclick = () => { invoke('force_refresh'); $('status').textContent = 'Refreshing…'; };
-$('edit-btn').onclick = () => {
-  editMode = !editMode;
-  invoke('set_overlay_edit_mode', { edit: editMode });
-  $('edit-btn').textContent = editMode ? 'Done repositioning' : 'Reposition overlay';
+// ---------- games tab ----------
+async function loadGames() {
+  const tbody = $('games-table').querySelector('tbody');
+  tbody.innerHTML = '<tr><td colspan="8" class="muted">Loading…</td></tr>';
+  try {
+    const data = await invoke('get_match_history');
+    tbody.innerHTML = '';
+    const pid = settings.profile_id;
+    for (const g of (data.games || [])) {
+      if (g.ongoing) continue;
+      const teams = (g.teams || []).map(t => t.map(m => m.player || m));
+      const fmtTeam = t => t.map(p => `${p.name ?? '?'} (${(p.civilization ?? '').replace(/_/g, ' ')})`).join('<br>');
+      let me = null;
+      teams.flat().forEach(p => { if (p.profile_id === pid) me = p; });
+      const result = me?.result ? me.result[0].toUpperCase() + me.result.slice(1) : '?';
+      const diff = me?.rating_diff ?? '?';
+      const started = g.started_at ? new Date(g.started_at).toLocaleString() : '?';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${fmtTeam(teams[0] || [])}</td><td>${fmtTeam(teams[1] || [])}</td>
+        <td>${g.map ?? '?'}</td><td>${started}</td><td>${g.kind ?? ''}</td>
+        <td class="${result === 'Win' ? 'win' : 'loss'}">${result}</td><td>${diff}</td>
+        <td><a href="https://aoe4world.com/players/${pid}/games/${g.game_id}" target="_blank">aoe4world</a></td>`;
+      tbody.appendChild(tr);
+    }
+    if (!tbody.children.length) tbody.innerHTML = '<tr><td colspan="8" class="muted">No games.</td></tr>';
+  } catch (e) { tbody.innerHTML = `<tr><td colspan="8" class="muted">Failed: ${e}</td></tr>`; }
+}
+
+// ---------- build orders tab ----------
+function renderBoList() {
+  const sel = $('bo-list');
+  sel.innerHTML = '';
+  for (const name of Object.keys(settings.buildorders || {})) {
+    const o = document.createElement('option');
+    const checked = !(settings.unchecked_buildorders || []).includes(name);
+    o.value = name;
+    o.textContent = (checked ? '✓ ' : '✗ ') + name;
+    sel.appendChild(o);
+  }
+}
+$('bo-list').onchange = () => {
+  const name = $('bo-list').value;
+  $('bo-name').value = name;
+  $('bo-content').value = settings.buildorders[name] || '';
+  $('bo-checked').checked = !(settings.unchecked_buildorders || []).includes(name);
+};
+$('bo-add').onclick = async () => {
+  const name = $('bo-name').value.trim();
+  if (!name) { setStatus('Enter a build order name.'); return; }
+  settings.buildorders[name] = $('bo-content').value;
+  settings.unchecked_buildorders = (settings.unchecked_buildorders || []).filter(n => n !== name);
+  if (!$('bo-checked').checked) settings.unchecked_buildorders.push(name);
+  await save();
+  renderBoList();
+  setStatus(`Build order "${name}" saved.`);
+};
+$('bo-del').onclick = async () => {
+  const name = $('bo-list').value;
+  if (!name) return;
+  delete settings.buildorders[name];
+  await save();
+  renderBoList();
+};
+$('bo-showbtn').onclick = () => {
+  const name = $('bo-list').value || $('bo-name').value.trim();
+  if (name) invoke('bo_select', { name });
+};
+$('bo-save').onclick = save;
+$('bo-edit-btn').onclick = () => {
+  boEditMode = !boEditMode;
+  invoke('set_edit_mode', { window: 'buildorder', edit: boEditMode });
+  $('bo-edit-btn').textContent = boEditMode ? 'Done repositioning' : 'Reposition BO overlay';
 };
 
-listen('game_data', e => { renderMatch(e.payload); $('status').textContent = 'Match data updated.'; });
-listen('poll_ok', e => { $('status').textContent = `Polling OK ${e.payload ? '(game ongoing)' : ''} — ${new Date().toLocaleTimeString()}`; });
-listen('poll_error', e => { $('status').textContent = `Poll error: ${e.payload}`; });
+// ---------- override tab ----------
+const OV_ROWS = 8;
+const ovInputs = [];
+function buildOverrideGrid() {
+  const grid = $('ov-grid');
+  for (let i = 0; i < OV_ROWS; i++) {
+    const row = {};
+    row.name = document.createElement('input');
+    row.civ = document.createElement('select');
+    row.civ.innerHTML = '<option value=""></option>' + CIVS.map(c => `<option>${c}</option>`).join('');
+    row.team = document.createElement('select');
+    row.team.innerHTML = '<option value="0">No team</option><option value="1">Team 1</option><option value="2">Team 2</option>';
+    for (const k of ['rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate']) row[k] = document.createElement('input');
+    ['name', 'civ', 'team', 'rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate']
+      .forEach(k => grid.appendChild(row[k]));
+    ovInputs.push(row);
+  }
+}
+function ovLoad(d) {
+  if (!d) return;
+  $('ov-map').value = d.map ?? '';
+  ovInputs.forEach((row, i) => {
+    const p = (d.players || [])[i] || {};
+    row.name.value = p.name ?? '';
+    row.civ.value = p.civ ?? '';
+    row.team.value = p.team ?? 0;
+    row.rating.value = p.rating ?? '';
+    row.rank.value = p.rank ?? '';
+    row.winrate.value = p.winrate ?? '';
+    row.wins.value = p.wins ?? '';
+    row.losses.value = p.losses ?? '';
+    row.civ_winrate.value = p.civ_winrate ?? '';
+  });
+}
+$('ov-load').onclick = async () => ovLoad(await invoke('get_current_data'));
+$('ov-send').onclick = () => {
+  const players = ovInputs
+    .filter(r => r.name.value.trim())
+    .map(r => ({
+      name: r.name.value, civ: r.civ.value, team: parseInt(r.team.value),
+      country: '', rating: r.rating.value, rank: r.rank.value, winrate: r.winrate.value,
+      wins: r.wins.value, losses: r.losses.value,
+      civ_games: '', civ_winrate: r.civ_winrate.value,
+    }));
+  const data = { map: $('ov-map').value, kind: 'override', started: '', server: '', match_id: 'override', ongoing: true, players };
+  invoke('override_data', { data, prevent: $('ov-prevent').checked });
+  setStatus('Override sent to overlay.');
+};
+$('ov-reset').onclick = () => { $('ov-prevent').checked = false; invoke('reset_override'); setStatus('Reverted to live data.'); };
+$('ov-prevent').onchange = () => { if (!$('ov-prevent').checked) invoke('reset_override'); };
 
+// ---------- random tab ----------
+let lastCiv = null, lastMap = null;
+$('rand-civ').onclick = () => {
+  let c;
+  do { c = CIVS[Math.floor(Math.random() * CIVS.length)]; } while (c === lastCiv && CIVS.length > 1);
+  lastCiv = c;
+  $('rand-civ-name').textContent = c;
+  const img = $('rand-civ-img');
+  img.src = `flags/${c}.webp`; img.style.display = '';
+};
+$('rand-map').onclick = () => {
+  let m;
+  do { m = MAPS[Math.floor(Math.random() * MAPS.length)]; } while (m === lastMap && MAPS.length > 1);
+  lastMap = m;
+  $('rand-map-name').textContent = m;
+  const img = $('rand-map-img');
+  img.src = `maps/${m.replace(/ /g, '_')}.png`; img.style.display = '';
+};
+
+// ---------- wiring ----------
+$('search-btn').onclick = doSearch;
+$('search').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+$('save-btn').onclick = save;
+$('toggle-btn').onclick = () => invoke('toggle_overlay');
+$('refresh-btn').onclick = () => { invoke('force_refresh'); setStatus('Refreshing…'); };
+$('edit-btn').onclick = () => {
+  editMode = !editMode;
+  invoke('set_edit_mode', { window: 'overlay', edit: editMode });
+  $('edit-btn').textContent = editMode ? 'Done repositioning' : 'Reposition overlay';
+};
+$('games-refresh').onclick = loadGames;
+
+listen('game_data', e => { renderMatch(e.payload); setStatus('Match data updated.'); });
+listen('poll_ok', e => setStatus(`Polling OK ${e.payload ? '(game ongoing)' : ''} — ${new Date().toLocaleTimeString()}`));
+listen('poll_error', e => setStatus(`Poll error: ${e.payload}`));
+
+buildOverrideGrid();
 loadSettings().then(async () => {
   const d = await invoke('get_current_data');
   if (d) renderMatch(d);
-});
+}).catch(e => { document.title = 'INIT ERROR: ' + e; });
 </script>
 </body>
 </html>

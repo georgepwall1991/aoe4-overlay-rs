@@ -18,10 +18,8 @@
   .winrate { color: #fffb78; }
   .wins { color: #48bd21; }
   .losses { color: #ff6060; }
-  .civstat { color: #bc8aea; }
+  .civstat { color: var(--civstat, #bc8aea); }
   .name { font-weight: 600; max-width: 11vw; overflow: hidden; text-overflow: ellipsis; }
-  .t1row { background: linear-gradient(to right, rgba(74,255,2,0), rgba(74,255,2,0.30)); }
-  .t2row { background: linear-gradient(to left, rgba(3,179,255,0), rgba(3,179,255,0.30)); }
   /* Edit mode */
   body.edit { outline: 3px dashed #ffb300; outline-offset: -3px; background: rgba(0,0,0,0.4); }
   #edit-hint { display: none; position: absolute; top: 4px; left: 50%; transform: translateX(-50%);
@@ -40,6 +38,22 @@
 <script>
 const { invoke } = window.__TAURI__.core;
 const { listen } = window.__TAURI__.event;
+let settings = null;
+let lastData = null;
+
+function teamColor(team) {
+  const colors = settings?.team_colors?.length
+    ? settings.team_colors
+    : [[74, 255, 2, 0.35], [3, 179, 255, 0.35], [255, 0, 0, 0.35]];
+  const c = colors[(team - 1) % colors.length];
+  return `rgba(${c[0]},${c[1]},${c[2]},${c[3]})`;
+}
+
+function applyStyle() {
+  if (!settings) return;
+  document.documentElement.style.setProperty('--civstat', settings.civ_stats_color || '#bc8aea');
+  document.body.style.fontSize = (settings.font_scale || 100) + '%';
+}
 
 function flagImg(civ) {
   return `<img class="flag" src="flags/${civ}.webp" onerror="this.style.display='none'">`;
@@ -56,11 +70,14 @@ function playerRow(p, right) {
     `<td class="civstat">${p.civ_winrate ? p.civ_winrate + ' (' + p.civ_games + ')' : ''}</td>`,
   ];
   if (right) cells.reverse();
-  return `<tr class="${right ? 't2row' : 't1row'}">${cells.join('')}</tr>`;
+  const dir = right ? 'right' : 'left';
+  const c = teamColor(p.team);
+  return `<tr style="background: linear-gradient(to ${dir}, rgba(0,0,0,0), ${c})">${cells.join('')}</tr>`;
 }
 
 function render(d) {
   if (!d || !d.players) return;
+  lastData = d;
   document.getElementById('map').textContent = d.map ?? '';
   const t1 = d.players.filter(p => p.team === 1);
   const t2 = d.players.filter(p => p.team !== 1);
@@ -69,7 +86,11 @@ function render(d) {
 }
 
 listen('game_data', e => render(e.payload));
-listen('edit_mode', e => document.body.classList.toggle('edit', !!e.payload));
+listen('edit_mode', e => {
+  if (e.payload.window === 'overlay') document.body.classList.toggle('edit', !!e.payload.edit);
+});
+listen('settings_changed', e => { settings = e.payload; applyStyle(); if (lastData) render(lastData); });
+invoke('get_settings').then(s => { settings = s; applyStyle(); });
 invoke('get_current_data').then(d => { if (d) render(d); });
 </script>
 </body>

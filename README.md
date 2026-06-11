@@ -41,5 +41,9 @@ Settings persist to `%APPDATA%\com.georgewall.aoe4overlay\config.json`.
   (replaces the original's local WebSocket server).
 - `ui/flags/` — civ flag images from the original project.
 
-Not ported (yet): build-order overlay, civ randomizer, caster override tab, match
-history graphs.
+Feature parity with the original: match overlay, build-order overlay
+(`ui/buildorder.html`, RTS_Overlay JSON + plain text, @image@ tokens, 4 global
+hotkeys: show/cycle/prev/next step), match history tab, caster override tab,
+civ/map randomizer, team colors / civ-stats color / font scale settings, and a
+local websocket server (default port 7307) so `obs-html\overlay.html` can be
+used as an OBS browser source. Not ported: rating graphs (disabled upstream too).

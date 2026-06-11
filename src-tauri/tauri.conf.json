@@ -33,6 +33,23 @@
         "resizable": false,
         "focus": false,
         "visible": false
+      },
+      {
+        "label": "buildorder",
+        "title": "AoE4 Build Order",
+        "url": "buildorder.html",
+        "width": 440,
+        "height": 320,
+        "x": 1460,
+        "y": 60,
+        "transparent": true,
+        "decorations": false,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": true,
+        "focus": false,
+        "visible": false
       }
     ],
     "security": {
