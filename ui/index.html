@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AoE4 Overlay — Control Panel</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: "Segoe UI", sans-serif; background: #1e1e24; color: #ddd; margin: 0; padding: 18px 22px; }
+  h1 { font-size: 18px; margin: 0 0 14px; }
+  h2 { font-size: 14px; margin: 22px 0 8px; color: #9bd; border-bottom: 1px solid #333; padding-bottom: 4px; }
+  input, button, select { background: #2a2a32; color: #eee; border: 1px solid #444; border-radius: 4px; padding: 6px 10px; font-size: 13px; }
+  button { cursor: pointer; }
+  button:hover { background: #3a3a44; }
+  button.primary { background: #2d5f8a; border-color: #3d7fb0; }
+  #results { margin-top: 8px; }
+  .result { padding: 6px 10px; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between; }
+  .result:hover { background: #33333d; }
+  .muted { color: #888; font-size: 12px; }
+  #current-player { color: #8f8; }
+  #status { font-size: 12px; color: #888; margin-top: 4px; }
+  table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 13px; }
+  td, th { padding: 4px 8px; text-align: left; border-bottom: 1px solid #2c2c34; }
+  th { color: #9bd; font-weight: 600; }
+  .row { display: flex; gap: 8px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
+  label { font-size: 13px; min-width: 180px; }
+</style>
+</head>
+<body>
+  <h1>AoE4 Overlay <span class="muted">(Rust / Tauri)</span></h1>
+
+  <h2>Player</h2>
+  <div class="row">
+    <input id="search" placeholder="Search player name or profile ID…" style="flex:1">
+    <button id="search-btn" class="primary">Search</button>
+  </div>
+  <div id="results"></div>
+  <div class="row">Tracking: <span id="current-player">none</span></div>
+
+  <h2>Overlay</h2>
+  <div class="row">
+    <button id="toggle-btn">Show / Hide overlay</button>
+    <button id="edit-btn">Reposition overlay</button>
+    <button id="refresh-btn">Refresh now</button>
+  </div>
+  <div class="row">
+    <label>Hotkey (show/hide)</label>
+    <input id="hotkey" style="width:120px">
+  </div>
+  <div class="row">
+    <label>Poll interval (seconds)</label>
+    <input id="interval" type="number" min="5" style="width:80px">
+  </div>
+  <div class="row">
+    <label>Show overlay on new game</label>
+    <input id="autoshow" type="checkbox">
+  </div>
+  <div class="row"><button id="save-btn" class="primary">Save settings</button></div>
+  <div id="status">Idle</div>
+
+  <h2>Last match</h2>
+  <div id="match-info" class="muted">No match data yet.</div>
+  <table id="match-table" style="display:none">
+    <thead><tr><th>Team</th><th>Player</th><th>Civ</th><th>Rating</th><th>Rank</th><th>Winrate</th><th>W/L</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+const { invoke } = window.__TAURI__.core;
+const { listen } = window.__TAURI__.event;
+let settings = {};
+let editMode = false;
+
+const $ = id => document.getElementById(id);
+
+async function loadSettings() {
+  settings = await invoke('get_settings');
+  $('hotkey').value = settings.overlay_hotkey || '';
+  $('interval').value = settings.interval;
+  $('autoshow').checked = settings.show_overlay_on_new_game;
+  $('current-player').textContent = settings.player_name
+    ? `${settings.player_name} (#${settings.profile_id})` : 'none';
+}
+
+async function doSearch() {
+  const q = $('search').value.trim();
+  if (!q) return;
+  $('results').innerHTML = '<span class="muted">Searching…</span>';
+  try {
+    const players = await invoke('search_player', { query: q });
+    $('results').innerHTML = '';
+    if (!players.length) { $('results').innerHTML = '<span class="muted">No players found.</span>'; return; }
+    for (const p of players) {
+      const div = document.createElement('div');
+      div.className = 'result';
+      div.innerHTML = `<span>${p.name}</span><span class="muted">#${p.profile_id}${p.rating ? ' · ' + p.rating : ''}</span>`;
+      div.onclick = () => selectPlayer(p);
+      $('results').appendChild(div);
+    }
+  } catch (e) {
+    $('results').innerHTML = `<span class="muted">Search failed: ${e}</span>`;
+  }
+}
+
+async function selectPlayer(p) {
+  settings.profile_id = p.profile_id;
+  settings.player_name = p.name;
+  await invoke('save_settings', { newSettings: settings });
+  $('results').innerHTML = '';
+  await loadSettings();
+  $('status').textContent = 'Player saved — polling for matches…';
+}
+
+async function saveSettings() {
+  settings.overlay_hotkey = $('hotkey').value.trim();
+  settings.interval = parseInt($('interval').value) || 15;
+  settings.show_overlay_on_new_game = $('autoshow').checked;
+  await invoke('save_settings', { newSettings: settings });
+  $('status').textContent = 'Settings saved.';
+}
+
+function renderMatch(d) {
+  $('match-info').textContent =
+    `${d.map ?? '?'} — ${d.kind ?? ''} — ${d.ongoing ? 'ongoing' : 'finished'} — started ${d.started ?? ''}`;
+  const tbody = $('match-table').querySelector('tbody');
+  tbody.innerHTML = '';
+  for (const p of d.players || []) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p.team}</td><td>${p.name ?? '?'}</td><td>${p.civ}</td>
+      <td>${p.rating}</td><td>${p.rank}</td><td>${p.winrate}</td><td>${p.wins}/${p.losses}</td>`;
+    tbody.appendChild(tr);
+  }
+  $('match-table').style.display = '';
+}
+
+$('search-btn').onclick = doSearch;
+$('search').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+$('save-btn').onclick = saveSettings;
+$('toggle-btn').onclick = () => invoke('toggle_overlay');
+$('refresh-btn').onclick = () => { invoke('force_refresh'); $('status').textContent = 'Refreshing…'; };
+$('edit-btn').onclick = () => {
+  editMode = !editMode;
+  invoke('set_overlay_edit_mode', { edit: editMode });
+  $('edit-btn').textContent = editMode ? 'Done repositioning' : 'Reposition overlay';
+};
+
+listen('game_data', e => { renderMatch(e.payload); $('status').textContent = 'Match data updated.'; });
+listen('poll_ok', e => { $('status').textContent = `Polling OK ${e.payload ? '(game ongoing)' : ''} — ${new Date().toLocaleTimeString()}`; });
+listen('poll_error', e => { $('status').textContent = `Poll error: ${e.payload}`; });
+
+loadSettings().then(async () => {
+  const d = await invoke('get_current_data');
+  if (d) renderMatch(d);
+});
+</script>
+</body>
+</html>

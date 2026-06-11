@@ -1,0 +1,47 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AoE4 Overlay",
+  "version": "0.1.0",
+  "identifier": "com.georgewall.aoe4overlay",
+  "build": {
+    "frontendDist": "../ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "AoE4 Overlay — Control Panel",
+        "url": "index.html",
+        "width": 760,
+        "height": 640,
+        "resizable": true
+      },
+      {
+        "label": "overlay",
+        "title": "AoE4 Overlay",
+        "url": "overlay.html",
+        "width": 900,
+        "height": 130,
+        "x": 510,
+        "y": 0,
+        "transparent": true,
+        "decorations": false,
+        "shadow": false,
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "resizable": false,
+        "focus": false,
+        "visible": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/icon.ico"]
+  }
+}
