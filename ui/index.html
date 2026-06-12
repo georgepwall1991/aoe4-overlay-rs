@@ -732,7 +732,8 @@
   .savebar a { font-size: 12px; text-decoration: none; padding: 2px 10px; border-radius: 9px;
     background: rgba(111,224,74,.1); box-shadow: inset 0 0 0 1px rgba(111,224,74,.25); color: #8ae86a; }
   .savebar a:hover { background: rgba(111,224,74,.18); color: #a5f08a; }
-  .dirty-pill { color: #ffc845; font-size: 12px; opacity: 0; transition: .2s; }
+  .dirty-pill { color: #ffc845; font-size: 12px; opacity: 0; transition: .2s; margin-right: auto;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: min(48vw, 360px); }
   .savebar.dirty .dirty-pill { opacity: 1; animation: pulse 1.8s infinite; }
   button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
   /* async buttons swap their label for a spinner so width never jumps */
@@ -1342,6 +1343,30 @@ const SETTINGS_DIRTY_IDS = new Set([
   'bo-fontsize', 'bo-opacity', 'bo-textcolor', 'bo-titlecolor', 'bo-bgcolor',
   'bo-showtitle', 'bo-shownext',
 ]);
+const SETTINGS_LABELS = {
+  hotkey: 'Show / hide hotkey',
+  interval: 'Poll interval',
+  autoshow: 'Show overlay on new game',
+  fontscale: 'Overlay font scale',
+  ovscale: 'Overlay size',
+  wsport: 'OBS websocket port',
+  civstatcolor: 'Civ stats color',
+  tc1: 'Team 1 color',
+  tc2: 'Team 2 color',
+  tc3: 'Team 3 color',
+  tcalpha: 'Team color opacity',
+  'bo-hk-show': 'Build order show hotkey',
+  'bo-hk-cycle': 'Build order cycle hotkey',
+  'bo-hk-prev': 'Previous step hotkey',
+  'bo-hk-next': 'Next step hotkey',
+  'bo-fontsize': 'Build order font size',
+  'bo-opacity': 'Build order opacity',
+  'bo-textcolor': 'Build order text color',
+  'bo-titlecolor': 'Build order title color',
+  'bo-bgcolor': 'Build order background color',
+  'bo-showtitle': 'Build order title visibility',
+  'bo-shownext': 'Next step visibility',
+};
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1866,17 +1891,43 @@ function settingsControlValue(id) {
   if (!el) return null;
   return el.type === 'checkbox' ? !!el.checked : String(el.value ?? '');
 }
-function settingsSnapshot() {
+function settingsSnapshotData() {
   const out = {};
   [...SETTINGS_DIRTY_IDS].sort().forEach(id => { out[id] = settingsControlValue(id); });
-  return JSON.stringify(out);
+  return out;
+}
+function settingsSnapshot() {
+  return JSON.stringify(settingsSnapshotData());
+}
+function changedSettings() {
+  if (!savedSettingsSnapshot) return [];
+  let saved = {};
+  try { saved = JSON.parse(savedSettingsSnapshot); }
+  catch (e) { return [...SETTINGS_DIRTY_IDS]; }
+  const current = settingsSnapshotData();
+  return [...SETTINGS_DIRTY_IDS].sort().filter(id => saved[id] !== current[id]);
+}
+function changedSettingsTitle(changes) {
+  if (!changes.length) return 'No unsaved settings';
+  const labels = changes.map(id => SETTINGS_LABELS[id] || id);
+  const shown = labels.slice(0, 6).join(', ');
+  return changes.length > 6 ? `${shown}, and ${changes.length - 6} more` : shown;
 }
 function setSettingsDirty(dirty) {
+  const changes = dirty ? changedSettings() : [];
+  const count = changes.length;
+  const dirtyText = count === 1 ? '1 unsaved change' : `${count} unsaved changes`;
+  const title = changedSettingsTitle(changes);
   $('savebar').classList.toggle('dirty', dirty);
   $('save-btn').disabled = !dirty;
+  $('save-btn').title = dirty ? `Save ${dirtyText}: ${title}` : 'No unsaved settings';
   $('revert-btn').style.display = dirty ? '' : 'none';
+  $('revert-btn').title = dirty ? `Discard ${dirtyText}: ${title}` : 'Discard unsaved changes and reload saved settings';
+  $('dirty-pill').textContent = `● ${dirty ? dirtyText : 'Saved'}`;
+  $('dirty-pill').title = title;
   tabButtons[0].classList.toggle('unsaved', dirty);
-  if ($('sum-save')) $('sum-save').textContent = dirty ? 'Unsaved' : 'Saved';
+  if ($('sum-save')) $('sum-save').textContent = dirty ? dirtyText : 'Saved';
+  if ($('sum-save')) $('sum-save').title = title;
   $('sum-save-box')?.classList.toggle('dirty', dirty);
   $('sum-save-box')?.classList.toggle('good', !dirty);
 }
