@@ -1433,10 +1433,29 @@ const setStatus = (t, state = '') => {
   document.body.classList.toggle('busy', state === 'busy');
 };
 
-// Painted slider tracks: keep the filled portion in sync with the value
+// Painted slider tracks: keep the filled portion and exposed value in sync
+const RANGE_META = {
+  interval: { label: 'Poll interval', unit: 's' },
+  tcalpha: { label: 'Color opacity', unit: '%' },
+  fontscale: { label: 'Overlay font scale', unit: '%' },
+  ovscale: { label: 'Overlay size', unit: '%' },
+  'bo-fontsize': { label: 'Build order font size', unit: 'pt' },
+  'bo-opacity': { label: 'Build order opacity', unit: '%' },
+};
+function rangeValueText(el) {
+  const meta = RANGE_META[el.id];
+  return meta ? `${el.value}${meta.unit}` : String(el.value);
+}
 function syncRangeFill(el) {
   const min = +el.min || 0, max = +el.max || 100;
   el.style.setProperty('--fill', ((el.value - min) / (max - min) * 100) + '%');
+  const meta = RANGE_META[el.id];
+  if (meta) {
+    const value = rangeValueText(el);
+    el.setAttribute('aria-label', meta.label);
+    el.setAttribute('aria-valuetext', value);
+    el.title = `${meta.label}: ${value}. Double-click to reset`;
+  }
 }
 function syncAllRanges() { document.querySelectorAll('input[type=range]').forEach(syncRangeFill); }
 document.addEventListener('input', e => { if (e.target.type === 'range') syncRangeFill(e.target); });
@@ -1444,7 +1463,6 @@ document.addEventListener('input', e => { if (e.target.type === 'range') syncRan
 const RANGE_DEFAULTS = { interval: 15, tcalpha: 35, fontscale: 100, ovscale: 100, 'bo-fontsize': 12, 'bo-opacity': 75 };
 document.querySelectorAll('input[type=range]').forEach(el => {
   if (RANGE_DEFAULTS[el.id] === undefined) return;
-  el.title = 'Double-click to reset';
   el.addEventListener('dblclick', () => {
     el.value = RANGE_DEFAULTS[el.id];
     el.dispatchEvent(new Event('input', { bubbles: true }));
