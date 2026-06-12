@@ -584,6 +584,8 @@
   .copy-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
   .copy-row code { flex: 1 1 180px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .copy-row button { flex: none; }
+  .field-hint { margin: -2px 0 8px; color: #ffb3a6; font-size: 12px; line-height: 1.35; }
+  .field-hint[hidden] { display: none; }
   .searchbar { display: flex; gap: 8px; }
   .searchbar input, #gf-text, #bo-filter { padding-left: 30px !important;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="%236b6d78" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>');
@@ -1023,8 +1025,9 @@
         </div>
         <div class="field">
           <label>OBS websocket port</label>
-          <input id="wsport" type="number" min="1024" max="65535" style="width:90px">
+          <input id="wsport" type="number" min="1024" max="65535" aria-describedby="wsport-hint" style="width:90px">
         </div>
+        <div class="field-hint" id="wsport-hint" role="alert" aria-live="polite" hidden></div>
         <div class="copy-row">
           <code id="obs-source-path">obs-html\overlay.html</code>
           <button id="copy-obs-path" type="button" title="Copy OBS browser source path">Copy OBS path</button>
@@ -3510,10 +3513,15 @@ document.querySelectorAll('[data-poll-preset]').forEach(btn => {
 function syncPortValidity() {
   const v = parseInt($('wsport').value);
   const bad = isNaN(v) || v < 1024 || v > 65535;
+  const message = 'Port must be between 1024 and 65535';
   $('wsport').classList.toggle('invalid', bad);
   if (bad) $('wsport').setAttribute('aria-invalid', 'true');
   else $('wsport').removeAttribute('aria-invalid');
-  $('wsport').title = bad ? 'Port must be between 1024 and 65535' : '';
+  $('wsport').title = bad ? message : '';
+  if ($('wsport-hint')) {
+    $('wsport-hint').textContent = bad ? message : '';
+    $('wsport-hint').hidden = !bad;
+  }
   return bad;
 }
 // flag an out-of-range port as you type instead of silently clamping at save
