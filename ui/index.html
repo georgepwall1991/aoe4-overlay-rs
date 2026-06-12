@@ -742,6 +742,7 @@
   .toast::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
     background: rgba(255,255,255,.45); border-radius: 0 0 9px 9px; transform-origin: left;
     animation: toast-tick var(--toast-ms, 2200ms) linear forwards; }
+  .toast.paused::after { animation-play-state: paused; }
   @keyframes toast-tick { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 
   /* polish */
@@ -1506,12 +1507,33 @@ function toast(msg, err = false, action = null) {
   const t = document.createElement('div');
   t.className = 'toast' + (err ? ' err' : '');
   t.style.setProperty('--toast-ms', ms + 'ms');
-  let hideTimer, removeTimer;
+  let hideTimer, removeTimer, startedAt = Date.now(), remaining = ms, paused = false, dismissed = false;
   const dismiss = () => {
+    if (dismissed) return;
+    dismissed = true;
     clearTimeout(hideTimer);
     clearTimeout(removeTimer);
     t.classList.add('out');
     removeTimer = setTimeout(() => t.remove(), 260);
+  };
+  const scheduleDismiss = (delay = remaining) => {
+    clearTimeout(hideTimer);
+    remaining = delay;
+    startedAt = Date.now();
+    hideTimer = setTimeout(dismiss, delay);
+  };
+  const hold = () => {
+    if (paused || dismissed) return;
+    paused = true;
+    remaining = Math.max(700, remaining - (Date.now() - startedAt));
+    clearTimeout(hideTimer);
+    t.classList.add('paused');
+  };
+  const release = () => {
+    if (!paused || dismissed || t.matches(':hover') || t.contains(document.activeElement)) return;
+    paused = false;
+    t.classList.remove('paused');
+    scheduleDismiss(remaining);
   };
   const ic = document.createElement('span');
   ic.className = 't-ic'; ic.setAttribute('aria-hidden', 'true');
@@ -1533,9 +1555,13 @@ function toast(msg, err = false, action = null) {
   close.textContent = '×';
   close.onclick = dismiss;
   t.appendChild(close);
+  t.addEventListener('mouseenter', hold);
+  t.addEventListener('mouseleave', release);
+  t.addEventListener('focusin', hold);
+  t.addEventListener('focusout', () => setTimeout(release, 0));
   wrap.appendChild(t);
   while (wrap.children.length > 3) wrap.firstElementChild.remove();
-  hideTimer = setTimeout(dismiss, ms);
+  scheduleDismiss(ms);
 }
 
 async function copyText(text, label) {
