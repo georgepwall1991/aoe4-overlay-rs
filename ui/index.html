@@ -733,6 +733,10 @@
     color: #fff; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); border-radius: 7px;
     box-shadow: none; }
   .toast .t-act:hover { background: rgba(255,255,255,.26); }
+  .toast .t-close { flex: none; width: 22px; height: 22px; display: grid; place-items: center; margin-left: 2px;
+    padding: 0; border-radius: 50%; color: rgba(255,255,255,.86); background: rgba(0,0,0,.12);
+    border: 1px solid rgba(255,255,255,.18); box-shadow: none; font-size: 16px; line-height: 1; }
+  .toast .t-close:hover { color: #fff; background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.32); }
   @keyframes t-ic-pop { from { transform: scale(.4); opacity: 0; } }
   .toast.err { background: linear-gradient(180deg, #b04532, #93341f); }
   .toast::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 100%;
@@ -1502,6 +1506,13 @@ function toast(msg, err = false, action = null) {
   const t = document.createElement('div');
   t.className = 'toast' + (err ? ' err' : '');
   t.style.setProperty('--toast-ms', ms + 'ms');
+  let hideTimer, removeTimer;
+  const dismiss = () => {
+    clearTimeout(hideTimer);
+    clearTimeout(removeTimer);
+    t.classList.add('out');
+    removeTimer = setTimeout(() => t.remove(), 260);
+  };
   const ic = document.createElement('span');
   ic.className = 't-ic'; ic.setAttribute('aria-hidden', 'true');
   ic.textContent = err ? '⚠' : '✓';
@@ -1512,12 +1523,19 @@ function toast(msg, err = false, action = null) {
     const btn = document.createElement('button');
     btn.className = 't-act';
     btn.textContent = action.label;
-    btn.onclick = () => { t.remove(); action.run(); };
+    btn.onclick = () => { dismiss(); action.run(); };
     t.appendChild(btn);
   }
+  const close = document.createElement('button');
+  close.className = 't-close';
+  close.type = 'button';
+  close.setAttribute('aria-label', 'Dismiss notification');
+  close.textContent = '×';
+  close.onclick = dismiss;
+  t.appendChild(close);
   wrap.appendChild(t);
   while (wrap.children.length > 3) wrap.firstElementChild.remove();
-  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 260); }, ms);
+  hideTimer = setTimeout(dismiss, ms);
 }
 
 async function copyText(text, label) {
