@@ -646,6 +646,7 @@
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sum-item.dirty b { color: #ffc845; }
   .sum-item.good b { color: #8ae86a; }
+  .sum-item.invalid b { color: #ffb3a6; }
   @media (max-width: 880px) { .settings-summary { grid-column: auto; } }
   @media (max-width: 760px) { .settings-summary { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 430px) { .settings-summary { grid-template-columns: minmax(0, 1fr); } }
@@ -742,6 +743,9 @@
     box-shadow: 0 10px 28px -10px rgba(0,0,0,.7), 0 0 12px -2px rgba(255,179,0,.25), inset 0 1px 0 rgba(255,255,255,.05); }
   .savebar.saving { border-color: rgba(122,182,255,.45);
     box-shadow: 0 10px 28px -10px rgba(0,0,0,.7), 0 0 12px -2px rgba(122,182,255,.28), inset 0 1px 0 rgba(255,255,255,.05); }
+  .savebar.invalid { border-color: rgba(224,69,47,.5);
+    box-shadow: 0 10px 28px -10px rgba(0,0,0,.7), 0 0 12px -2px rgba(224,69,47,.28), inset 0 1px 0 rgba(255,255,255,.05); }
+  .savebar.invalid .dirty-pill { color: #ffb3a6; }
   .savebar a { font-size: 12px; text-decoration: none; padding: 2px 10px; border-radius: 9px;
     background: rgba(111,224,74,.1); box-shadow: inset 0 0 0 1px rgba(111,224,74,.25); color: #8ae86a; }
   .savebar a:hover { background: rgba(111,224,74,.18); color: #a5f08a; }
@@ -1385,6 +1389,7 @@ const SETTINGS_LABELS = {
   'bo-showtitle': 'Build order title visibility',
   'bo-shownext': 'Next step visibility',
 };
+const HOTKEY_IDS = ['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next'];
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1973,24 +1978,54 @@ function setChangedSettingHighlights(changes) {
     if (row) row.classList.add('setting-changed');
   });
 }
+function hotkeyDuplicateIds() {
+  const seen = new Map(), duplicates = new Set();
+  for (const id of HOTKEY_IDS) {
+    const key = $(id)?.value.trim();
+    if (!key) continue;
+    const norm = key.toLowerCase();
+    if (seen.has(norm)) { duplicates.add(id); duplicates.add(seen.get(norm)); }
+    else seen.set(norm, id);
+  }
+  return duplicates;
+}
+function syncSettingsValidity() {
+  const duplicates = hotkeyDuplicateIds();
+  HOTKEY_IDS.forEach(id => {
+    const el = $(id);
+    const bad = duplicates.has(id);
+    el.classList.toggle('invalid', bad);
+    if (bad) el.setAttribute('aria-invalid', 'true');
+    else el.removeAttribute('aria-invalid');
+    el.title = bad ? 'Duplicate hotkey' : '';
+  });
+  const portBad = syncPortValidity();
+  if (duplicates.size) return 'Two hotkeys use the same key combo';
+  if (portBad) return 'OBS websocket port must be between 1024 and 65535';
+  return '';
+}
 function setSettingsDirty(dirty) {
   const changes = dirty ? changedSettings() : [];
   const count = changes.length;
   const dirtyText = count === 1 ? '1 unsaved change' : `${count} unsaved changes`;
   const title = changedSettingsTitle(changes);
+  const validationMessage = syncSettingsValidity();
+  const invalidDirty = dirty && !!validationMessage;
   setChangedSettingHighlights(changes);
   $('savebar').classList.toggle('dirty', dirty);
-  $('save-btn').disabled = savingSettings || !dirty;
-  if (!savingSettings) $('save-btn').title = dirty ? `Save ${dirtyText}: ${title}` : 'No unsaved settings';
+  $('savebar').classList.toggle('invalid', invalidDirty);
+  $('save-btn').disabled = savingSettings || !dirty || invalidDirty;
+  if (!savingSettings) $('save-btn').title = invalidDirty ? validationMessage : dirty ? `Save ${dirtyText}: ${title}` : 'No unsaved settings';
   $('revert-btn').style.display = dirty ? '' : 'none';
   $('revert-btn').disabled = savingSettings;
   $('revert-btn').title = dirty ? `Discard ${dirtyText}: ${title}` : 'Discard unsaved changes and reload saved settings';
   $('dirty-pill').textContent = `● ${dirty ? dirtyText : 'Saved'}`;
-  $('dirty-pill').title = title;
+  $('dirty-pill').title = invalidDirty ? `${title} - ${validationMessage}` : title;
   tabButtons[0].classList.toggle('unsaved', dirty);
-  if ($('sum-save')) $('sum-save').textContent = dirty ? dirtyText : 'Saved';
-  if ($('sum-save')) $('sum-save').title = title;
+  if ($('sum-save')) $('sum-save').textContent = invalidDirty ? 'Fix invalid setting' : dirty ? dirtyText : 'Saved';
+  if ($('sum-save')) $('sum-save').title = invalidDirty ? validationMessage : title;
   $('sum-save-box')?.classList.toggle('dirty', dirty);
+  $('sum-save-box')?.classList.toggle('invalid', invalidDirty);
   $('sum-save-box')?.classList.toggle('good', !dirty);
 }
 function markDirty() {
@@ -2002,26 +2037,9 @@ function clearDirty() {
 }
 
 function validateSettings() {
-  const hotkeyIds = ['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next'];
-  hotkeyIds.forEach(id => { $(id).classList.remove('invalid'); $(id).title = ''; });
-  const seen = new Map(), duplicates = new Set();
-  for (const id of hotkeyIds) {
-    const key = $(id).value.trim();
-    if (!key) continue;
-    const norm = key.toLowerCase();
-    if (seen.has(norm)) { duplicates.add(id); duplicates.add(seen.get(norm)); }
-    else seen.set(norm, id);
-  }
-  duplicates.forEach(id => { $(id).classList.add('invalid'); $(id).title = 'Duplicate hotkey'; });
-  if (duplicates.size) {
-    toast('Two hotkeys use the same key combo', true);
-    return false;
-  }
-  const port = parseInt($('wsport').value);
-  if (isNaN(port) || port < 1024 || port > 65535) {
-    $('wsport').classList.add('invalid');
-    $('wsport').title = 'Port must be between 1024 and 65535';
-    toast('OBS websocket port must be between 1024 and 65535', true);
+  const message = syncSettingsValidity();
+  if (message) {
+    toast(message, true);
     return false;
   }
   return true;
@@ -3472,7 +3490,7 @@ listen('poll_error', e => {
   setStatus(`Poll error: ${e.payload}`, 'err');
 });
 
-['hotkey', 'bo-hk-show', 'bo-hk-cycle', 'bo-hk-prev', 'bo-hk-next'].forEach(id => makeHotkeyRecorder($(id)));
+HOTKEY_IDS.forEach(id => makeHotkeyRecorder($(id)));
 const NO_DIRTY = new Set(['search', 'bo-filter', 'bo-import-file']);
 ['tab-settings', 'tab-buildorders'].forEach(id => {
   $(id).addEventListener('input', e => { if (!NO_DIRTY.has(e.target.id) && SETTINGS_DIRTY_IDS.has(e.target.id)) markDirty(); });
@@ -3493,7 +3511,10 @@ function syncPortValidity() {
   const v = parseInt($('wsport').value);
   const bad = isNaN(v) || v < 1024 || v > 65535;
   $('wsport').classList.toggle('invalid', bad);
+  if (bad) $('wsport').setAttribute('aria-invalid', 'true');
+  else $('wsport').removeAttribute('aria-invalid');
   $('wsport').title = bad ? 'Port must be between 1024 and 65535' : '';
+  return bad;
 }
 // flag an out-of-range port as you type instead of silently clamping at save
 $('wsport').addEventListener('input', syncPortValidity);
