@@ -371,9 +371,47 @@
   #bo-content { width: 100%; height: 220px; font-family: "Cascadia Code", "Cascadia Mono", Consolas, monospace; font-size: 12px; box-sizing: border-box;
                 margin: 8px 0; resize: vertical; line-height: 1.5; background: rgba(0,0,0,.22); tab-size: 2; }
   #bo-content.invalid { border-color: #e0452f; box-shadow: 0 0 0 2px rgba(224,69,47,.14); }
+  #bo-content.repairable { border-color: rgba(255,179,0,.52); box-shadow: 0 0 0 2px rgba(255,179,0,.14); }
   /* valid JSON gets a quiet green edge so "it parsed" is visible at a glance */
   #bo-content.json-ok { border-color: rgba(72,189,33,.4); }
   #bo-content.json-ok:focus { border-color: rgba(72,189,33,.6); box-shadow: 0 0 0 2px rgba(72,189,33,.18); }
+  #bo-format.warn { background: rgba(255,179,0,.18); color: #ffc845; }
+  .bo-editor-shell { display: grid; grid-template-columns: minmax(0, 1fr) 292px; gap: 16px; align-items: stretch; }
+  .bo-editor-main { min-width: 0; display: grid; grid-template-rows: auto minmax(320px, 1fr) auto auto auto; gap: 10px; }
+  .bo-editor-card #bo-content { height: 360px; min-height: 320px; margin: 0; font-size: 12.5px; line-height: 1.58;
+    background:
+      linear-gradient(90deg, rgba(122,182,255,.045), transparent 18%),
+      rgba(0,0,0,.24); }
+  .bo-editor-name { margin: 0; }
+  .bo-editor-actions { margin: 0; gap: 9px; }
+  .bo-editor-flags { margin: 0; }
+  .bo-editor-assist { min-width: 0; display: grid; align-content: start; gap: 12px; padding: 14px;
+    border-left: 1px solid rgba(224,186,94,.16); background:
+      linear-gradient(180deg, rgba(224,186,94,.07), transparent 38%),
+      linear-gradient(180deg, rgba(255,255,255,.035), rgba(0,0,0,.08)); }
+  .bo-assist-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .bo-assist-head span { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }
+  .bo-assist-head b { color: #fff; font-size: 12px; padding: 4px 8px; border-radius: 999px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.08); }
+  .bo-assist-head b.good { color: #bdf8a9; background: rgba(111,224,74,.1); border-color: rgba(111,224,74,.24); }
+  .bo-assist-head b.warn { color: #ffe08a; background: rgba(255,179,0,.11); border-color: rgba(255,179,0,.26); }
+  .bo-assist-head b.bad { color: #ffb3a6; background: rgba(255,123,102,.1); border-color: rgba(255,123,102,.24); }
+  .bo-assist-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .bo-assist-metric { min-width: 0; padding: 9px 10px; border-radius: 12px; background: rgba(5,6,10,.34);
+    border: 1px solid rgba(255,255,255,.075); }
+  .bo-assist-metric span { display: block; color: #9da3b0; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; }
+  .bo-assist-metric b { display: block; margin-top: 4px; color: #fff; font-size: 14px; line-height: 1.2;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-repair-panel { display: grid; gap: 10px; padding: 12px; border-radius: 14px;
+    border: 1px solid rgba(255,179,0,.24); background:
+      radial-gradient(260px 120px at 0 0, rgba(255,179,0,.13), transparent 70%),
+      rgba(255,179,0,.045); }
+  .bo-repair-panel[hidden] { display: none; }
+  .bo-repair-title { color: #ffe08a; font-size: 12px; font-weight: 850; }
+  .bo-repair-copy { color: #d4d0bd; font-size: 12px; line-height: 1.42; }
+  .bo-repair-copy ul { margin: 7px 0 0; padding-left: 18px; }
+  .bo-repair-copy li { margin: 3px 0; }
+  .bo-assist-tip { color: #aeb3bf; font-size: 12px; line-height: 1.48; padding-top: 2px; }
   /* paired buttons render as one segmented control */
   .seg-group { display: inline-flex; }
   .seg-group button { border-radius: 0; margin: 0; }
@@ -1168,11 +1206,14 @@
     filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
   .bo-workbench .cards { position: relative; z-index: 1; }
   .bo-workbench .card { border-color: rgba(255,255,255,.09); background: linear-gradient(180deg, rgba(43,43,53,.9), rgba(29,29,37,.96)); }
+  .bo-workbench .bo-editor-card { grid-column: 1 / -1; }
   @media (max-width: 760px) {
     .bo-workbench-head { align-items: flex-start; flex-direction: column; }
     .bo-workbench-metrics { justify-content: flex-start; }
     .bo-dossier { grid-template-columns: 1fr; }
     .bo-dossier-media { min-height: 150px; }
+    .bo-editor-shell { grid-template-columns: 1fr; }
+    .bo-editor-assist { border-left: 0; border-top: 1px solid rgba(224,186,94,.16); }
   }
   /* build-order cards settle in with a slight stagger when the tab opens */
   #tab-buildorders .card { animation: card-in .38s cubic-bezier(.22,1,.36,1) backwards; }
@@ -2120,25 +2161,47 @@
         <div class="hint" style="margin-top:10px"><svg class="ic"><use href="#i-globe"/></svg><span>Build links and aoe4guides profile links both work — profiles list the author's builds. Click an author name to see more of their builds; double-click a result to import <i>and</i> show it. <kbd>Esc</kbd> clears the results.</span></div>
       </div>
 
-      <div class="card">
+      <div class="card bo-editor-card">
         <h3><svg class="ic"><use href="#i-pencil"/></svg> Editor</h3>
-        <div class="row">
-          <input id="bo-name" placeholder="Build order name" style="flex:1">
-          <span id="bo-format" class="badge mode" title="">—</span>
+        <div class="bo-editor-shell">
+          <div class="bo-editor-main">
+            <div class="row bo-editor-name">
+              <input id="bo-name" placeholder="Build order name" style="flex:1">
+              <span id="bo-format" class="badge mode" title="">—</span>
+            </div>
+            <textarea id="bo-content" spellcheck="false" placeholder='Plain text (one step per line), or RTS_Overlay JSON ({"civilization": ..., "build_order": [...]})'></textarea>
+            <div class="row bo-editor-actions">
+              <button id="bo-add" class="primary">Save build order</button>
+              <button id="bo-dup">Duplicate</button>
+              <button id="bo-format-btn">Format / repair JSON</button>
+              <button id="bo-export">Export</button>
+              <button id="bo-del" class="danger" style="margin-left:auto">Delete</button>
+            </div>
+            <div class="row bo-editor-flags">
+              <button id="bo-showbtn">Show on overlay</button>
+              <label style="min-width:0; flex:1"><input id="bo-checked" type="checkbox" checked> include in hotkey cycle</label>
+            </div>
+            <div class="hint" style="margin-top:2px"><svg class="ic"><use href="#i-pencil"/></svg><span>Paste plain text, RTS_Overlay JSON, age4builder-style JSON, or a build link. The editor can repair common JSON paste mistakes before saving. Use <code>@folder/image@</code> tokens for icons. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves.</span></div>
+          </div>
+          <aside class="bo-editor-assist" aria-live="polite">
+            <div class="bo-assist-head">
+              <span>Input quality</span>
+              <b id="bo-assist-state">Idle</b>
+            </div>
+            <div class="bo-assist-grid">
+              <div class="bo-assist-metric"><span>Steps</span><b id="bo-assist-steps">--</b></div>
+              <div class="bo-assist-metric"><span>Civ</span><b id="bo-assist-civ">--</b></div>
+              <div class="bo-assist-metric"><span>Format</span><b id="bo-assist-format">--</b></div>
+              <div class="bo-assist-metric"><span>Issues</span><b id="bo-assist-issues">--</b></div>
+            </div>
+            <div class="bo-repair-panel" id="bo-repair-panel" hidden>
+              <div class="bo-repair-title">Repair available</div>
+              <div class="bo-repair-copy" id="bo-repair-copy"></div>
+              <button id="bo-repair-apply" class="primary" type="button">Apply repair</button>
+            </div>
+            <div class="bo-assist-tip">The preview uses the repaired structure when possible, so you can see whether a messy paste will become a clean build before committing it.</div>
+          </aside>
         </div>
-        <textarea id="bo-content" spellcheck="false" placeholder='Plain text (one step per line), or RTS_Overlay JSON ({"civilization": ..., "build_order": [...]})'></textarea>
-        <div class="row">
-          <button id="bo-add" class="primary">Save build order</button>
-          <button id="bo-dup">Duplicate</button>
-          <button id="bo-format-btn">Format JSON</button>
-          <button id="bo-export">Export</button>
-          <button id="bo-del" class="danger" style="margin-left:auto">Delete</button>
-        </div>
-        <div class="row">
-          <button id="bo-showbtn">Show on overlay</button>
-          <label style="min-width:0; flex:1"><input id="bo-checked" type="checkbox" checked> include in hotkey cycle</label>
-        </div>
-        <div class="hint" style="margin-top:8px"><svg class="ic"><use href="#i-pencil"/></svg><span>JSON format is compatible with RTS_Overlay / age4builder — or use Import from the web. Pasting a build link in here imports it too. Use <code>@folder/image@</code> tokens for icons (works in plain text too). <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves. <kbd>↑</kbd><kbd>↓</kbd> in the filter browses the library; double-click a build order to show it on the overlay.</span></div>
       </div>
 
       <div class="card">
@@ -4270,18 +4333,130 @@ function parseBo(content) {
   boParseCache.set(content, r);
   return r;
 }
+function normalizeBoTime(t) {
+  if (typeof t !== 'string') return t;
+  const m = t.trim().match(/^(\d+)[.:](\d+)$/);
+  if (!m) return t;
+  const s = parseInt(m[2], 10);
+  return s < 60 ? `${parseInt(m[1], 10)}:${String(s).padStart(2, '0')}` : t;
+}
+function boParseAllocations(v) {
+  if (typeof v !== 'string') return null;
+  const nums = v.trim().replace(/[()]/g, '').split(/[\/,]/).map(x => {
+    const m = x.trim().match(/^-?\d+/);
+    return m ? parseInt(m[0], 10) : -1;
+  });
+  if (nums.length !== 4) return null;
+  return { food: nums[0], wood: nums[1], gold: nums[2], stone: nums[3] };
+}
+function normalizeBoJsonShape(value, notes = []) {
+  const j = JSON.parse(JSON.stringify(value));
+  if (!j.civilization && j.civilisation) {
+    j.civilization = j.civilisation;
+    delete j.civilisation;
+    notes.push('Renamed civilisation to civilization.');
+  }
+  if (!Array.isArray(j.build_order)) {
+    if (Array.isArray(j.buildOrder)) {
+      j.build_order = j.buildOrder;
+      delete j.buildOrder;
+      notes.push('Renamed buildOrder to build_order.');
+    } else if (Array.isArray(j.steps)) {
+      j.build_order = j.steps;
+      delete j.steps;
+      notes.push('Renamed steps to build_order.');
+    } else if (Array.isArray(j.build_order?.steps)) {
+      j.build_order = j.build_order.steps;
+      notes.push('Pulled steps out of the build_order object.');
+    }
+  }
+  if (Array.isArray(j.build_order)) {
+    j.build_order = j.build_order.map((step, i) => {
+      if (typeof step === 'string') {
+        notes.push(`Converted step ${i + 1} text into a notes array.`);
+        return { notes: [step] };
+      }
+      if (!step || typeof step !== 'object') return step;
+      const s = { ...step };
+      if (!Array.isArray(s.notes)) {
+        if (typeof s.notes === 'string') {
+          s.notes = [s.notes];
+          notes.push(`Wrapped step ${i + 1} notes in an array.`);
+        } else if (s.note) {
+          s.notes = [String(s.note)];
+          delete s.note;
+          notes.push(`Moved step ${i + 1} note into notes.`);
+        } else if (s.description) {
+          s.notes = [String(s.description)];
+          delete s.description;
+          notes.push(`Moved step ${i + 1} description into notes.`);
+        }
+      }
+      const fixedTime = normalizeBoTime(s.time);
+      if (fixedTime !== s.time) {
+        s.time = fixedTime;
+        notes.push(`Normalized step ${i + 1} time.`);
+      }
+      const res = boParseAllocations(s.resources);
+      if (res) {
+        s.resources = res;
+        notes.push(`Converted step ${i + 1} resource allocation text.`);
+      }
+      return s;
+    });
+  }
+  return { json: j, notes };
+}
+function boParsedJson(j, err = null, repair = null) {
+  if (!Array.isArray(j.build_order)) return { json: j, steps: 0, civ: null, err: 'missing "build_order" array', repair };
+  const civ = Array.isArray(j.civilization) ? j.civilization[0] : j.civilization;
+  return { json: j, steps: j.build_order.length, civ, err, repair };
+}
+function suggestBoRepair(t, parseError = '') {
+  const syntaxNotes = [];
+  let fixed = t.replace(/^\uFEFF/, '').replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+  const apply = (next, note) => {
+    if (next !== fixed) {
+      fixed = next;
+      syntaxNotes.push(note);
+    }
+  };
+  apply(fixed.replace(/\/\*[\s\S]*?\*\//g, ''), 'Removed block comments.');
+  apply(fixed.replace(/(^|[^:])\/\/.*$/gm, '$1'), 'Removed line comments.');
+  apply(fixed.replace(/([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)(\s*:)/g, '$1"$2"$3'), 'Quoted bare object keys.');
+  apply(fixed.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, s) => JSON.stringify(s.replace(/\\'/g, "'"))), 'Converted single-quoted strings.');
+  apply(fixed.replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false').replace(/\bNone\b/g, 'null'), 'Converted Python-style booleans/nulls.');
+  apply(fixed.replace(/,\s*([}\]])/g, '$1'), 'Removed trailing commas.');
+  try {
+    const parsed = JSON.parse(fixed);
+    const normalized = normalizeBoJsonShape(parsed, [...syntaxNotes]);
+    if (!Array.isArray(normalized.json.build_order)) return null;
+    return {
+      fixed: JSON.stringify(normalized.json, null, 2),
+      json: normalized.json,
+      notes: [...new Set(normalized.notes)],
+      error: parseError,
+    };
+  } catch (e) {
+    return null;
+  }
+}
 function parseBoUncached(content) {
   const t = (content || '').trim();
   if (!t.startsWith('{')) {
     return { json: null, steps: t.split('\n').filter(l => l.trim()).length, civ: null, err: null };
   }
   try {
-    const j = JSON.parse(t);
-    if (!Array.isArray(j.build_order)) return { json: j, steps: 0, civ: null, err: 'missing "build_order" array' };
-    const civ = Array.isArray(j.civilization) ? j.civilization[0] : j.civilization;
-    return { json: j, steps: j.build_order.length, civ, err: null };
+    const parsed = JSON.parse(t);
+    const normalized = normalizeBoJsonShape(parsed);
+    const repair = normalized.notes.length
+      ? { fixed: JSON.stringify(normalized.json, null, 2), json: normalized.json, notes: [...new Set(normalized.notes)], error: null }
+      : null;
+    return boParsedJson(normalized.json, null, repair);
   } catch (e) {
-    return { json: null, steps: 0, civ: null, err: e.message };
+    const repair = suggestBoRepair(t, e.message);
+    if (repair) return boParsedJson(repair.json, e.message, repair);
+    return { json: null, steps: 0, civ: null, err: e.message, repair: null };
   }
 }
 
@@ -4351,7 +4526,8 @@ function updateBoDossier() {
   $('bo-dossier-title').textContent = hasDraft ? name : 'Planner idle';
   $('bo-dossier-civ').textContent = civ || (hasDraft ? 'No civilization' : 'Not selected');
   $('bo-dossier-copy').textContent = hasDraft
-    ? p.err ? `Fix the JSON before saving or showing this build: ${p.err}`
+    ? p.err && p.repair ? 'This paste can be repaired into a valid build. Apply the repair in the editor before saving or showing it.'
+      : p.err ? `Fix the JSON before saving or showing this build: ${p.err}`
       : p.steps ? `${name} is staged in the editor. Review the first steps below, then show it on the overlay when ready.`
       : 'This build is open, but it does not have any steps yet.'
     : 'Select a saved build or start a new one to stage the editor, preview, and overlay controls.';
@@ -4361,13 +4537,14 @@ function updateBoDossier() {
     if (civ) tags.push(`<span>${esc(civ)}</span>`);
     tags.push(`<span>${p.json ? 'JSON build' : 'Plain text'}</span>`);
     if (p.err) tags.push(`<span class="bad">Invalid JSON</span>`);
+    if (p.repair) tags.push('<span>Repair available</span>');
     if (saved) tags.push(`<span>${checked ? 'In cycle' : 'Cycle paused'}</span>`);
     if (live) tags.push('<span class="live">Live on overlay</span>');
     if (!saved) tags.push('<span>Unsaved draft</span>');
   }
   $('bo-dossier-tags').innerHTML = tags.join('');
   $('bo-dossier-step-count').textContent = hasDraft ? `${p.steps} step${p.steps === 1 ? '' : 's'}` : '--';
-  $('bo-dossier-format').textContent = hasDraft ? (p.err ? 'Invalid' : p.json ? 'JSON' : 'Text') : '--';
+  $('bo-dossier-format').textContent = hasDraft ? (p.err && p.repair ? 'Repairable' : p.err ? 'Invalid' : p.json ? 'JSON' : 'Text') : '--';
   const img = $('bo-dossier-img');
   const mark = $('bo-dossier-mark');
   if (civ) {
@@ -4431,7 +4608,7 @@ function renderBoList() {
       ${flag}<span class="bo-text"><span class="bo-title">${esc(name)}</span>${p.civ ? `<span class="bo-civ">${esc(p.civ)}</span>` : ''}</span>
       ${name === boShownName ? '<span class="live-badge" title="Currently on the overlay">LIVE</span>' : ''}
       <span class="bo-meta">
-        ${p.err ? '<span class="badge loss" title="' + esc(p.err) + '">invalid</span>' : ''}
+        ${p.err ? (p.repair ? '<span class="badge live" title="' + esc(p.err) + '">repair</span>' : '<span class="badge loss" title="' + esc(p.err) + '">invalid</span>') : ''}
         <span class="steps-pill">${p.steps} step${p.steps === 1 ? '' : 's'}</span>
         <span class="cyc${checked ? ' on' : ''}" title="${checked ? 'In the hotkey cycle — click to remove' : 'Not in the hotkey cycle — click to add'}">${checked ? '✓ cycle' : 'cycle'}</span>
       </span>
@@ -4475,16 +4652,52 @@ function selectBo(name) {
   updateBoDossier();
 }
 
+function updateBoAssist(p) {
+  const state = $('bo-assist-state');
+  if (!state) return;
+  const hasContent = !!$('bo-content').value.trim();
+  const stateClass = !hasContent ? '' : p.err && !p.repair ? 'bad' : p.repair ? 'warn' : p.json ? 'good' : '';
+  state.className = stateClass;
+  state.textContent = !hasContent ? 'Idle' : p.err && !p.repair ? 'Broken' : p.repair ? 'Repairable' : p.json ? 'Clean' : 'Plain text';
+  $('bo-assist-steps').textContent = hasContent ? `${p.steps}` : '--';
+  $('bo-assist-civ').textContent = p.civ || (hasContent && p.json ? 'Any' : '--');
+  $('bo-assist-format').textContent = hasContent ? (p.err && p.repair ? 'JSON fix' : p.err ? 'Invalid' : p.json ? 'JSON' : 'Text') : '--';
+  $('bo-assist-issues').textContent = !hasContent ? '--' : p.err && !p.repair ? '1 error' : p.repair ? `${p.repair.notes.length || 1} fix${p.repair.notes.length === 1 ? '' : 'es'}` : 'None';
+  const panel = $('bo-repair-panel');
+  panel.hidden = !p.repair;
+  if (p.repair) {
+    const notes = (p.repair.notes.length ? p.repair.notes : ['Reformatted the build as valid RTS_Overlay JSON.'])
+      .slice(0, 6).map(n => `<li>${esc(n)}</li>`).join('');
+    $('bo-repair-copy').innerHTML = `${p.err ? `<div>${esc(p.err)}</div>` : '<div>This JSON is valid, but can be normalized for safer preview and overlay behavior.</div>'}<ul>${notes}</ul>`;
+  }
+}
+
 function validateBoContent() {
   const p = parseBo($('bo-content').value);
   const badge = $('bo-format');
-  $('bo-content').classList.toggle('invalid', !!p.err);
-  $('bo-content').classList.toggle('json-ok', !!p.json && !p.err);
-  if (p.err) { badge.className = 'badge bad'; badge.textContent = 'invalid JSON'; badge.title = p.err; }
+  $('bo-content').classList.toggle('invalid', !!p.err && !p.repair);
+  $('bo-content').classList.toggle('repairable', !!p.repair);
+  $('bo-content').classList.toggle('json-ok', !!p.json && !p.err && !p.repair);
+  if (p.err && p.repair) { badge.className = 'badge warn'; badge.textContent = `repairable · ${p.steps} steps`; badge.title = p.err; }
+  else if (p.err) { badge.className = 'badge bad'; badge.textContent = 'invalid JSON'; badge.title = p.err; }
+  else if (p.repair) { badge.className = 'badge warn'; badge.textContent = `cleanup · ${p.steps} steps`; badge.title = p.repair.notes.join(' '); }
   else if (p.json) { badge.className = 'badge ok'; badge.textContent = `JSON · ${p.steps} steps`; badge.title = p.civ || ''; }
   else { badge.className = 'badge mode'; badge.textContent = `text · ${p.steps} steps`; badge.title = ''; }
+  updateBoAssist(p);
   updateBoDossier();
   return p;
+}
+
+function applyBoRepair() {
+  const p = parseBo($('bo-content').value);
+  if (!p.repair) return false;
+  $('bo-content').value = p.repair.fixed;
+  setBoDirty(true);
+  validateBoContent();
+  updateBoPreview();
+  markDirty();
+  toast('Build order JSON repaired and formatted');
+  return true;
 }
 
 // Save settings without the full validate/collect cycle of save() when only BOs changed.
@@ -4496,6 +4709,13 @@ async function persistBo() {
 $('bo-add').onclick = async () => {
   const name = $('bo-name').value.trim();
   if (!name) { toast('Enter a build order name', true); return; }
+  const parsed = validateBoContent();
+  if (parsed.repair) {
+    toast('Apply the suggested JSON cleanup before saving', true);
+    if (parsed.repair) $('bo-repair-apply').focus();
+    return;
+  }
+  if (parsed.err) { toast(`Fix the JSON before saving: ${parsed.err}`, true); return; }
   const renamed = boSelected && boSelected !== name && settings.buildorders[boSelected] !== undefined;
   if (boSelected !== name && settings.buildorders[name] !== undefined &&
       !confirm(`A build order named "${name}" already exists. Overwrite it?`)) return;
@@ -4588,12 +4808,14 @@ $('bo-del').onclick = async () => {
 
 $('bo-format-btn').onclick = () => {
   const p = parseBo($('bo-content').value);
+  if (p.repair) { applyBoRepair(); return; }
   if (!p.json) { toast(p.err ? 'Cannot format: ' + p.err : 'Not JSON content', true); return; }
   $('bo-content').value = JSON.stringify(p.json, null, 2);
   setBoDirty(true);
   validateBoContent();
   markDirty();
 };
+$('bo-repair-apply').onclick = applyBoRepair;
 
 $('bo-export').onclick = () => {
   const name = $('bo-name').value.trim() || 'build-order';
