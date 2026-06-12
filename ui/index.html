@@ -1932,7 +1932,9 @@ function palRender() {
       .sort((a, b) => b.score - a.score);
   } else {
     const rec = palRecents().map(n => PAL_COMMANDS.find(c => c.name === n)).filter(Boolean);
-    matches = [...rec.map(c => ({ c, m: null, sect: 'Recent' })), ...PAL_COMMANDS.map(c => ({ c, m: null }))];
+    const recentNames = new Set(rec.map(c => c.name));
+    const rest = PAL_COMMANDS.filter(c => !recentNames.has(c.name));
+    matches = [...rec.map(c => ({ c, m: null, sect: 'Recent' })), ...rest.map(c => ({ c, m: null }))];
   }
   palShown = matches.map(x => x.c);
   const countText = palShown.length === 1 ? '1 command shown' : `${palShown.length} commands shown`;
@@ -1961,7 +1963,10 @@ function palRender() {
   $('pal-list').querySelector('.pal-item.sel')?.scrollIntoView({ block: 'nearest' });
 }
 function palRecents() {
-  try { return JSON.parse(localStorage.getItem('palRecent') || '[]'); } catch (e) { return []; }
+  try {
+    const stored = JSON.parse(localStorage.getItem('palRecent') || '[]');
+    return Array.isArray(stored) ? stored.filter(n => typeof n === 'string') : [];
+  } catch (e) { return []; }
 }
 function palRemember(name) {
   try { localStorage.setItem('palRecent', JSON.stringify([name, ...palRecents().filter(n => n !== name)].slice(0, 4))); }
