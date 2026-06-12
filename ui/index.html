@@ -686,7 +686,14 @@
   .switch input:checked + span::after { left: 21px; background: #fff; }
   .switch span:active::after { width: 19px; }
   .switch input:checked + span:active::after { left: 18px; }
-  .color-set { display: flex; gap: 6px; }
+  .color-set, .color-control { display: flex; align-items: center; gap: 6px; }
+  .color-set { flex-wrap: wrap; justify-content: flex-end; }
+  .color-control { flex: none; }
+  .color-value { min-width: 7ch; padding: 2px 5px; border: 1px solid #34343f; border-radius: 5px;
+    background: rgba(0,0,0,.16); color: #aeb0ba; font: 600 11px/1.3 Consolas, "Cascadia Mono", monospace;
+    text-align: center; letter-spacing: 0; }
+  .field.setting-changed .color-value { color: var(--gold-bright); border-color: rgba(255,200,69,.42);
+    background: rgba(255,200,69,.08); }
   .appearance-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
   .preview-wrap { align-self: center; min-width: 0; }
   @media (max-width: 880px) { .appearance-grid { grid-template-columns: minmax(0, 1fr); } }
@@ -1062,9 +1069,18 @@
             <div class="field">
               <label>Team colors</label>
               <span class="color-set">
-                <input id="tc1" type="color" aria-label="Team 1 color" title="Team 1 color">
-                <input id="tc2" type="color" aria-label="Team 2 color" title="Team 2 color">
-                <input id="tc3" type="color" aria-label="Team 3 color" title="Team 3 color">
+                <span class="color-control">
+                  <input id="tc1" type="color" aria-label="Team 1 color" title="Team 1 color">
+                  <span class="color-value" id="tc1-value" aria-hidden="true"></span>
+                </span>
+                <span class="color-control">
+                  <input id="tc2" type="color" aria-label="Team 2 color" title="Team 2 color">
+                  <span class="color-value" id="tc2-value" aria-hidden="true"></span>
+                </span>
+                <span class="color-control">
+                  <input id="tc3" type="color" aria-label="Team 3 color" title="Team 3 color">
+                  <span class="color-value" id="tc3-value" aria-hidden="true"></span>
+                </span>
               </span>
             </div>
             <div class="field">
@@ -1073,7 +1089,10 @@
             </div>
             <div class="field">
               <label>Civ stats color</label>
-              <input id="civstatcolor" type="color" aria-label="Civ stats color" title="Civ stats color">
+              <span class="color-control">
+                <input id="civstatcolor" type="color" aria-label="Civ stats color" title="Civ stats color">
+                <span class="color-value" id="civstatcolor-value" aria-hidden="true"></span>
+              </span>
             </div>
             <div class="field">
               <label>Overlay font scale <b id="fontscale-val"></b></label>
@@ -1946,6 +1965,11 @@ function syncColorMetadata() {
     const value = (el.value || '').toUpperCase();
     el.setAttribute('aria-label', `${label} ${value}`);
     el.title = `${label}: ${value}`;
+    const valueEl = $(`${id}-value`);
+    if (valueEl) {
+      valueEl.textContent = value || '--';
+      valueEl.title = `${label}: ${value || 'unset'}`;
+    }
   });
 }
 
