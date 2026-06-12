@@ -1110,11 +1110,69 @@
     border-radius: 999px; color: #d5d8e0; background: rgba(9,9,13,.5);
     border: 1px solid rgba(255,255,255,.09); font-size: 11px; font-weight: 700; }
   .bo-workbench-metrics b { color: var(--gold-bright); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .bo-dossier { position: relative; z-index: 1; display: grid; grid-template-columns: 240px minmax(0, 1fr) 220px;
+    gap: 14px; margin-bottom: 16px; padding: 13px; overflow: hidden; border-radius: 18px;
+    border: 1px solid rgba(224,186,94,.24); background:
+      radial-gradient(620px 230px at 12% 0%, rgba(224,186,94,.14), transparent 64%),
+      radial-gradient(720px 260px at 100% 18%, rgba(122,182,255,.14), transparent 65%),
+      linear-gradient(135deg, rgba(33,35,44,.95), rgba(17,19,27,.97));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 20px 48px -30px rgba(0,0,0,.96); }
+  .bo-dossier::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .15;
+    background-image:
+      linear-gradient(rgba(224,186,94,.18) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(122,182,255,.16) 1px, transparent 1px);
+    background-size: 58px 58px;
+    -webkit-mask-image: linear-gradient(90deg, #000 0 48%, transparent 92%);
+    mask-image: linear-gradient(90deg, #000 0 48%, transparent 92%); }
+  .bo-dossier.idle { border-color: rgba(255,255,255,.1); }
+  .bo-dossier.live { border-color: rgba(111,224,74,.34); box-shadow: inset 0 1px 0 rgba(255,255,255,.06),
+      0 20px 48px -30px rgba(0,0,0,.96), 0 0 32px -22px rgba(111,224,74,.9); }
+  .bo-dossier.invalid { border-color: rgba(255,123,102,.34); }
+  .bo-dossier-media { position: relative; min-height: 178px; overflow: hidden; border-radius: 15px;
+    border: 1px solid rgba(255,255,255,.1); background:
+      radial-gradient(circle at 48% 35%, rgba(255,233,160,.18), transparent 50%),
+      linear-gradient(180deg, rgba(255,255,255,.045), rgba(0,0,0,.28)); }
+  .bo-dossier-media::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,.6)); }
+  .bo-dossier-media img { position: absolute; inset: 20px; width: calc(100% - 40px); height: calc(100% - 58px);
+    object-fit: contain; filter: drop-shadow(0 20px 26px rgba(0,0,0,.58)); }
+  .bo-dossier-mark { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,233,160,.42);
+    font-size: 54px; font-weight: 900; }
+  .bo-dossier-media-label { position: absolute; left: 14px; right: 14px; bottom: 12px; z-index: 1;
+    display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+  .bo-dossier-media-label span { color: #8fc9ff; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .12em; }
+  .bo-dossier-media-label b { color: var(--gold-bright); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-dossier-main { position: relative; min-width: 0; display: grid; align-content: center; gap: 11px; }
+  .bo-dossier-kicker { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+  .bo-dossier-title { color: #fff; font-size: 28px; line-height: 1.1; font-weight: 850; padding-bottom: 4px;
+    text-shadow: 0 2px 20px rgba(0,0,0,.72); overflow-wrap: anywhere; }
+  .bo-dossier-copy { color: #c3c7d1; font-size: 12.5px; line-height: 1.45; max-width: 64ch; }
+  .bo-dossier-tags, .bo-dossier-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .bo-dossier-tags span { display: inline-flex; align-items: center; min-height: 25px; padding: 4px 10px;
+    border-radius: 999px; color: #e4e7ee; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    font-size: 11px; font-weight: 800; }
+  .bo-dossier-tags .live { color: #bdf8a9; border-color: rgba(111,224,74,.28); background: rgba(111,224,74,.1); }
+  .bo-dossier-tags .bad { color: #ffb3a6; border-color: rgba(255,123,102,.28); background: rgba(255,123,102,.1); }
+  .bo-dossier-side { position: relative; min-width: 0; display: grid; align-content: stretch; gap: 9px; }
+  .bo-dossier-metric { min-width: 0; padding: 10px 11px; border-radius: 13px; background: rgba(8,9,13,.38);
+    border: 1px solid rgba(255,255,255,.08); }
+  .bo-dossier-metric span { display: block; color: #9fa5b1; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .08em; }
+  .bo-dossier-metric b { display: block; margin-top: 4px; color: #fff; font-size: 16px; line-height: 1.18;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-dossier-steps { display: grid; gap: 6px; }
+  .bo-dossier-step { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: start;
+    padding: 7px 8px; border-radius: 10px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.06); }
+  .bo-dossier-step b { color: var(--gold-bright); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .bo-dossier-step > span { min-width: 0; color: #d9dce4; font-size: 12px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bo-dossier-step > span img { height: 18px; vertical-align: middle; margin: -2px 3px 0; border-radius: 3px;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
   .bo-workbench .cards { position: relative; z-index: 1; }
   .bo-workbench .card { border-color: rgba(255,255,255,.09); background: linear-gradient(180deg, rgba(43,43,53,.9), rgba(29,29,37,.96)); }
   @media (max-width: 760px) {
     .bo-workbench-head { align-items: flex-start; flex-direction: column; }
     .bo-workbench-metrics { justify-content: flex-start; }
+    .bo-dossier { grid-template-columns: 1fr; }
+    .bo-dossier-media { min-height: 150px; }
   }
   /* build-order cards settle in with a slight stagger when the tab opens */
   #tab-buildorders .card { animation: card-in .38s cubic-bezier(.22,1,.36,1) backwards; }
@@ -1995,6 +2053,31 @@
           <span id="bo-workbench-current">Overlay idle</span>
         </div>
       </div>
+      <section class="bo-dossier idle" id="bo-dossier" aria-live="polite">
+        <div class="bo-dossier-media">
+          <img id="bo-dossier-img" alt="">
+          <div class="bo-dossier-mark" id="bo-dossier-mark"><svg class="ic"><use href="#i-scroll"/></svg></div>
+          <div class="bo-dossier-media-label">
+            <span>Civilization</span>
+            <b id="bo-dossier-civ">Not selected</b>
+          </div>
+        </div>
+        <div class="bo-dossier-main">
+          <div class="bo-dossier-kicker">Selected build</div>
+          <div class="bo-dossier-title" id="bo-dossier-title">Planner idle</div>
+          <div class="bo-dossier-copy" id="bo-dossier-copy">Select a saved build or start a new one to stage the editor, preview, and overlay controls.</div>
+          <div class="bo-dossier-tags" id="bo-dossier-tags"></div>
+          <div class="bo-dossier-steps" id="bo-dossier-steps"></div>
+        </div>
+        <div class="bo-dossier-side">
+          <div class="bo-dossier-metric"><span>Steps</span><b id="bo-dossier-step-count">--</b></div>
+          <div class="bo-dossier-metric"><span>Format</span><b id="bo-dossier-format">--</b></div>
+          <div class="bo-dossier-actions">
+            <button id="bo-dossier-show" class="primary" disabled>Show on overlay</button>
+            <button id="bo-dossier-new" type="button">New build</button>
+          </div>
+        </div>
+      </section>
       <div class="cards">
 
       <div class="card">
@@ -4233,6 +4316,76 @@ function boLibraryEmptyHtml(kind, total) {
   </div>`;
 }
 
+function boFirstNote(step) {
+  if (!step) return '';
+  if (Array.isArray(step.notes) && step.notes.length) return String(step.notes[0]);
+  if (step.note) return String(step.note);
+  if (step.description) return String(step.description);
+  return '';
+}
+function boDossierSteps(p, content) {
+  if (p.json && Array.isArray(p.json.build_order)) {
+    return p.json.build_order.slice(0, 4).map((step, i) => ({
+      lead: step.time || (step.population_count ? `${step.population_count} pop` : `S${i + 1}`),
+      text: boFirstNote(step) || `Step ${i + 1}`,
+    }));
+  }
+  return String(content || '').split('\n').map(x => x.trim()).filter(Boolean).slice(0, 4)
+    .map((line, i) => ({ lead: `S${i + 1}`, text: line }));
+}
+function updateBoDossier() {
+  const dossier = $('bo-dossier');
+  if (!dossier) return;
+  const editorName = $('bo-name')?.value.trim() || '';
+  const content = $('bo-content')?.value || '';
+  const saved = !!boSelected && settings.buildorders?.[boSelected] !== undefined;
+  const hasDraft = !!(saved || editorName || content.trim());
+  const name = editorName || boSelected || 'Planner idle';
+  const p = parseBo(content || (saved ? settings.buildorders[boSelected] : ''));
+  const live = saved && boSelected === boShownName;
+  const checked = saved && !(settings.unchecked_buildorders || []).includes(boSelected);
+  const civ = p.civ || '';
+  dossier.classList.toggle('idle', !hasDraft);
+  dossier.classList.toggle('live', live);
+  dossier.classList.toggle('invalid', !!p.err);
+  $('bo-dossier-title').textContent = hasDraft ? name : 'Planner idle';
+  $('bo-dossier-civ').textContent = civ || (hasDraft ? 'No civilization' : 'Not selected');
+  $('bo-dossier-copy').textContent = hasDraft
+    ? p.err ? `Fix the JSON before saving or showing this build: ${p.err}`
+      : p.steps ? `${name} is staged in the editor. Review the first steps below, then show it on the overlay when ready.`
+      : 'This build is open, but it does not have any steps yet.'
+    : 'Select a saved build or start a new one to stage the editor, preview, and overlay controls.';
+  const tags = [];
+  if (!hasDraft) tags.push('<span>No build selected</span>');
+  else {
+    if (civ) tags.push(`<span>${esc(civ)}</span>`);
+    tags.push(`<span>${p.json ? 'JSON build' : 'Plain text'}</span>`);
+    if (p.err) tags.push(`<span class="bad">Invalid JSON</span>`);
+    if (saved) tags.push(`<span>${checked ? 'In cycle' : 'Cycle paused'}</span>`);
+    if (live) tags.push('<span class="live">Live on overlay</span>');
+    if (!saved) tags.push('<span>Unsaved draft</span>');
+  }
+  $('bo-dossier-tags').innerHTML = tags.join('');
+  $('bo-dossier-step-count').textContent = hasDraft ? `${p.steps} step${p.steps === 1 ? '' : 's'}` : '--';
+  $('bo-dossier-format').textContent = hasDraft ? (p.err ? 'Invalid' : p.json ? 'JSON' : 'Text') : '--';
+  const img = $('bo-dossier-img');
+  const mark = $('bo-dossier-mark');
+  if (civ) {
+    img.hidden = false;
+    mark.hidden = true;
+    img.onerror = () => { img.hidden = true; mark.hidden = false; };
+    img.src = `flags/${flagName(civ)}.webp`;
+  } else {
+    img.hidden = true;
+    mark.hidden = false;
+  }
+  const steps = boDossierSteps(p, content || (saved ? settings.buildorders[boSelected] : ''));
+  $('bo-dossier-steps').innerHTML = steps.length
+    ? steps.map(s => `<div class="bo-dossier-step"><b>${esc(s.lead)}</b><span>${boRenderLine(s.text)}</span></div>`).join('')
+    : '<div class="bo-dossier-step"><b>--</b><span>No steps staged yet</span></div>';
+  $('bo-dossier-show').disabled = !saved || !!p.err;
+}
+
 function renderBoList() {
   const list = $('bo-list');
   const filter = ($('bo-filter').value || '').toLowerCase();
@@ -4241,6 +4394,7 @@ function renderBoList() {
   $('tab-bo-chip').textContent = total || '';
   $('tab-bo-chip').title = total ? `${total} build order${total === 1 ? '' : 's'} in the library` : '';
   if ($('bo-workbench-count')) $('bo-workbench-count').textContent = String(total);
+  updateBoDossier();
   const setCount = shown => {
     const el = $('bo-count');
     const txt = total ? (shown === total ? `(${total})` : `(${shown}/${total})`) : '';
@@ -4303,6 +4457,7 @@ async function toggleCycle(name) {
   if (name === boSelected) $('bo-checked').checked = i >= 0;
   await persistBo();
   renderBoList();
+  updateBoDossier();
 }
 
 function selectBo(name) {
@@ -4317,6 +4472,7 @@ function selectBo(name) {
   renderBoList();
   validateBoContent();
   updateBoPreview();
+  updateBoDossier();
 }
 
 function validateBoContent() {
@@ -4327,6 +4483,7 @@ function validateBoContent() {
   if (p.err) { badge.className = 'badge bad'; badge.textContent = 'invalid JSON'; badge.title = p.err; }
   else if (p.json) { badge.className = 'badge ok'; badge.textContent = `JSON · ${p.steps} steps`; badge.title = p.civ || ''; }
   else { badge.className = 'badge mode'; badge.textContent = `text · ${p.steps} steps`; badge.title = ''; }
+  updateBoDossier();
   return p;
 }
 
@@ -4372,6 +4529,12 @@ $('bo-new').onclick = () => {
   updateBoPreview();
   $('bo-name').focus();
 };
+
+$('bo-dossier-show').onclick = () => {
+  if (!boSelected || settings.buildorders[boSelected] === undefined) return;
+  invoke('bo_select', { name: boSelected });
+};
+$('bo-dossier-new').onclick = () => $('bo-new').onclick();
 
 $('bo-template').onclick = () => {
   if (boDirty && !confirm('Discard unsaved changes in the editor?')) return;
@@ -4736,6 +4899,7 @@ function updateBoPreview() {
     $('bo-pv-step').textContent = lines.length ? `${boPvStep + 1}/${lines.length}` : '';
     syncPvPager(lines.length);
   }
+  updateBoDossier();
 }
 function syncPvPager(steps) {
   $('bo-pv-prev').disabled = boPvStep <= 0;
