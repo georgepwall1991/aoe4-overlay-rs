@@ -39,9 +39,11 @@
   body { font-family: "Segoe UI Variable Text", "Segoe UI", sans-serif; color: var(--ink); margin: 0; min-height: 100vh;
     -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; line-height: 1.45;
     background:
-      radial-gradient(900px 420px at 85% -10%, rgba(224,186,94,.05), transparent 60%),
-      radial-gradient(800px 500px at -10% 110%, rgba(61,127,176,.06), transparent 60%),
-      linear-gradient(180deg, #17171d, var(--bg) 320px);
+      radial-gradient(1100px 520px at 8% -12%, rgba(122,182,255,.12), transparent 62%),
+      radial-gradient(980px 480px at 96% -4%, rgba(224,186,94,.1), transparent 65%),
+      radial-gradient(850px 560px at 50% 118%, rgba(111,224,74,.05), transparent 68%),
+      linear-gradient(180deg, #191a21 0%, #13141b 44%, #0f1015 100%);
+    background-attachment: fixed;
     animation: launch-in .45s ease-out; }
   @keyframes launch-in { from { opacity: 0; } }
   /* staged boot: chrome settles in around the content */
@@ -51,12 +53,23 @@
   @keyframes boot-status { from { opacity: 0; transform: translateX(-50%) translateY(8px); } }
   body:not(.booted) > .tab.active { animation: boot-pane .55s .08s cubic-bezier(.22,1,.36,1) backwards; }
   @keyframes boot-pane { from { opacity: 0; transform: translateY(10px); } }
-  /* faint film grain keeps the large dark surfaces from looking flat */
-  body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: .035;
-    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="120" height="120" filter="url(%23n)" opacity="0.5"/></svg>'); }
+  /* tactical map texture: quiet enough for reading, visible enough to make the shell feel staged */
+  body::before { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1; opacity: .38;
+    background-image:
+      linear-gradient(rgba(122,182,255,.075) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(224,186,94,.06) 1px, transparent 1px),
+      linear-gradient(115deg, transparent 0 47%, rgba(122,182,255,.075) 47.2%, transparent 47.6%),
+      radial-gradient(circle at 22px 22px, rgba(255,233,160,.2) 0 1px, transparent 1.7px),
+      url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="120" height="120" filter="url(%23n)" opacity="0.38"/></svg>');
+    background-size: 72px 72px, 72px 72px, 260px 260px, 144px 144px, 120px 120px;
+    background-position: center top, center top, center -24px, center 12px, center top;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 8%, #000 0 58%, transparent 88%);
+    mask-image: radial-gradient(ellipse at 50% 8%, #000 0 58%, transparent 88%); }
   /* soft vignette pulls focus toward the content */
   body::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 1;
-    background: radial-gradient(120% 95% at 50% 15%, transparent 62%, rgba(0,0,0,.22)); }
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.03), transparent 190px),
+      radial-gradient(120% 92% at 50% 16%, transparent 56%, rgba(0,0,0,.34)); }
   #brand { display: flex; align-items: center; gap: 9px; align-self: stretch; padding: 6px 14px 6px 7px; margin-right: 5px;
     font-size: 13px; font-weight: 850; letter-spacing: 0; user-select: none; white-space: nowrap;
     border-right: 1px solid rgba(122,182,255,.18); border-radius: 12px;
@@ -130,7 +143,7 @@
   #tabs { transition: box-shadow .25s, border-color .25s, filter .25s, opacity .25s; }
   #status { transition: filter .25s, opacity .25s; }
   body.unfocused #tabs, body.unfocused #status { filter: saturate(.75); opacity: .88; }
-  .tab { display: none; padding: 18px 22px 84px; max-width: 1180px; margin: 0 auto; box-sizing: border-box; }
+  .tab { display: none; position: relative; z-index: 2; padding: 18px 22px 84px; max-width: 1180px; margin: 0 auto; box-sizing: border-box; }
   .tab.active { display: block; animation: tab-in .28s cubic-bezier(.22,1,.36,1); }
   @keyframes tab-in { from { opacity: 0; transform: translateX(var(--dir, 0px)) translateY(4px) scale(.998); } }
   h2, .card h3, .rand-box h3 { font-family: "Segoe UI Variable Display", "Segoe UI Variable Text", "Segoe UI", sans-serif; }
