@@ -1190,24 +1190,43 @@
   #shortcuts .sc-row span:last-child { flex: none; white-space: nowrap; }
 
   /* last match panel */
-  .lm-banner { position: relative; border-radius: 10px; overflow: hidden; margin-bottom: 12px;
+  .match-arena-card { margin-top: 14px; overflow: hidden; border-radius: 18px;
+    border-color: rgba(122,182,255,.18); background:
+      radial-gradient(700px 280px at 18% 0%, rgba(224,186,94,.09), transparent 64%),
+      radial-gradient(620px 300px at 96% 8%, rgba(122,182,255,.1), transparent 62%),
+      linear-gradient(180deg, #26262e, #202028); }
+  .match-arena-card h3 { margin: -14px -16px 14px; padding: 14px 16px 12px;
+    background: linear-gradient(90deg, rgba(122,182,255,.08), rgba(224,186,94,.07), transparent);
+    border-bottom-color: rgba(224,186,94,.2); color: var(--gold-bright); }
+  #last-match .bo-empty { border: 1px dashed rgba(224,186,94,.22); border-radius: 14px;
+    background: rgba(0,0,0,.16); min-height: 120px; display: grid; place-items: center; }
+  .lm-arena { display: grid; grid-template-columns: minmax(300px, .92fr) minmax(0, 1.08fr); gap: 14px; align-items: stretch; }
+  .lm-banner { position: relative; border-radius: 14px; overflow: hidden; margin-bottom: 0; min-height: 238px;
     background: #15151c center/cover no-repeat;
-    box-shadow: inset 0 0 0 1px rgba(230,198,100,.18), 0 6px 18px -8px rgba(0,0,0,.6); }
+    box-shadow: inset 0 0 0 1px rgba(230,198,100,.22), 0 18px 36px -24px rgba(0,0,0,.85); }
   .lm-banner::before { content: ""; position: absolute; inset: 0;
-    background: linear-gradient(100deg, rgba(14,14,20,.94) 30%, rgba(14,14,20,.55) 65%, rgba(14,14,20,.25)); }
+    background:
+      radial-gradient(420px 210px at 14% 88%, rgba(122,182,255,.12), transparent 68%),
+      linear-gradient(100deg, rgba(14,14,20,.96) 25%, rgba(14,14,20,.62) 67%, rgba(14,14,20,.28)); }
   .lm-banner::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
     background: linear-gradient(to right, transparent, rgba(222,186,88,.55) 30%, rgba(222,186,88,.55) 70%, transparent); }
-  .lm-head { position: relative; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding: 16px; }
-  .lm-map { font-size: 19px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; text-shadow: none;
+  .lm-head { position: relative; min-height: 206px; display: flex; flex-direction: column; justify-content: flex-end;
+    align-items: flex-start; gap: 9px; padding: 16px; }
+  .lm-badges { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .lm-map { font-size: 31px; font-weight: 850; letter-spacing: 0; line-height: 1.16; min-height: 37px; text-shadow: none;
     background: linear-gradient(180deg, #fff6cf 15%, #ecc75d 55%, #c79a2e);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,.9)); }
   .lm-sub { color: #ccc; font-size: 12px; text-shadow: 0 1px 3px #000; }
-  .lm-head a.lm-sub { margin-left: auto; text-decoration: none; padding: 2px 9px; border-radius: 9px;
+  .lm-head a.lm-sub { text-decoration: none; padding: 3px 10px; border-radius: 9px;
     background: rgba(122,182,255,.12); box-shadow: inset 0 0 0 1px rgba(122,182,255,.22);
     transition: background .15s; }
   .lm-head a.lm-sub:hover { background: rgba(122,182,255,.22); }
-  .lm-teams { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: start; }
+  .lm-team-stage { border-radius: 14px; padding: 12px; background: rgba(8,8,12,.28);
+    border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+  .lm-team-label { color: #aeb1bc; font-size: 10px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; margin: 1px 0 7px; }
+  .lm-teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: start; }
+  @media (max-width: 920px) { .lm-arena { grid-template-columns: 1fr; } }
   @media (max-width: 760px) { .lm-teams { grid-template-columns: 1fr; } .lm-vs { justify-self: center; } }
   .lm-vs { align-self: center; color: var(--gold-dim); font-weight: 800; font-size: 13px; letter-spacing: .1em; padding: 0 4px; }
   .lmp { display: grid; grid-template-columns: 38px minmax(90px, 1fr) auto; grid-template-rows: auto auto;
@@ -1234,6 +1253,10 @@
   .lmp .stats .wr { color: #fffb78; }
   .lmp .stats .cv { color: var(--civstat, #bc8aea); }
   .lm-spark { grid-column: 3; grid-row: 2; justify-self: end; opacity: .9; }
+  .lm-team-stage .lmp { grid-template-columns: 38px minmax(0, 1fr); grid-template-rows: auto auto auto auto; }
+  .lm-team-stage .lmp .rt { grid-column: 2; grid-row: 2; justify-self: start; text-align: left; }
+  .lm-team-stage .lmp .stats { grid-column: 2; grid-row: 3; }
+  .lm-team-stage .lm-spark { grid-column: 2; grid-row: 4; justify-self: start; }
   .streak.pos { color: #ffac4d; } .streak.neg { color: #7fc7ff; }
   .lmp a.tw { text-decoration: none; flex: none; font-size: 11px; }
   .rk { font-size: 9px; font-weight: 700; padding: 1px 7px; border-radius: 8px; text-transform: capitalize;
@@ -1437,7 +1460,7 @@
       <button id="save-btn" class="primary" aria-label="No unsaved settings" disabled>Save settings</button>
     </div>
 
-    <div class="card" style="margin-top:12px">
+    <div class="card match-arena-card">
       <h3><svg class="ic"><use href="#i-swords"/></svg> Last match</h3>
       <div id="last-match"><div class="bo-empty match muted">No match data yet — your latest game will appear here after the first poll.</div></div>
     </div>
@@ -3025,19 +3048,26 @@ function renderMatch(d) {
     ? `<a href="https://aoe4world.com/players/${settings.profile_id}/games/${d.match_id}" target="_blank" class="lm-sub">details ↗</a>` : '';
   const mapImg = `maps/${(d.map ?? '').replace(/ /g, '_')}.png`;
   $('last-match').innerHTML = `
-    <div class="lm-banner" style="background-image:url('${encodeURI(mapImg)}')">
-      <div class="lm-head">
-        <span class="lm-map">${esc(d.map ?? '?')}</span>
-        ${resBadge}
-        <span class="badge mode">${fmtMode(d.kind)}</span>
-        <span class="lm-sub">${sub}</span>
-        ${gameLink}
+    <div class="lm-arena">
+      <div class="lm-banner" style="background-image:url('${encodeURI(mapImg)}')">
+        <div class="lm-head">
+          <span class="lm-map">${esc(d.map ?? '?')}</span>
+          <div class="lm-badges">
+            ${resBadge}
+            <span class="badge mode">${fmtMode(d.kind)}</span>
+            <span class="lm-sub">${sub}</span>
+            ${gameLink}
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="lm-teams">
-      <div>${t1.map(lmPlayer).join('')}</div>
-      <span class="lm-vs">VS</span>
-      <div>${t2.map(lmPlayer).join('')}</div>
+      <div class="lm-team-stage">
+        <div class="lm-team-label">Players</div>
+        <div class="lm-teams">
+          <div>${t1.map(lmPlayer).join('')}</div>
+          <span class="lm-vs">VS</span>
+          <div>${t2.map(lmPlayer).join('')}</div>
+        </div>
+      </div>
     </div>`;
 }
 
