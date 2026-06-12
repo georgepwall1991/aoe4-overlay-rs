@@ -975,7 +975,8 @@
       <div class="card" style="grid-column: span 2">
         <h3><svg class="ic"><use href="#i-user"/></svg> Player</h3>
         <div class="searchbar">
-          <input id="search" placeholder="Search aoe4world by name or profile ID…" autocomplete="off">
+          <input id="search" type="search" placeholder="Search aoe4world by name or profile ID…" autocomplete="off" spellcheck="false"
+                 role="combobox" aria-label="Player search" aria-autocomplete="list" aria-controls="results" aria-expanded="false">
           <button id="search-btn" class="primary">Search</button>
         </div>
         <div id="results"></div>
@@ -2360,10 +2361,15 @@ function setSearchBusy(busy) {
   $('search-btn').classList.toggle('btn-busy', busy);
   $('results').setAttribute('aria-busy', String(busy));
 }
+function setSearchExpanded(expanded) {
+  $('search').setAttribute('aria-expanded', String(expanded));
+  if (!expanded) $('search').removeAttribute('aria-activedescendant');
+}
 function clearSearchResults() {
   searchSeq++;
   setSearchBusy(false);
   $('results').innerHTML = '';
+  setSearchExpanded(false);
 }
 function renderSearchState(kind, message) {
   const list = document.createElement('div');
@@ -2374,6 +2380,8 @@ function renderSearchState(kind, message) {
   list.appendChild(state);
   $('results').innerHTML = '';
   $('results').appendChild(list);
+  setSearchExpanded(true);
+  $('search').removeAttribute('aria-activedescendant');
 }
 function cacheSearch(q, players) {
   const key = q.toLowerCase();
@@ -2392,11 +2400,18 @@ async function trackPlayer(p) {
 }
 function setKbResult(next) {
   const items = [...document.querySelectorAll('#results .result')];
+  if (!items.length) {
+    $('search').removeAttribute('aria-activedescendant');
+    return;
+  }
   items.forEach((item, i) => {
     const on = i === next;
     item.classList.toggle('kb', on);
     item.setAttribute('aria-selected', String(on));
-    if (on) item.scrollIntoView({ block: 'nearest' });
+    if (on) {
+      $('search').setAttribute('aria-activedescendant', item.id);
+      item.scrollIntoView({ block: 'nearest' });
+    }
   });
 }
 function renderSearchResults(q, players) {
@@ -2417,6 +2432,7 @@ function renderSearchResults(q, players) {
   for (const p of players) {
     const div = document.createElement('div');
     div.className = 'result';
+    div.id = `player-result-${p.profile_id}`;
     div.setAttribute('role', 'option');
     div.setAttribute('aria-selected', 'false');
     div.innerHTML = `<span>${hlName(p.name)}${p.rating ? `<span class="elo">${p.rating} elo</span>` : ''}</span><span class="muted">#${p.profile_id}</span>`;
@@ -2429,6 +2445,7 @@ function renderSearchResults(q, players) {
   list.appendChild(hint);
   $('results').innerHTML = '';
   $('results').appendChild(list);
+  setSearchExpanded(true);
   setKbResult(0);
 }
 async function doSearch() {
