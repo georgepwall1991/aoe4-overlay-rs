@@ -1437,6 +1437,43 @@
   .bo-dossier-metric b { display: block; margin-top: 4px; color: #fff; font-size: 16px; line-height: 1.18;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bo-dossier-steps { display: grid; gap: 6px; }
+  .bo-dossier-steps.bo-dossier-route { position: relative; min-width: 0; display: grid; grid-auto-flow: column;
+    grid-auto-columns: minmax(112px, 1fr); gap: 8px; overflow-x: auto; overscroll-behavior-x: contain;
+    padding: 2px 1px 7px; scrollbar-width: thin; }
+  .bo-dossier-steps.bo-dossier-route::before { content: ""; position: absolute; left: 18px; right: 18px; top: 30px;
+    height: 3px; border-radius: 999px; background: linear-gradient(90deg, rgba(111,224,74,.5), rgba(224,186,94,.55), rgba(143,201,255,.48));
+    box-shadow: 0 0 14px rgba(224,186,94,.16); }
+  .bo-dossier-route-node { position: relative; z-index: 1; min-width: 0; height: 112px; display: grid;
+    grid-template-rows: 33px auto minmax(0, 1fr) 22px; gap: 4px; align-items: center; justify-items: start;
+    padding: 7px 8px 8px; text-align: left; color: #e8edf6; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.08); background:
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.12)), rgba(7,9,14,.38);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
+  .bo-dossier-route-node:hover { border-color: rgba(143,201,255,.32); background-color: rgba(13,17,25,.64); }
+  .bo-dossier-route-node.sel { border-color: rgba(224,186,94,.58); background:
+      radial-gradient(110px 62px at 50% 0, rgba(224,186,94,.18), transparent 68%),
+      linear-gradient(180deg, rgba(255,255,255,.065), rgba(0,0,0,.1)), rgba(11,12,18,.52);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(224,186,94,.13), 0 14px 26px -22px rgba(224,186,94,.9); }
+  .bo-dossier-route-pin { justify-self: center; width: 33px; height: 33px; display: grid; place-items: center;
+    border-radius: 50%; background: linear-gradient(180deg, rgba(20,23,31,.96), rgba(7,9,14,.96));
+    border: 1px solid rgba(255,255,255,.16); box-shadow: 0 6px 15px rgba(0,0,0,.32); }
+  .bo-dossier-route-node.sel .bo-dossier-route-pin { background: linear-gradient(180deg, #ffe08a, #cda343);
+    border-color: rgba(255,224,138,.78); box-shadow: 0 0 0 3px rgba(224,186,94,.13), 0 8px 17px rgba(0,0,0,.34); }
+  .bo-dossier-route-pin img { width: 23px; height: 23px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.36)); }
+  .bo-dossier-route-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(143,201,255,.48);
+    box-shadow: 0 0 0 4px rgba(143,201,255,.08); }
+  .bo-dossier-route-lead { min-width: 0; max-width: 100%; color: #ffe08a; font-size: 11px; line-height: 1.1;
+    font-weight: 950; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-dossier-route-note { min-width: 0; max-width: 100%; color: #fff; font-size: 11.5px; line-height: 1.22;
+    font-weight: 820; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .bo-dossier-route-note img { height: 16px; vertical-align: middle; margin: -2px 2px 0; }
+  .bo-dossier-route-bars { align-self: end; min-width: 0; display: flex; align-items: flex-end; gap: 3px; height: 22px; }
+  .bo-dossier-route-bars span { width: 9px; min-height: 3px; border-radius: 4px 4px 2px 2px; box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+  .bo-dossier-route-bars .food { background: linear-gradient(180deg, #ff725f, #963c34); }
+  .bo-dossier-route-bars .wood { background: linear-gradient(180deg, #ce8849, #704217); }
+  .bo-dossier-route-bars .gold { background: linear-gradient(180deg, #ffd95a, #a97808); }
+  .bo-dossier-route-bars .stone { background: linear-gradient(180deg, #d4d7dc, #6d737d); }
+  .bo-dossier-route-bars em { color: #9ea5b2; font-size: 10px; font-style: normal; font-weight: 850; white-space: nowrap; }
   .bo-dossier-step { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: start;
     padding: 7px 8px; border-radius: 10px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.06); }
   .bo-dossier-step b { color: var(--gold-bright); font-size: 11px; font-variant-numeric: tabular-nums; }
@@ -4864,15 +4901,83 @@ function boFirstNote(step) {
   if (step.description) return String(step.description);
   return '';
 }
-function boDossierSteps(p, content) {
+function boDossierResourceTotal(step) {
+  const r = step?.resources || {};
+  return ['food', 'wood', 'gold', 'stone'].reduce((sum, k) => sum + Math.max(0, Number(r[k]) || 0), 0);
+}
+function boDossierRouteBars(step) {
+  const r = step?.resources || {};
+  const rows = ['food', 'wood', 'gold', 'stone'].map(k => ({ key: k, value: Math.max(0, Number(r[k]) || 0) }));
+  const max = Math.max(0, ...rows.map(x => x.value));
+  const bars = max ? rows.map(x => {
+    const h = Math.max(3, Math.round((x.value / max) * 22));
+    return `<span class="${x.key}" style="height:${h}px" title="${x.key}: ${x.value}"></span>`;
+  }).join('') : '<em>No split</em>';
+  const vills = step?.villager_count >= 0 ? `<em>${step.villager_count} vills</em>` : '';
+  return `${bars}${vills}`;
+}
+function boDossierRouteData(p, content) {
   if (p.json && Array.isArray(p.json.build_order)) {
-    return p.json.build_order.slice(0, 4).map((step, i) => ({
-      lead: step.time || (step.population_count ? `${step.population_count} pop` : `S${i + 1}`),
-      text: boFirstNote(step) || `Step ${i + 1}`,
-    }));
+    const steps = p.json.build_order;
+    const last = steps.length - 1;
+    if (last < 0) return [];
+    const seen = new Set();
+    const nodes = [];
+    const add = (index, role) => {
+      if (index < 0 || index > last || seen.has(index)) return;
+      seen.add(index);
+      const step = steps[index];
+      nodes.push({ index, role, json: true, step, lead: boStepLead(step, index), text: boFirstNote(step) || `Step ${index + 1}` });
+    };
+    add(0, 'Open');
+    let priorAge = boAgeFromStep(steps[0]) || 0;
+    steps.forEach((step, i) => {
+      const age = boAgeFromStep(step);
+      if (age && age > priorAge) {
+        add(i, ['Dark', 'Feudal', 'Castle', 'Imperial'][age - 1] || `Age ${age}`);
+        priorAge = age;
+      }
+    });
+    const totals = steps.map(boDossierResourceTotal);
+    const peak = totals.indexOf(Math.max(0, ...totals));
+    if (peak > 0 && peak < last) add(peak, 'Peak eco');
+    const current = Math.min(Math.max(boPvStep, 0), last);
+    add(current, 'Now');
+    add(last, 'Finish');
+    const sorted = nodes.sort((a, b) => a.index - b.index);
+    if (sorted.length <= 6) return sorted;
+    const required = new Set([0, current, last]);
+    const keep = sorted.filter(n => required.has(n.index));
+    sorted.filter(n => !required.has(n.index)).slice(0, 6 - keep.length).forEach(n => keep.push(n));
+    return keep.sort((a, b) => a.index - b.index);
   }
-  return String(content || '').split('\n').map(x => x.trim()).filter(Boolean).slice(0, 4)
-    .map((line, i) => ({ lead: `S${i + 1}`, text: line }));
+  return String(content || '').split('\n').map(x => x.trim()).filter(Boolean).slice(0, 6)
+    .map((line, i) => ({ index: i, role: i === 0 ? 'Open' : `S${i + 1}`, json: false, step: null, lead: `Line ${i + 1}`, text: line }));
+}
+function boDossierRouteHtml(p, content) {
+  const nodes = boDossierRouteData(p, content);
+  if (!nodes.length) {
+    return {
+      route: false,
+      html: '<div class="bo-dossier-step"><b>--</b><span>No steps staged yet</span></div>',
+    };
+  }
+  return {
+    route: true,
+    html: nodes.map(n => {
+      const age = n.json ? boAgeFromStep(n.step) : 0;
+      const pin = age
+        ? `<img src="bo_img/age/age_${age}.webp" alt="">`
+        : '<span class="bo-dossier-route-dot" aria-hidden="true"></span>';
+      const selected = n.index === Math.min(Math.max(boPvStep, 0), Math.max(0, p.steps - 1));
+      return `<button class="bo-dossier-route-node ${selected ? 'sel' : ''}" type="button" data-dossier-step-index="${n.index}" title="${esc(n.text)}">
+        <span class="bo-dossier-route-pin">${pin}</span>
+        <span class="bo-dossier-route-lead">${esc(n.lead)}</span>
+        <span class="bo-dossier-route-note">${boRenderLine(n.text)}</span>
+        <span class="bo-dossier-route-bars">${n.json ? boDossierRouteBars(n.step) : `<em>${esc(n.role)}</em>`}</span>
+      </button>`;
+    }).join(''),
+  };
 }
 function updateBoDossier() {
   const dossier = $('bo-dossier');
@@ -4881,11 +4986,11 @@ function updateBoDossier() {
   const content = $('bo-content')?.value || '';
   const saved = !!boSelected && settings.buildorders?.[boSelected] !== undefined;
   const hasDraft = !!(saved || editorName || content.trim());
-  const name = editorName || boSelected || 'Planner idle';
   const p = parseBo(content || (saved ? settings.buildorders[boSelected] : ''));
   const live = saved && boSelected === boShownName;
   const checked = saved && !(settings.unchecked_buildorders || []).includes(boSelected);
   const civ = p.civ || '';
+  const name = editorName || boSelected || (content.trim() ? `${civ || 'Build'} draft` : 'Planner idle');
   dossier.classList.toggle('idle', !hasDraft);
   dossier.classList.toggle('live', live);
   dossier.classList.toggle('invalid', !!p.err);
@@ -4922,10 +5027,10 @@ function updateBoDossier() {
     img.hidden = true;
     mark.hidden = false;
   }
-  const steps = boDossierSteps(p, content || (saved ? settings.buildorders[boSelected] : ''));
-  $('bo-dossier-steps').innerHTML = steps.length
-    ? steps.map(s => `<div class="bo-dossier-step"><b>${esc(s.lead)}</b><span>${boRenderLine(s.text)}</span></div>`).join('')
-    : '<div class="bo-dossier-step"><b>--</b><span>No steps staged yet</span></div>';
+  const route = boDossierRouteHtml(p, content || (saved ? settings.buildorders[boSelected] : ''));
+  const routeEl = $('bo-dossier-steps');
+  routeEl.className = `bo-dossier-steps${route.route ? ' bo-dossier-route' : ''}`;
+  routeEl.innerHTML = route.html;
   $('bo-dossier-show').disabled = !saved || !!p.err;
 }
 
@@ -6053,6 +6158,12 @@ $('bo-stage').addEventListener('click', e => {
   const next = e.target.closest('#bo-stage-next');
   if (!prev && !next) return;
   boPvStep += prev ? -1 : 1;
+  updateBoPreview();
+});
+$('bo-dossier-steps').addEventListener('click', e => {
+  const node = e.target.closest('.bo-dossier-route-node');
+  if (!node) return;
+  boPvStep = parseInt(node.dataset.dossierStepIndex, 10) || 0;
   updateBoPreview();
 });
 $('bo-step-path').addEventListener('click', e => {
