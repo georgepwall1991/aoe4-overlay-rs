@@ -1966,7 +1966,14 @@ function palRender() {
 function palRecents() {
   try {
     const stored = JSON.parse(localStorage.getItem('palRecent') || '[]');
-    return Array.isArray(stored) ? stored.filter(n => typeof n === 'string') : [];
+    const seen = new Set();
+    return Array.isArray(stored)
+      ? stored.filter(n => {
+          if (typeof n !== 'string' || seen.has(n)) return false;
+          seen.add(n);
+          return true;
+        }).slice(0, 4)
+      : [];
   } catch (e) { return []; }
 }
 function palRemember(name) {
