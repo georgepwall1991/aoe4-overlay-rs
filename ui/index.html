@@ -533,6 +533,49 @@
     box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
   .random-seed { grid-column: 1 / -1; position: relative; color: #b7bbc7; font-size: 12px; line-height: 1.45;
     padding: 8px 11px; border-radius: 11px; background: rgba(0,0,0,.16); border: 1px solid rgba(255,255,255,.07); }
+  .random-dossier[hidden] { display: none; }
+  .random-dossier { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(280px, .9fr) minmax(0, 1.1fr);
+    gap: 14px; margin: 16px 0; padding: 13px; overflow: hidden; border-radius: 18px;
+    border: 1px solid rgba(111,224,74,.26); background:
+      radial-gradient(680px 220px at 10% 0%, rgba(111,224,74,.13), transparent 62%),
+      radial-gradient(680px 260px at 100% 16%, rgba(122,182,255,.13), transparent 65%),
+      linear-gradient(135deg, rgba(22,28,25,.96), rgba(18,20,28,.98));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 20px 48px -30px rgba(0,0,0,.96),
+      0 0 30px -22px rgba(111,224,74,.9);
+    animation: rand-pop .32s cubic-bezier(.22,1,.36,1); }
+  .random-dossier::before { content: ""; position: absolute; inset: 0; opacity: .16; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(111,224,74,.2) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(122,182,255,.16) 1px, transparent 1px);
+    background-size: 54px 54px;
+    -webkit-mask-image: linear-gradient(90deg, #000 0 48%, transparent 90%);
+    mask-image: linear-gradient(90deg, #000 0 48%, transparent 90%); }
+  .random-dossier-art { position: relative; min-height: 196px; overflow: hidden; border-radius: 15px;
+    border: 1px solid rgba(255,255,255,.1); background:
+      linear-gradient(115deg, rgba(224,186,94,.18), transparent 46%),
+      linear-gradient(180deg, rgba(255,255,255,.045), rgba(0,0,0,.2));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+  .random-dossier-art::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(90deg, rgba(0,0,0,.34), transparent 36%, rgba(0,0,0,.34)),
+      radial-gradient(circle at 50% 50%, transparent 0 48%, rgba(0,0,0,.34) 80%); }
+  .random-dossier-art img { position: absolute; display: block; object-fit: cover; filter: saturate(1.08) contrast(1.03); }
+  #rand-dossier-map-img { inset: 0 0 0 38%; width: 62%; height: 100%; }
+  #rand-dossier-civ-img { left: 18px; top: 18px; width: 42%; height: calc(100% - 36px); object-fit: contain;
+    padding: 20px; box-sizing: border-box; border-radius: 18px;
+    background: radial-gradient(circle at 50% 42%, rgba(255,233,160,.16), rgba(0,0,0,.3) 66%);
+    border: 1px solid rgba(224,186,94,.24); box-shadow: 0 20px 38px -22px rgba(0,0,0,.9); }
+  .random-dossier-main { position: relative; min-width: 0; display: grid; align-content: center; gap: 12px; padding: 8px 10px 8px 0; }
+  .random-dossier-kicker { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+  .random-dossier-title { color: #fff; font-size: 30px; line-height: 1.08; font-weight: 850; padding-bottom: 4px;
+    text-shadow: 0 2px 20px rgba(0,0,0,.7); }
+  .random-dossier-copy { color: #c4c8d2; font-size: 13px; line-height: 1.5; max-width: 58ch; }
+  .random-dossier-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .random-dossier-tags span { display: inline-flex; align-items: center; gap: 6px; min-height: 26px;
+    padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 800;
+    color: #e6e9ef; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
+  .random-dossier-tags .seed { color: var(--gold-bright); border-color: rgba(224,186,94,.28); background: rgba(224,186,94,.1); }
+  .random-stage.paired { border-color: rgba(111,224,74,.28); box-shadow: 0 1px 0 rgba(255,255,255,.06) inset,
+      0 24px 58px -30px rgba(0,0,0,.95), 0 0 34px -23px rgba(111,224,74,.95); }
   .rand-wrap { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
   .rand-box { min-width: 0; display: grid; grid-template-rows: auto 242px auto auto auto; gap: 12px;
     background: linear-gradient(180deg, rgba(43,43,53,.9), rgba(29,29,37,.96)); border: 1px solid rgba(255,255,255,.09);
@@ -582,6 +625,8 @@
     .random-actions, .random-counts { justify-content: flex-start; }
     .random-board { grid-template-columns: 1fr; }
     .random-plus { min-height: 42px; }
+    .random-dossier { grid-template-columns: 1fr; }
+    .random-dossier-main { padding: 0; }
     .rand-wrap { grid-template-columns: 1fr; }
   }
 
@@ -2076,6 +2121,22 @@
           <em id="rand-board-map-note">Map lane idle.</em>
         </div>
         <div class="random-seed" id="rand-board-seed">Practice pairing awaiting result.</div>
+      </div>
+      <div class="random-dossier" id="rand-dossier" hidden aria-live="polite">
+        <div class="random-dossier-art" aria-hidden="true">
+          <img id="rand-dossier-map-img" alt="">
+          <img id="rand-dossier-civ-img" alt="">
+        </div>
+        <div class="random-dossier-main">
+          <div class="random-dossier-kicker">Draft locked</div>
+          <div class="random-dossier-title" id="rand-dossier-title">—</div>
+          <div class="random-dossier-copy" id="rand-dossier-copy"></div>
+          <div class="random-dossier-tags">
+            <span id="rand-dossier-civ-tag"></span>
+            <span id="rand-dossier-map-tag"></span>
+            <span class="seed" id="rand-dossier-seed"></span>
+          </div>
+        </div>
       </div>
       <div class="rand-wrap">
         <div class="rand-box rand-civ-card">
@@ -4761,6 +4822,53 @@ $('ov-prevent').onchange = () => { if (!$('ov-prevent').checked) invoke('reset_o
 // ---------- random tab ----------
 // Each card rolls without repeating the previous result and keeps a short history of past rolls.
 const randomDraft = { civ: '', map: '' };
+function draftCode(civ, map) {
+  let h = 2166136261;
+  for (const ch of `${civ}|${map}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return 'Seed ' + (h >>> 0).toString(36).toUpperCase().slice(-5).padStart(5, '0');
+}
+function draftCivBrief(civ) {
+  const c = civ.toLowerCase();
+  if (/mongols|french|jeanne|knights|rus|ayyubids/.test(c))
+    return { tag: 'Tempo pressure', copy: 'Scout fast lanes, protect food, and look for a sharp timing before the map settles.' };
+  if (/abbasid|chinese|byzantines|malians|japanese|jin|zhu|sengoku/.test(c))
+    return { tag: 'Eco engine', copy: 'Stabilize the opener, secure safe income, then convert the bank into a mid-game push.' };
+  if (/delhi|tughlaq|ottomans/.test(c))
+    return { tag: 'Map control', copy: 'Contest central space early and make the opponent answer your objective timing.' };
+  return { tag: 'Flexible opener', copy: 'Keep the first minutes adaptable and let scouting choose pressure, boom, or tech.' };
+}
+function draftMapBrief(map) {
+  const m = map.toLowerCase();
+  if (/archipelago|boulder bay|danube|four lakes|warring|nagari/.test(m))
+    return { tag: 'Hybrid map', copy: 'Water or side economy can decide the pace, so queue the first scout path before loading in.' };
+  if (/black forest|french pass|mountain pass/.test(m))
+    return { tag: 'Closed lanes', copy: 'Expect tighter fronts, greedier economies, and one decisive push through the choke.' };
+  if (/dry arabia|high view|altai|lipany|hill and dale/.test(m))
+    return { tag: 'Open field', copy: 'Map vision and army position matter immediately, especially around exposed food.' };
+  return { tag: 'Mixed terrain', copy: 'Treat the map as a scouting test and identify the safest expansion before committing.' };
+}
+function setDraftImage(id, src) {
+  const img = $(id);
+  img.hidden = false;
+  img.onerror = () => { img.hidden = true; };
+  img.src = src;
+}
+function updateRandomDossier(civReady, mapReady) {
+  const dossier = $('rand-dossier');
+  const paired = civReady && mapReady;
+  dossier.hidden = !paired;
+  document.querySelector('.random-stage')?.classList.toggle('paired', paired);
+  if (!paired) return;
+  const civ = randomDraft.civ, map = randomDraft.map;
+  const civBrief = draftCivBrief(civ), mapBrief = draftMapBrief(map);
+  $('rand-dossier-title').textContent = `${civ} + ${map}`;
+  $('rand-dossier-copy').textContent = `${civBrief.copy} ${mapBrief.copy}`;
+  $('rand-dossier-civ-tag').textContent = civBrief.tag;
+  $('rand-dossier-map-tag').textContent = mapBrief.tag;
+  $('rand-dossier-seed').textContent = draftCode(civ, map);
+  setDraftImage('rand-dossier-civ-img', `flags/${civ}.webp`);
+  setDraftImage('rand-dossier-map-img', `maps/${map.replace(/ /g, '_')}.png`);
+}
 function updateRandomBoard(kind, value) {
   randomDraft[kind] = value;
   const civReady = !!randomDraft.civ;
@@ -4776,6 +4884,7 @@ function updateRandomBoard(kind, value) {
     : civReady ? `${randomDraft.civ} awaiting map lane.`
     : mapReady ? `${randomDraft.map} awaiting civilization lane.`
     : 'Practice pairing awaiting result.';
+  updateRandomDossier(civReady, mapReady);
 }
 function makeRoller(btnId, nameId, imgId, histId, pool, srcFor) {
   let last = null;
