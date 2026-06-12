@@ -2051,9 +2051,20 @@ const scToggle = open => {
 };
 // keep keyboard focus inside open dialogs
 $('palette').addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); $('pal-input').focus(); } });
-$('shortcuts').addEventListener('keydown', e => { if (e.key === 'Tab') e.preventDefault(); });
+$('shortcuts').addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  const panel = $('shortcuts').querySelector('.pal-box');
+  (document.activeElement === $('shortcuts-close') ? panel : $('shortcuts-close')).focus();
+});
 $('shortcuts').addEventListener('mousedown', e => { if (e.target === $('shortcuts')) scToggle(false); });
-$('shortcuts-close').onclick = () => scToggle(false);
+const scClose = () => scToggle(false);
+$('shortcuts-close').onclick = scClose;
+$('shortcuts-close').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  scClose();
+});
 document.addEventListener('keydown', e => {
   if (e.target.classList?.contains('hotkey-input')) return;
   if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === '/') { e.preventDefault(); palClose(); scToggle(); }
