@@ -883,7 +883,11 @@
   #shortcuts h4:first-of-type { margin-top: 4px; }
   #shortcuts .sc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
     font-size: 14px; font-weight: 700; color: var(--ink-strong); }
-  #shortcuts .sc-head .sc-close { margin-left: auto; font-size: 11px; color: var(--ink-muted); font-weight: 400; }
+  #shortcuts .sc-head .sc-close { appearance: none; margin-left: auto; display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid transparent; border-radius: 7px; padding: 2px 5px; background: transparent;
+    box-shadow: none; font-size: 11px; color: var(--ink-muted); font-weight: 400; }
+  #shortcuts .sc-head .sc-close:hover,
+  #shortcuts .sc-head .sc-close:focus-visible { color: var(--ink-strong); background: rgba(255,255,255,.06); border-color: #3a3d4b; }
   #shortcuts .sc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3px 28px; font-size: 12.5px; }
   #shortcuts .sc-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
     padding: 3px 0; color: var(--ink); }
@@ -1373,7 +1377,7 @@
   <div id="shortcuts" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
     <div class="pal-box" tabindex="-1" style="outline:none">
       <div class="sc-head"><svg class="ic"><use href="#i-keyboard"/></svg> Keyboard shortcuts
-        <span class="sc-close"><kbd>Esc</kbd> close</span></div>
+        <button id="shortcuts-close" type="button" class="sc-close" aria-label="Close keyboard shortcuts"><kbd>Esc</kbd> close</button></div>
       <h4>Global</h4>
       <div class="sc-grid">
         <div class="sc-row"><span>Command palette</span><span><kbd>Ctrl</kbd>+<kbd>K</kbd></span></div>
@@ -2049,6 +2053,7 @@ const scToggle = open => {
 $('palette').addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); $('pal-input').focus(); } });
 $('shortcuts').addEventListener('keydown', e => { if (e.key === 'Tab') e.preventDefault(); });
 $('shortcuts').addEventListener('mousedown', e => { if (e.target === $('shortcuts')) scToggle(false); });
+$('shortcuts-close').onclick = () => scToggle(false);
 document.addEventListener('keydown', e => {
   if (e.target.classList?.contains('hotkey-input')) return;
   if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === '/') { e.preventDefault(); palClose(); scToggle(); }
