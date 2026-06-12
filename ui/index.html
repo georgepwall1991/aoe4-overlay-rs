@@ -1129,7 +1129,7 @@
       <button id="revert-btn" title="Discard unsaved changes and reload saved settings"
               aria-label="Discard unsaved changes and reload saved settings" style="display:none">Revert</button>
       <span class="muted save-shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd></span>
-      <button id="save-btn" class="primary" disabled>Save settings</button>
+      <button id="save-btn" class="primary" aria-label="No unsaved settings" disabled>Save settings</button>
     </div>
 
     <div class="card" style="margin-top:12px">
@@ -2277,7 +2277,11 @@ function setSettingsDirty(dirty) {
   $('savebar').classList.toggle('dirty', dirty);
   $('savebar').classList.toggle('invalid', invalidDirty);
   $('save-btn').disabled = savingSettings || !dirty || invalidDirty;
-  if (!savingSettings) $('save-btn').title = invalidDirty ? validationMessage : dirty ? `Save ${dirtyText}: ${title}` : 'No unsaved settings';
+  const saveLabel = invalidDirty ? validationMessage : dirty ? `Save ${dirtyText}: ${title}` : 'No unsaved settings';
+  if (!savingSettings) {
+    $('save-btn').title = saveLabel;
+    $('save-btn').setAttribute('aria-label', saveLabel);
+  }
   $('revert-btn').style.display = dirty ? '' : 'none';
   $('revert-btn').disabled = savingSettings;
   const revertLabel = dirty ? `Discard ${dirtyText}: ${title}` : 'Discard unsaved changes and reload saved settings';
@@ -2341,6 +2345,7 @@ async function save() {
   btn.setAttribute('aria-busy', 'true');
   btn.disabled = true;
   btn.title = 'Saving settings...';
+  btn.setAttribute('aria-label', 'Saving settings');
   revert.disabled = true;
   $('savebar').classList.add('saving');
   setStatus('Saving settings...', 'busy');
