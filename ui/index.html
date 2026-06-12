@@ -756,8 +756,11 @@
   .dirty-meta { display: flex; align-items: center; gap: 8px; min-width: 0; margin-right: auto; }
   .dirty-pill { flex: none; color: #ffc845; font-size: 12px; opacity: 0; transition: .2s;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .dirty-detail { color: #aeadb8; font-size: 12px; opacity: 0; transition: .2s; min-width: 0;
-    max-width: min(42vw, 520px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dirty-detail { appearance: none; border: 0; background: transparent; box-shadow: none; padding: 0;
+    text-align: left; color: #aeadb8; font: inherit; font-size: 12px; opacity: 0; transition: .2s;
+    min-width: 0; max-width: min(42vw, 520px); white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; cursor: pointer; border-radius: 4px; }
+  .dirty-detail:hover { color: #fff; text-decoration: underline; text-underline-offset: 2px; }
   .savebar.dirty .dirty-pill { opacity: 1; animation: pulse 1.8s infinite; }
   .savebar.dirty .dirty-detail { opacity: .92; }
   .savebar.invalid .dirty-detail { color: #ffc7be; }
@@ -1082,7 +1085,7 @@
     <div class="savebar" id="savebar">
       <div class="dirty-meta">
         <span class="dirty-pill" id="dirty-pill" role="status" aria-live="polite" aria-atomic="true">● Unsaved changes</span>
-        <span class="dirty-detail" id="dirty-detail"></span>
+        <button class="dirty-detail" id="dirty-detail" type="button" hidden></button>
       </div>
       <button id="revert-btn" title="Discard unsaved changes and reload saved settings" style="display:none">Revert</button>
       <span class="muted save-shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd></span>
@@ -2040,8 +2043,7 @@ function firstInvalidSettingId() {
   if (duplicates.size) return HOTKEY_IDS.find(id => duplicates.has(id)) || '';
   return syncPortValidity() ? 'wsport' : '';
 }
-function focusInvalidSetting() {
-  const id = firstInvalidSettingId();
+function focusSettingControl(id) {
   const el = id ? $(id) : null;
   if (!el) return;
   const tab = el.closest('.tab');
@@ -2054,6 +2056,12 @@ function focusInvalidSetting() {
     el.focus({ preventScroll: true });
     if (typeof el.select === 'function' && el.type !== 'color') el.select();
   });
+}
+function focusInvalidSetting() {
+  focusSettingControl(firstInvalidSettingId());
+}
+function focusFirstChangedSetting() {
+  focusSettingControl(changedSettings()[0]);
 }
 function setSettingsDirty(dirty) {
   const changes = dirty ? changedSettings() : [];
@@ -2076,7 +2084,8 @@ function setSettingsDirty(dirty) {
   if ($('dirty-detail')) {
     const detailText = dirty && title !== 'No unsaved settings' ? `Changed: ${title}` : '';
     $('dirty-detail').textContent = detailText;
-    $('dirty-detail').title = detailText;
+    $('dirty-detail').title = detailText ? `${detailText} - click to review` : '';
+    $('dirty-detail').setAttribute('aria-label', detailText ? `${detailText}. Click to review the first changed setting.` : 'No changed settings');
     $('dirty-detail').hidden = !detailText;
   }
   tabButtons[0].classList.toggle('unsaved', dirty);
@@ -3507,6 +3516,7 @@ $('search').addEventListener('keydown', e => {
   }
 });
 $('save-btn').onclick = save;
+$('dirty-detail').onclick = focusFirstChangedSetting;
 $('revert-btn').onclick = async () => { await loadSettings(); toast('Reverted to saved settings'); };
 $('clear-player').onclick = stopTrackingPlayer;
 $('toggle-btn').onclick = () => invoke('toggle_overlay');
