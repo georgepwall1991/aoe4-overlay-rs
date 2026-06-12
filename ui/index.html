@@ -979,7 +979,7 @@
                  role="combobox" aria-label="Player search" aria-autocomplete="list" aria-controls="results" aria-expanded="false">
           <button id="search-btn" class="primary">Search</button>
         </div>
-        <div id="results"></div>
+        <div id="results" aria-live="polite" aria-atomic="true" aria-busy="false"></div>
         <div class="tracked" id="tracked-box">
           <span class="tracked-ava" id="tracked-ava" aria-hidden="true"><svg class="ic"><use href="#i-user"/></svg></span>
           <div class="tracked-info">
@@ -2450,7 +2450,11 @@ function renderSearchResults(q, players) {
 }
 async function doSearch() {
   const q = $('search').value.trim();
-  if (!q) { clearSearchResults(); $('search').focus(); return; }
+  if (!q) {
+    renderSearchState('empty', 'Enter a player name or profile ID');
+    $('search').focus();
+    return;
+  }
   const token = ++searchSeq;
   const key = q.toLowerCase();
   setSearchBusy(true);
