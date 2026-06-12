@@ -543,11 +543,14 @@
   }
 
   /* ---- games tab ---- */
-  .game-card { display: flex; align-items: stretch; gap: 0; background: linear-gradient(180deg, #26262e, #232229);
-               border: 1px solid #32323c; border-radius: 10px; margin: 10px 0; overflow: hidden;
+  .game-card { position: relative; display: grid; grid-template-columns: 164px minmax(0, 1fr) 126px; align-items: stretch; gap: 0;
+               min-height: 136px; background:
+                 radial-gradient(520px 160px at 26% 0, rgba(122,182,255,.09), transparent 68%),
+                 linear-gradient(180deg, #272730, #202129);
+               border: 1px solid #343541; border-radius: 15px; margin: 12px 0; overflow: hidden;
                box-shadow: var(--shadow-card);
                transition: border-color .15s, transform .15s, box-shadow .15s;
-               content-visibility: auto; contain-intrinsic-size: auto 104px; }
+               content-visibility: auto; contain-intrinsic-size: auto 136px; }
   #tab-games { max-width: 1240px; }
   .games-hero { --hero-map: linear-gradient(135deg, #26262e, #16161c);
     position: relative; overflow: hidden; min-height: 232px; margin: 0 0 14px; padding: 18px;
@@ -626,7 +629,7 @@
   #games-list .game-card:nth-child(4) { animation-delay: .12s; }
   #games-list .game-card:nth-child(5) { animation-delay: .16s; }
   @keyframes card-in { from { opacity: 0; transform: translateY(7px); } }
-  .game-card .ribbon { width: 5px; flex: none; }
+  .game-card .ribbon { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; z-index: 2; }
   /* a faint wash of the result colour bleeds in from the ribbon so win/loss reads
      peripherally, before you've focused on any one card */
   .game-card.res-win { background: linear-gradient(90deg, rgba(72,189,33,.07), transparent 240px),
@@ -641,13 +644,21 @@
   .game-card.res-win .ribbon { background: linear-gradient(180deg, #5ad32f, #3a9c18); box-shadow: 1px 0 6px -1px rgba(72,189,33,.5); }
   .game-card.res-loss .ribbon { background: linear-gradient(180deg, #ef5840, #c0341f); box-shadow: 1px 0 6px -1px rgba(224,69,47,.5); }
   .game-card.res-live .ribbon { background: linear-gradient(180deg, #ffc845, #e09b00); box-shadow: 1px 0 6px -1px rgba(255,179,0,.5); }
-  .game-map { width: 110px; flex: none; object-fit: cover; align-self: stretch;
-              -webkit-mask-image: linear-gradient(to left, transparent, #000 70%);
+  .game-poster { position: relative; min-width: 0; overflow: hidden; background: #12131a; }
+  .game-poster::after { content: ""; position: absolute; inset: 0;
+    background:
+      linear-gradient(90deg, rgba(13,14,20,.15), rgba(13,14,20,.78)),
+      linear-gradient(180deg, transparent 45%, rgba(0,0,0,.5));
+    pointer-events: none; }
+  .game-map { width: 100%; height: 100%; display: block; object-fit: cover; align-self: stretch;
               transition: transform .35s cubic-bezier(.22,1,.36,1); }
   .game-card:hover .game-map { transform: scale(1.06); }
-  .game-main { flex: 1; padding: 10px 14px; min-width: 0; }
+  .game-poster-label { position: absolute; left: 14px; right: 10px; bottom: 11px; z-index: 1;
+    color: #fff; font-size: 16px; font-weight: 850; line-height: 1.1; text-shadow: 0 2px 12px rgba(0,0,0,.9);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .game-main { min-width: 0; padding: 12px 14px; display: grid; align-content: center; gap: 10px; }
   .game-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; flex-wrap: wrap; }
-  .game-head .map-name { font-weight: 700; font-size: 14px; color: #fff; }
+  .game-head .map-name { font-weight: 850; font-size: 16px; color: #fff; line-height: 1.15; }
   .badge { font-size: 10px; font-weight: 700; letter-spacing: .06em; padding: 2px 8px; border-radius: 10px;
     text-transform: uppercase; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
   .badge.win { background: rgba(72,189,33,.16); color: #6fe04a; box-shadow: inset 0 0 0 1px rgba(72,189,33,.3); }
@@ -657,27 +668,34 @@
   .badge.mode.ranked { background: var(--gold-faint); color: var(--gold);
     box-shadow: inset 0 0 0 1px var(--gold-dim); }
   @keyframes pulse { 50% { opacity: .55; } }
-  .game-teams { display: flex; align-items: center; gap: 14px; }
-  .team-col { flex: 1; min-width: 0; }
+  .game-teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 11px; }
+  .team-col { min-width: 0; padding: 8px 9px; border-radius: 12px; background: rgba(9,10,15,.34);
+    border: 1px solid rgba(255,255,255,.07); box-shadow: inset 0 1px 0 rgba(255,255,255,.035); }
   .team-col.right .gp { flex-direction: row-reverse; text-align: right; }
+  .team-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 5px;
+    color: #9ea4b2; font-size: 9.5px; font-weight: 850; text-transform: uppercase; letter-spacing: 0; }
+  .team-label b { color: #dfe2ea; font-size: 11px; white-space: nowrap; }
   /* the VS divider gets short flanking rules so the two teams read as opposing columns */
-  .vs { color: var(--gold-dim); font-size: 10px; font-weight: 800; letter-spacing: .08em; flex: none;
+  .vs { color: var(--gold-dim); font-size: 10px; font-weight: 850; letter-spacing: 0; flex: none;
     display: flex; flex-direction: column; align-items: center; gap: 3px; }
   .vs::before, .vs::after { content: ""; width: 1px; height: 9px;
     background: linear-gradient(180deg, transparent, var(--gold-faint)); }
   .vs::after { background: linear-gradient(0deg, transparent, var(--gold-faint)); }
-  .gp { display: flex; align-items: center; gap: 6px; margin: 2px 0; font-size: 12.5px; white-space: nowrap; }
-  .gp img { width: 22px; height: 14px; object-fit: cover; border-radius: 2px; flex: none; }
-  .gp .pname { overflow: hidden; text-overflow: ellipsis; }
+  .gp { display: flex; align-items: center; gap: 7px; margin: 4px 0; min-width: 0; font-size: 12.5px; white-space: nowrap; }
+  .gp img { width: 24px; height: 16px; object-fit: cover; border-radius: 3px; flex: none; }
+  .gp .pname { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .gp.me .pname { color: #ffd97a; font-weight: 700; }
-  .gp .pdiff { font-size: 11px; }
-  .game-side { flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: center;
-               gap: 4px; padding: 10px 16px; min-width: 86px; }
-  .rdiff { font-size: 20px; font-weight: 800; }
+  .gp .pdiff { flex: none; font-size: 11px; font-weight: 850; padding: 1px 6px; border-radius: 999px;
+    background: rgba(255,255,255,.055); }
+  .game-side { display: flex; flex-direction: column; align-items: stretch; justify-content: center;
+               gap: 7px; padding: 12px 13px; min-width: 0; background: rgba(8,9,13,.32);
+               border-left: 1px solid rgba(255,255,255,.07); }
+  .rdiff { padding-bottom: 4px; font-size: 24px; font-weight: 850; line-height: 1.12; text-align: right; font-variant-numeric: tabular-nums; }
   .rdiff.pos { color: #6fe04a; } .rdiff.neg { color: #ff7b66; } .rdiff.na { color: #555; font-size: 14px; }
-  .game-side .when, .game-side .dur { font-size: 11px; color: #888; font-variant-numeric: tabular-nums; }
+  .game-side .when, .game-side .dur { display: block; padding: 5px 7px; border-radius: 8px;
+    background: rgba(255,255,255,.035); color: #a5a9b4; font-size: 11px; text-align: right; font-variant-numeric: tabular-nums; }
   .game-side .dur:not(:empty)::before { content: "⏱ "; font-size: 10px; opacity: .7; }
-  .game-side a { font-size: 11px; text-decoration: none; padding: 2px 8px; border-radius: 8px;
+  .game-side a { text-align: center; font-size: 11px; text-decoration: none; padding: 4px 8px; border-radius: 8px;
     background: rgba(122,182,255,.08); box-shadow: inset 0 0 0 1px rgba(122,182,255,.18);
     opacity: .55; transition: opacity .15s, background .15s; }
   .game-card:hover .game-side a { opacity: 1; }
@@ -3474,12 +3492,21 @@ function playerLine(p, pid, right) {
     <span class="pname" data-pfilter="${esc(p.name ?? '')}" title="${esc(p.name ?? '?')} — click to see all games with them">${esc(p.name ?? '?')}</span>${me ? diff : ''}</div>`;
 }
 
+function gameTeamBlock(team, pid, label, right = false) {
+  const rating = team.map(p => Number(p.rating)).filter(Number.isFinite);
+  const avg = rating.length ? Math.round(rating.reduce((a, b) => a + b, 0) / rating.length) : null;
+  return `<div class="team-col ${right ? 'right' : ''}">
+    <div class="team-label"><span>${label}</span><b>${avg ? `${avg} avg` : `${team.length || '?'}P`}</b></div>
+    ${team.length ? team.map(p => playerLine(p, pid, right)).join('') : '<div class="muted">Unknown side</div>'}
+  </div>`;
+}
+
 // Inline SVG placeholder for maps we have no art for
 function mapPlaceholder(img, name) {
   const initials = name.split(/\s+/).map(w => w[0]).join('').slice(0, 3).toUpperCase();
   let hue = 0;
   for (const ch of name) hue = (hue * 31 + ch.charCodeAt(0)) % 360;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="110" height="100"><rect width="110" height="100" fill="hsl(${hue},35%,22%)"/><text x="55" y="58" font-family="Arial" font-size="26" font-weight="800" fill="hsl(${hue},45%,55%)" text-anchor="middle">${initials}</text></svg>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="180" height="136"><rect width="180" height="136" fill="hsl(${hue},35%,22%)"/><text x="90" y="78" font-family="Arial" font-size="32" font-weight="800" fill="hsl(${hue},45%,55%)" text-anchor="middle">${initials}</text></svg>`;
   img.onerror = null;
   img.src = 'data:image/svg+xml;base64,' + btoa(svg);
 }
@@ -3804,10 +3831,15 @@ function renderGames() {
       const mapImg = gameMapAsset(g.map);
       const badge = live ? '<span class="badge live">Live</span>'
         : result ? `<span class="badge ${result}">${result}</span>` : '';
+      const myTeam = teams.find(t => t.some(p => p.profile_id === pid)) || teams[0] || [];
+      const opposition = teams.filter(t => t !== myTeam).flat();
       html += `
       <div class="game-card res-${result}" data-url="https://aoe4world.com/players/${pid}/games/${g.game_id}">
         <div class="ribbon"></div>
-        <img class="game-map" loading="lazy" src="${encodeURI(mapImg)}" onerror="mapPlaceholder(this, '${(g.map ?? '?').replace(/[^\w ]/g, '')}')">
+        <div class="game-poster">
+          <img class="game-map" loading="lazy" src="${encodeURI(mapImg)}" onerror="mapPlaceholder(this, '${(g.map ?? '?').replace(/[^\w ]/g, '')}')">
+          <span class="game-poster-label">${esc(g.map ?? '?')}</span>
+        </div>
         <div class="game-main">
           <div class="game-head">
             <span class="map-name">${esc(g.map ?? '?')}</span>
@@ -3815,9 +3847,9 @@ function renderGames() {
             <span class="badge mode${(g.kind ?? '').startsWith('rm_') ? ' ranked' : ''}">${fmtMode(g.kind)}</span>
           </div>
           <div class="game-teams">
-            <div class="team-col">${(teams[0] || []).map(p => playerLine(p, pid)).join('')}</div>
+            ${gameTeamBlock(myTeam, pid, 'Your side')}
             <span class="vs">VS</span>
-            <div class="team-col right">${(teams[1] || []).map(p => playerLine(p, pid, true)).join('')}</div>
+            ${gameTeamBlock(opposition, pid, 'Opposition', true)}
           </div>
         </div>
         <div class="game-side">
