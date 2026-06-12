@@ -971,26 +971,71 @@
     color: var(--ink-muted); border-color: #353541; box-shadow: none; }
   .link-btn:hover { color: #fff; border-color: #515160; background: rgba(255,255,255,.08); }
   .control-deck { grid-column: span 2; position: relative; display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(340px, .75fr); gap: 14px; min-width: 0;
-    padding: 16px; overflow: hidden; border: 1px solid rgba(224,186,94,.28); border-radius: 16px;
+    grid-template-columns: minmax(330px, .88fr) minmax(0, 1.12fr);
+    grid-template-areas: "theater player" "theater summary"; gap: 16px; min-width: 0; min-height: 344px;
+    padding: 18px; overflow: hidden; border: 1px solid rgba(224,186,94,.28); border-radius: 18px;
     background:
-      linear-gradient(135deg, rgba(52,52,65,.94), rgba(31,31,41,.97) 46%, rgba(23,38,45,.9)),
-      linear-gradient(180deg, rgba(255,255,255,.04), transparent 52%);
-    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 20px 42px -26px rgba(0,0,0,.95),
-      0 0 26px -18px rgba(224,186,94,.65); }
-  .control-deck::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .18;
+      radial-gradient(680px 320px at 15% 0%, rgba(224,186,94,.15), transparent 62%),
+      radial-gradient(600px 360px at 98% 18%, rgba(122,182,255,.16), transparent 66%),
+      linear-gradient(135deg, rgba(42,42,54,.98), rgba(24,26,35,.98) 52%, rgba(14,31,38,.96));
+    box-shadow: 0 1px 0 rgba(255,255,255,.07) inset, 0 24px 58px -30px rgba(0,0,0,.98),
+      0 0 32px -20px rgba(224,186,94,.7); }
+  .control-deck::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .2;
     background-image:
-      linear-gradient(rgba(224,186,94,.26) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(122,182,255,.22) 1px, transparent 1px);
-    background-size: 56px 56px; mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); }
+      linear-gradient(rgba(224,186,94,.18) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(122,182,255,.18) 1px, transparent 1px);
+    background-size: 58px 58px; mask-image: linear-gradient(90deg, #000 0, #000 72%, transparent 100%); }
   .control-deck::after { content: ""; position: absolute; inset: 0 0 auto; height: 1px; pointer-events: none;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), rgba(224,186,94,.28), transparent); }
-  .deck-player, .deck-summary { position: relative; z-index: 1; min-width: 0; }
-  .deck-player { display: grid; align-content: start; gap: 12px; }
+    background: linear-gradient(90deg, transparent, rgba(122,182,255,.2), rgba(224,186,94,.36), transparent); }
+  .deck-theater, .deck-player, .deck-summary { position: relative; z-index: 1; min-width: 0; }
+  .deck-theater { grid-area: theater; display: grid; grid-template-rows: minmax(0, 1fr) auto; gap: 14px;
+    min-height: 306px; padding: 16px; overflow: hidden; border-radius: 16px;
+    background:
+      radial-gradient(circle at 50% 36%, rgba(122,182,255,.18), transparent 34%),
+      linear-gradient(180deg, rgba(9,13,18,.7), rgba(6,8,12,.46));
+    border: 1px solid rgba(255,255,255,.1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), inset 0 -26px 70px -54px rgba(224,186,94,.75); }
+  .deck-theater::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .18;
+    background:
+      linear-gradient(115deg, transparent 0 42%, rgba(224,186,94,.55) 42.4%, transparent 43% 100%),
+      linear-gradient(22deg, transparent 0 48%, rgba(122,182,255,.52) 48.3%, transparent 49% 100%),
+      radial-gradient(circle at 50% 38%, transparent 0 88px, rgba(255,255,255,.18) 89px, transparent 91px),
+      radial-gradient(circle at 50% 38%, transparent 0 142px, rgba(255,255,255,.12) 143px, transparent 145px); }
+  .deck-theater::after { content: ""; position: absolute; left: 22px; right: 22px; bottom: 92px; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(224,186,94,.28), rgba(122,182,255,.2), transparent); }
+  .deck-radar { position: relative; align-self: center; justify-self: center; width: min(260px, 74%); aspect-ratio: 1;
+    display: grid; place-items: center; }
+  .deck-radar span { position: absolute; border-radius: 50%; border: 1px solid rgba(122,182,255,.18);
+    box-shadow: inset 0 0 24px rgba(122,182,255,.04); }
+  .deck-radar .r1 { inset: 12%; }
+  .deck-radar .r2 { inset: 27%; border-color: rgba(224,186,94,.22); }
+  .deck-radar .r3 { inset: 42%; border-color: rgba(111,224,74,.2); }
+  .deck-radar .sweep { inset: 9%; border: 0; opacity: .52;
+    background: conic-gradient(from -24deg, rgba(122,182,255,.28), rgba(224,186,94,.18) 30deg, transparent 86deg);
+    mask-image: radial-gradient(circle, transparent 0 18%, #000 19% 72%, transparent 73%);
+    animation: deck-sweep 7s linear infinite; }
+  .deck-radar .pip { width: 9px; height: 9px; border: 0; background: #7ab6ff; box-shadow: 0 0 12px rgba(122,182,255,.72); }
+  .deck-radar .pip.one { transform: translate(82px, -58px); }
+  .deck-radar .pip.two { background: #e0ba5e; transform: translate(-88px, 36px); box-shadow: 0 0 12px rgba(224,186,94,.7); }
+  .deck-radar .pip.three { background: #6fe04a; transform: translate(26px, 91px); box-shadow: 0 0 12px rgba(111,224,74,.68); }
+  .deck-core { position: relative; z-index: 1; width: 78px; height: 78px; display: grid; place-items: center; border-radius: 22px;
+    color: #ffe9a0; background: linear-gradient(180deg, rgba(47,43,32,.96), rgba(23,25,31,.96));
+    border: 1px solid rgba(224,186,94,.42);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 0 32px -12px rgba(224,186,94,.78), 0 18px 36px -28px #000; }
+  .deck-core .ic { width: 32px; height: 32px; filter: drop-shadow(0 0 10px rgba(224,186,94,.4)); }
+  @keyframes deck-sweep { to { transform: rotate(360deg); } }
+  .deck-state { position: relative; display: grid; gap: 11px; }
+  .deck-state-kicker { color: #8fc9ff; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: 0; }
+  .deck-state-title { padding-bottom: 3px; color: #fff; font-size: 26px; line-height: 1.16; font-weight: 850;
+    text-shadow: 0 2px 20px rgba(0,0,0,.65); }
+  .deck-state-copy { color: #b9bdc8; font-size: 12.5px; line-height: 1.45; font-style: normal; }
+  .deck-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 1px; }
+  .deck-actions button { min-height: 32px; border-radius: 10px; padding: 6px 10px; font-weight: 760; }
+  .deck-player { grid-area: player; display: grid; align-content: start; gap: 12px; padding: 2px 0; }
   .deck-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-width: 0; }
   .deck-head h3 { margin: 0; color: var(--gold-bright); border: 0; padding: 0; font-size: 12px;
-    letter-spacing: .12em; text-transform: uppercase; display: flex; align-items: center; gap: 7px; }
-  .deck-source { flex: none; color: #91cfff; font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    letter-spacing: 0; text-transform: uppercase; display: flex; align-items: center; gap: 7px; }
+  .deck-source { flex: none; color: #91cfff; font-size: 11px; font-weight: 700; letter-spacing: 0;
     text-transform: uppercase; text-shadow: 0 0 10px rgba(122,182,255,.24); }
   .control-deck .searchbar { margin: 0; }
   .control-deck .searchbar input { padding-top: 11px; padding-bottom: 11px; border-radius: 11px;
@@ -1003,6 +1048,8 @@
       linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.12)),
       linear-gradient(180deg, rgba(255,255,255,.05), transparent);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 14px 28px -24px #000; }
+  .control-deck .tracked.live { border-color: rgba(111,224,74,.32);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 0 26px -18px rgba(111,224,74,.8), 0 14px 28px -24px #000; }
   .control-deck .tracked-ava { width: 46px; height: 46px; border-radius: 14px; font-size: 18px; }
   .control-deck .tracked-name { font-size: 15px; }
   @media (max-width: 560px) {
@@ -1036,10 +1083,23 @@
     box-shadow: inset 0 0 0 1px rgba(255,200,69,.22); }
   .sum-item.actionable:focus-visible { outline: 2px solid #3d7fb0; outline-offset: -2px; }
   .deck-summary.settings-summary { grid-column: auto; grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-self: stretch; border-color: rgba(255,255,255,.1); border-radius: 14px;
+    grid-area: summary; align-self: stretch; border-color: rgba(255,255,255,.1); border-radius: 14px;
     background: rgba(11,12,16,.52); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 16px 30px -26px #000; }
-  .deck-summary .sum-item { min-height: 70px; padding: 15px 16px;
+  .deck-summary .sum-item { position: relative; min-height: 74px; padding: 15px 16px; overflow: hidden;
     background: linear-gradient(180deg, rgba(38,38,47,.82), rgba(29,29,38,.88)); }
+  .deck-summary .sum-item::after { content: ""; position: absolute; left: 14px; right: 14px; bottom: 10px; height: 3px;
+    border-radius: 999px; background: rgba(255,255,255,.07); overflow: hidden; }
+  .deck-summary .sum-item::before { content: ""; position: absolute; left: 14px; bottom: 10px; width: var(--meter, 54%);
+    max-width: calc(100% - 28px); height: 3px; border-radius: 999px;
+    background: linear-gradient(90deg, rgba(122,182,255,.82), rgba(224,186,94,.86));
+    box-shadow: 0 0 10px rgba(122,182,255,.35); z-index: 1; }
+  .deck-summary .sum-item:nth-child(1) { --meter: 30%; }
+  .deck-summary .sum-item:nth-child(2) { --meter: var(--poll-meter, 82%); }
+  .deck-summary .sum-item:nth-child(3) { --meter: var(--display-meter, 50%); }
+  .deck-summary .sum-item:nth-child(4) { --meter: 100%; }
+  .deck-summary .sum-item.good::before { background: linear-gradient(90deg, #6fe04a, #d6f78e); box-shadow: 0 0 12px rgba(111,224,74,.38); }
+  .deck-summary .sum-item.dirty::before { background: linear-gradient(90deg, #ffb300, #ffe18a); box-shadow: 0 0 12px rgba(255,179,0,.36); }
+  .deck-summary .sum-item.invalid::before { background: linear-gradient(90deg, #ff7b66, #ffb3a6); box-shadow: 0 0 12px rgba(255,123,102,.36); }
   .deck-summary .sum-item span { margin-bottom: 7px; color: #aeb2be; }
   .deck-summary .sum-item b { font-size: 15px; letter-spacing: 0; line-height: 1.25;
     white-space: normal; overflow: visible; }
@@ -1049,7 +1109,8 @@
     linear-gradient(180deg, rgba(255,255,255,.05), transparent); }
   .deck-summary button.sum-item:disabled:hover { background: linear-gradient(180deg, rgba(38,38,47,.82), rgba(29,29,38,.88)); }
   @media (max-width: 1000px) {
-    .control-deck { grid-template-columns: minmax(0, 1fr); }
+    .control-deck { grid-template-columns: minmax(0, 1fr); grid-template-areas: "theater" "player" "summary"; }
+    .deck-theater { min-height: 250px; }
     .deck-summary.settings-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
   @media (max-width: 880px) { .settings-summary { grid-column: auto; } }
@@ -1472,6 +1533,28 @@
     <div class="cards">
 
       <div class="control-deck">
+        <div class="deck-theater">
+          <div class="deck-radar" aria-hidden="true">
+            <span class="sweep"></span>
+            <span class="r1"></span>
+            <span class="r2"></span>
+            <span class="r3"></span>
+            <span class="pip one"></span>
+            <span class="pip two"></span>
+            <span class="pip three"></span>
+            <div class="deck-core"><svg class="ic"><use href="#i-swords"/></svg></div>
+          </div>
+          <div class="deck-state">
+            <div class="deck-state-kicker">Desktop command center</div>
+            <div class="deck-state-title" id="deck-state-title">Ready to track</div>
+            <div class="deck-state-copy" id="deck-state-copy">Pick your aoe4world profile and the app will keep the desktop overlay in sync.</div>
+            <div class="deck-actions">
+              <button id="deck-open-games" type="button"><svg class="ic"><use href="#i-swords"/></svg> Games</button>
+              <button id="deck-open-shortcuts" type="button"><svg class="ic"><use href="#i-keyboard"/></svg> Shortcuts</button>
+            </div>
+          </div>
+        </div>
+
         <div class="deck-player">
           <div class="deck-head">
             <h3><svg class="ic"><use href="#i-user"/></svg> Player command</h3>
@@ -2232,9 +2315,28 @@ function schedulePreviewUpdate() {
 
 function updateSettingsSummary() {
   const player = settings.player_name || $('current-player')?.textContent || '';
-  if ($('sum-player')) $('sum-player').textContent = player && player !== 'No player tracked' ? player : 'No profile';
-  if ($('sum-poll')) $('sum-poll').textContent = `${$('interval').value || 15}s${$('autoshow').checked ? ' auto-show' : ' manual'}`;
-  if ($('sum-display')) $('sum-display').textContent = `${$('fontscale').value || 100}% type / ${$('ovscale').value || 100}% window`;
+  const tracked = !!(player && player !== 'No player tracked');
+  const interval = parseInt($('interval')?.value, 10) || 15;
+  const autoShow = !!$('autoshow')?.checked;
+  const fontScale = parseInt($('fontscale')?.value, 10) || 100;
+  const overlayScale = parseInt($('ovscale')?.value, 10) || 100;
+  const pollMeter = Math.max(12, Math.min(100, Math.round((60 - Math.min(interval, 60)) / 55 * 100)));
+  const displayMeter = Math.max(14, Math.min(100, Math.round(((fontScale + overlayScale) / 2 - 70) / 80 * 100)));
+  if ($('sum-player')) {
+    $('sum-player').textContent = tracked ? player : 'No profile';
+    $('sum-player').closest('.sum-item')?.style.setProperty('--meter', tracked ? '100%' : '30%');
+  }
+  if ($('sum-poll')) $('sum-poll').textContent = `${interval}s${autoShow ? ' auto-show' : ' manual'}`;
+  if ($('sum-display')) $('sum-display').textContent = `${fontScale}% type / ${overlayScale}% window`;
+  if ($('deck-state-title')) $('deck-state-title').textContent = tracked ? `Tracking ${player}` : 'Ready to track';
+  if ($('deck-state-copy')) {
+    $('deck-state-copy').textContent = tracked
+      ? `${interval}s polling - ${autoShow ? 'auto-show is armed' : 'manual overlay control'} - display ${fontScale}% / ${overlayScale}%`
+      : 'Pick your aoe4world profile and the app will keep the desktop overlay in sync.';
+  }
+  document.querySelector('.deck-summary')?.style.setProperty('--poll-meter', `${pollMeter}%`);
+  document.querySelector('.deck-summary')?.style.setProperty('--display-meter', `${displayMeter}%`);
+  $('tracked-box')?.classList.toggle('live', tracked);
 }
 
 const DISPLAY_PRESETS = {
@@ -2623,6 +2725,8 @@ $('shortcuts-close').addEventListener('keydown', e => {
   e.preventDefault();
   scClose();
 });
+$('deck-open-games').onclick = () => tabButtons[1].click();
+$('deck-open-shortcuts').onclick = () => scToggle(true);
 document.addEventListener('keydown', e => {
   if (e.target.classList?.contains('hotkey-input')) return;
   if (e.ctrlKey && !e.altKey && !e.shiftKey && e.key === '/') { e.preventDefault(); palClose(); scToggle(); }
