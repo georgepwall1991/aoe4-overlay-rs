@@ -573,6 +573,9 @@
     background: rgba(255,255,255,.045); border-color: #353541; color: #cfd0d8; }
   .preset-row button:hover { background: rgba(122,182,255,.12); border-color: rgba(122,182,255,.35); color: #fff; }
   .preset-row button.on { color: var(--gold-bright); border-color: rgba(224,186,94,.38); background: var(--gold-faint); }
+  .copy-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .copy-row code { flex: 1 1 180px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .copy-row button { flex: none; }
   .searchbar { display: flex; gap: 8px; }
   .searchbar input, #gf-text, #bo-filter { padding-left: 30px !important;
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="%236b6d78" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>');
@@ -1010,7 +1013,11 @@
           <label>OBS websocket port</label>
           <input id="wsport" type="number" min="1024" max="65535" style="width:90px">
         </div>
-        <div class="muted">Add <code>obs-html\overlay.html</code> as an OBS browser source. Restart the app after changing the port.</div>
+        <div class="copy-row">
+          <code id="obs-source-path">obs-html\overlay.html</code>
+          <button id="copy-obs-path" type="button" title="Copy OBS browser source path">Copy OBS path</button>
+        </div>
+        <div class="muted">Add that path as an OBS browser source. Restart the app after changing the port.</div>
       </div>
 
       <div class="card" style="grid-column: span 2">
@@ -1427,6 +1434,17 @@ function toast(msg, err = false, action = null) {
   wrap.appendChild(t);
   while (wrap.children.length > 3) wrap.firstElementChild.remove();
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 260); }, ms);
+}
+
+async function copyText(text, label) {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast(`${label} copied`);
+    return true;
+  } catch (e) {
+    toast('Could not copy', true);
+    return false;
+  }
 }
 
 // Click a hotkey field, press a combo; Esc cancels, Backspace/Delete clears.
@@ -3406,13 +3424,9 @@ $('games-refresh').onclick = loadGames;
 $('status-dot').title = 'Refresh overlay data now';
 $('status-dot').onclick = () => $('refresh-btn').click();
 $('status-dot').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('refresh-btn').click(); } };
+$('copy-obs-path').onclick = () => copyText($('obs-source-path').textContent, 'OBS path');
 $('app-ver').title = 'Copy version info';
-$('app-ver').onclick = async () => {
-  try {
-    await navigator.clipboard.writeText(`AoE4 Overlay ${$('app-ver').textContent} · ${navigator.userAgent}`);
-    toast('Version info copied');
-  } catch (e) { toast('Could not copy', true); }
-};
+$('app-ver').onclick = () => copyText(`AoE4 Overlay ${$('app-ver').textContent} · ${navigator.userAgent}`, 'Version info');
 
 listen('game_data', e => { renderMatch(e.payload); setStatus('Match data updated.', 'ok'); });
 let lastPollAt = null, lastPollLive = false;
