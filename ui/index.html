@@ -410,6 +410,42 @@
   .bo-stage-list div { min-width: 0; color: #cfd6e2; font-size: 12px; line-height: 1.32; padding-left: 10px;
     border-left: 2px solid rgba(143,201,255,.22); }
   .bo-stage-list img { height: 18px; vertical-align: middle; margin: -2px 2px 0; }
+  .bo-stage-rail { position: relative; min-width: 0; display: grid; gap: 8px; padding: 9px;
+    border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,.08); background:
+      radial-gradient(360px 80px at var(--stage-rail-pct, 0%) 0, rgba(224,186,94,.16), transparent 68%),
+      linear-gradient(180deg, rgba(255,255,255,.045), rgba(0,0,0,.12)), rgba(5,6,10,.28); }
+  .bo-stage-rail::before { content: ""; position: absolute; left: 14px; right: 14px; top: 31px; height: 4px;
+    border-radius: 999px; background: rgba(255,255,255,.09); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+  .bo-stage-rail::after { content: ""; position: absolute; left: 14px; right: 14px; top: 31px; height: 4px;
+    transform-origin: left center; transform: scaleX(var(--stage-rail-progress, 0)); border-radius: 999px;
+    background: linear-gradient(90deg, #6fe04a, #e0ba5e, #8fc9ff); box-shadow: 0 0 18px rgba(224,186,94,.28);
+    transition: transform .18s ease; }
+  .bo-stage-rail-track { position: relative; z-index: 1; min-width: 0; display: grid; grid-auto-flow: column;
+    grid-auto-columns: minmax(62px, 1fr); gap: 8px; overflow-x: auto; overscroll-behavior-x: contain; padding: 0 1px 2px;
+    scrollbar-width: thin; }
+  .bo-stage-rail-node { min-width: 0; height: 76px; display: grid; grid-template-rows: 31px auto auto; gap: 3px;
+    justify-items: center; align-items: center; padding: 0 5px 5px; text-align: center; border: 1px solid transparent;
+    border-radius: 12px; color: #dbe1eb; background: transparent; box-shadow: none; }
+  .bo-stage-rail-node:hover { border-color: rgba(143,201,255,.28); background: rgba(143,201,255,.065); }
+  .bo-stage-rail-node.done { color: #dff6d8; }
+  .bo-stage-rail-node.sel { color: #fff; border-color: rgba(224,186,94,.58); background:
+      linear-gradient(180deg, rgba(224,186,94,.16), rgba(0,0,0,.04)); box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 1px rgba(224,186,94,.13), 0 10px 24px -18px rgba(224,186,94,.9); }
+  .bo-stage-rail-pin { position: relative; z-index: 1; width: 31px; height: 31px; display: grid; place-items: center;
+    border-radius: 50%; background: linear-gradient(180deg, rgba(19,23,31,.96), rgba(7,9,14,.96));
+    border: 1px solid rgba(255,255,255,.14); box-shadow: 0 5px 14px rgba(0,0,0,.3); }
+  .bo-stage-rail-node.done .bo-stage-rail-pin { border-color: rgba(111,224,74,.42); box-shadow: 0 0 0 1px rgba(111,224,74,.1), 0 5px 14px rgba(0,0,0,.3); }
+  .bo-stage-rail-node.sel .bo-stage-rail-pin { border-color: rgba(255,224,138,.74); background: linear-gradient(180deg, #ffe08a, #cda343);
+    box-shadow: 0 0 0 3px rgba(224,186,94,.13), 0 8px 18px rgba(0,0,0,.34); }
+  .bo-stage-rail-pin img { width: 22px; height: 22px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.32)); }
+  .bo-stage-rail-node.sel .bo-stage-rail-pin img { filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+  .bo-stage-rail-dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(143,201,255,.42); }
+  .bo-stage-rail-node.done .bo-stage-rail-dot { background: #6fe04a; }
+  .bo-stage-rail-node.sel .bo-stage-rail-dot { background: #101217; box-shadow: 0 0 0 3px rgba(255,255,255,.26); }
+  .bo-stage-rail-time { color: #ffe08a; font-size: 10.5px; font-weight: 950; line-height: 1.1;
+    font-variant-numeric: tabular-nums; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-stage-rail-label { color: inherit; opacity: .82; font-size: 10px; font-weight: 850; line-height: 1.1;
+    max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bo-stage-side { min-width: 0; display: grid; gap: 8px; align-content: stretch; }
   .bo-stage-age { display: grid; place-items: center; gap: 6px; min-height: 92px; padding: 10px; border-radius: 14px;
     border: 1px solid rgba(224,186,94,.18); background: rgba(0,0,0,.22); }
@@ -5602,6 +5638,32 @@ function boStageResHtml(step) {
   bits.push(boStepResHtml(step));
   return bits.filter(Boolean).join('');
 }
+function boStageRailHtml(steps, selectedIndex, jsonMode) {
+  const count = steps.length;
+  if (!count) return '';
+  const safeIndex = Math.max(0, Math.min(selectedIndex, count - 1));
+  const progress = count <= 1 ? 1 : safeIndex / (count - 1);
+  const pct = Math.round(progress * 100);
+  const nodes = steps.map((step, i) => {
+    const age = jsonMode ? boAgeFromStep(step) : 0;
+    const lead = jsonMode ? boStepLead(step, i) : `Line ${i + 1}`;
+    const label = jsonMode
+      ? (boFirstNote(step) || `Step ${i + 1}`)
+      : String(step || `Line ${i + 1}`).trim();
+    const state = i === safeIndex ? 'sel' : i < safeIndex ? 'done' : '';
+    const pin = age
+      ? `<img src="bo_img/age/age_${age}.webp" alt="">`
+      : `<span class="bo-stage-rail-dot" aria-hidden="true"></span>`;
+    return `<button class="bo-stage-rail-node ${state}" type="button" data-stage-step-index="${i}" aria-pressed="${i === safeIndex ? 'true' : 'false'}" title="${esc(label)}">
+      <span class="bo-stage-rail-pin">${pin}</span>
+      <span class="bo-stage-rail-time">${esc(lead)}</span>
+      <span class="bo-stage-rail-label">S${i + 1}</span>
+    </button>`;
+  }).join('');
+  return `<div class="bo-stage-rail" style="--stage-rail-progress:${progress};--stage-rail-pct:${pct}%">
+    <div class="bo-stage-rail-track" aria-label="Build order stage map">${nodes}</div>
+  </div>`;
+}
 function renderBoStage(p) {
   const stage = $('bo-stage');
   if (!stage) return;
@@ -5624,6 +5686,7 @@ function renderBoStage(p) {
       <div class="bo-stage-kicker"><span>Text line ${boPvStep + 1} of ${count}</span><b>${esc(boStepLead(null, boPvStep))}</b></div>
       <div class="bo-stage-note">${boRenderLine(line || `Line ${boPvStep + 1}`)}</div>
       <div class="bo-stage-list"><div>Convert to JSON to unlock age, resources, and full timeline cards.</div></div>
+      ${boStageRailHtml(steps, boPvStep, false)}
     </div>
     <div class="bo-stage-side">
       <div class="bo-stage-next"><span>Next up</span><b>${next ? boRenderLine(next) : 'End of plan'}</b></div>
@@ -5644,6 +5707,7 @@ function renderBoStage(p) {
     <div class="bo-stage-note">${boRenderLine(primary)}</div>
     <div class="bo-stage-res">${res}</div>
     ${extras ? `<div class="bo-stage-list">${extras}</div>` : ''}
+    ${boStageRailHtml(steps, boPvStep, true)}
   </div>
   <div class="bo-stage-side">
     <div class="bo-stage-age">${age ? `<img src="bo_img/age/age_${age}.webp" alt="">` : '<span class="bo-age-unknown" aria-hidden="true"></span>'}<span>${esc(ageLabel)}</span></div>
@@ -5979,6 +6043,12 @@ $('bo-preview').addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') { e.preventDefault(); boPvStep++; updateBoPreview(); }
 });
 $('bo-stage').addEventListener('click', e => {
+  const rail = e.target.closest('.bo-stage-rail-node');
+  if (rail) {
+    boPvStep = parseInt(rail.dataset.stageStepIndex, 10) || 0;
+    updateBoPreview();
+    return;
+  }
   const prev = e.target.closest('#bo-stage-prev');
   const next = e.target.closest('#bo-stage-next');
   if (!prev && !next) return;
