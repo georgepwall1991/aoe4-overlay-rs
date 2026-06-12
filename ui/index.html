@@ -694,6 +694,8 @@
     text-align: center; letter-spacing: 0; }
   .field.setting-changed .color-value { color: var(--gold-bright); border-color: rgba(255,200,69,.42);
     background: rgba(255,200,69,.08); }
+  .appearance-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+  .appearance-actions button { padding: 6px 10px; }
   .appearance-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
   .preview-wrap { align-self: center; min-width: 0; }
   @media (max-width: 880px) { .appearance-grid { grid-template-columns: minmax(0, 1fr); } }
@@ -1097,6 +1099,9 @@
             <div class="field">
               <label>Overlay font scale <b id="fontscale-val"></b></label>
               <input id="fontscale" type="range" min="50" max="200" step="5">
+            </div>
+            <div class="appearance-actions">
+              <button id="appearance-reset" type="button" title="Restore default team colors, opacity, civ stats color and font scale">Reset appearance</button>
             </div>
           </div>
           <div class="preview-wrap">
@@ -1631,6 +1636,14 @@ const DISPLAY_PRESETS = {
   default: { fontscale: 100, ovscale: 100 },
   readable: { fontscale: 115, ovscale: 110 },
 };
+const APPEARANCE_DEFAULTS = {
+  tc1: '#4aff02',
+  tc2: '#03b3ff',
+  tc3: '#ff0000',
+  tcalpha: 35,
+  civstatcolor: '#bc8aea',
+  fontscale: 100,
+};
 function setSettingInput(id, value) {
   const el = $(id);
   el.value = String(value);
@@ -1647,6 +1660,10 @@ function applyDisplayPreset(name) {
 function applyPollPreset(seconds) {
   setSettingInput('interval', seconds);
   toast(`Polling preset: ${seconds}s`);
+}
+function resetAppearanceSettings() {
+  Object.entries(APPEARANCE_DEFAULTS).forEach(([id, value]) => setSettingInput(id, value));
+  toast('Appearance defaults restored - click Save to apply');
 }
 function setPresetPressed(btn, on) {
   btn.classList.toggle('on', on);
@@ -3665,6 +3682,7 @@ document.querySelectorAll('[data-display-preset]').forEach(btn => {
 document.querySelectorAll('[data-poll-preset]').forEach(btn => {
   btn.onclick = () => applyPollPreset(parseInt(btn.dataset.pollPreset));
 });
+$('appearance-reset').onclick = resetAppearanceSettings;
 function syncPortValidity() {
   const v = parseInt($('wsport').value);
   const bad = isNaN(v) || v < 1024 || v > 65535;
