@@ -1829,6 +1829,7 @@ const PAL_COMMANDS = [
   { sect: 'Settings', name: 'Polling preset: Live 5s', icon: 'i-signal', run: () => { tabButtons[0].click(); applyPollPreset(5); } },
   { sect: 'Settings', name: 'Polling preset: Default 15s', icon: 'i-signal', run: () => { tabButtons[0].click(); applyPollPreset(15); } },
   { sect: 'Settings', name: 'Polling preset: Quiet 30s', icon: 'i-signal', run: () => { tabButtons[0].click(); applyPollPreset(30); } },
+  { sect: 'Settings', name: 'Reset appearance defaults', icon: 'i-palette', run: () => { tabButtons[0].click(); resetAppearanceSettings(); } },
   { sect: 'Overlay', name: 'Show / hide build order', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'toggle' }) },
   { sect: 'Overlay', name: 'Next build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'next' }) },
   { sect: 'Overlay', name: 'Previous build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'prev' }) },
