@@ -3654,12 +3654,20 @@ makeRoller('rand-civ', 'rand-civ-name', 'rand-civ-img', 'rand-civ-hist', CIVS, c
 makeRoller('rand-map', 'rand-map-name', 'rand-map-img', 'rand-map-hist', MAPS, m => `maps/${m.replace(/ /g, '_')}.png`);
 
 // ---------- wiring ----------
-$('search-btn').onclick = doSearch;
 let searchTimer = null;
-$('search').addEventListener('input', () => {
+function clearSearchTimer() {
   clearTimeout(searchTimer);
+  searchTimer = null;
+}
+function runPlayerSearchNow() {
+  clearSearchTimer();
+  doSearch();
+}
+$('search-btn').onclick = runPlayerSearchNow;
+$('search').addEventListener('input', () => {
+  clearSearchTimer();
   const q = $('search').value.trim();
-  if (q.length >= 3) searchTimer = setTimeout(doSearch, 450);
+  if (q.length >= 3) searchTimer = setTimeout(runPlayerSearchNow, 450);
   else clearSearchResults();
 });
 $('search').addEventListener('keydown', e => {
@@ -3673,7 +3681,7 @@ $('search').addEventListener('keydown', e => {
       : Math.max((cur < 0 ? items.length - 1 : cur - 1), 0);
     setKbResult(next);
   } else if (e.key === 'Enter') {
-    clearTimeout(searchTimer);
+    clearSearchTimer();
     if (cur >= 0) items[cur].click(); else doSearch();
   } else if (e.key === 'Escape') {
     clearSearchResults();
