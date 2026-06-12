@@ -580,7 +580,8 @@
   .preset-row button { padding: 4px 9px; font-size: 11px; border-radius: 999px; box-shadow: none;
     background: rgba(255,255,255,.045); border-color: #353541; color: #cfd0d8; }
   .preset-row button:hover { background: rgba(122,182,255,.12); border-color: rgba(122,182,255,.35); color: #fff; }
-  .preset-row button.on { color: var(--gold-bright); border-color: rgba(224,186,94,.38); background: var(--gold-faint); }
+  .preset-row button.on,
+  .preset-row button[aria-pressed="true"] { color: var(--gold-bright); border-color: rgba(224,186,94,.38); background: var(--gold-faint); }
   .copy-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
   .copy-row code { flex: 1 1 180px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .copy-row button { flex: none; min-width: 106px; }
@@ -1011,9 +1012,9 @@
         </div>
         <div class="preset-row" aria-label="Display presets">
           <span>Display preset</span>
-          <button type="button" data-display-preset="compact" title="Smaller window and type">Compact</button>
-          <button type="button" data-display-preset="default" title="Default window and type">Default</button>
-          <button type="button" data-display-preset="readable" title="Larger type without oversizing the window">Readable</button>
+          <button type="button" data-display-preset="compact" aria-pressed="false" title="Smaller window and type">Compact</button>
+          <button type="button" data-display-preset="default" aria-pressed="true" title="Selected: Default window and type">Default</button>
+          <button type="button" data-display-preset="readable" aria-pressed="false" title="Larger type without oversizing the window">Readable</button>
         </div>
         <div class="field">
           <label>Show / hide hotkey</label>
@@ -1034,9 +1035,9 @@
         <h3><svg class="ic"><use href="#i-signal"/></svg> Polling & streaming</h3>
         <div class="preset-row" aria-label="Polling interval presets">
           <span>Polling preset</span>
-          <button type="button" data-poll-preset="5" title="Check as often as allowed">Live 5s</button>
-          <button type="button" data-poll-preset="15" title="Default polling interval">Default 15s</button>
-          <button type="button" data-poll-preset="30" title="Lower API and battery usage">Quiet 30s</button>
+          <button type="button" data-poll-preset="5" aria-pressed="false" title="Check as often as allowed">Live 5s</button>
+          <button type="button" data-poll-preset="15" aria-pressed="true" title="Selected: Default polling interval">Default 15s</button>
+          <button type="button" data-poll-preset="30" aria-pressed="false" title="Lower API and battery usage">Quiet 30s</button>
         </div>
         <div class="field">
           <label>Poll interval <b id="interval-val"></b></label>
@@ -1607,19 +1608,23 @@ function applyPollPreset(seconds) {
   setSettingInput('interval', seconds);
   toast(`Polling preset: ${seconds}s`);
 }
+function setPresetPressed(btn, on) {
+  btn.classList.toggle('on', on);
+  btn.setAttribute('aria-pressed', String(on));
+  if (!btn.dataset.title) btn.dataset.title = (btn.title || '').replace(/^Selected:\s*/, '') || btn.textContent.trim();
+  btn.title = on ? `Selected: ${btn.dataset.title || btn.textContent.trim()}` : btn.dataset.title;
+}
 function updatePresetButtons() {
   const font = parseInt($('fontscale')?.value), size = parseInt($('ovscale')?.value);
   document.querySelectorAll('[data-display-preset]').forEach(btn => {
     const p = DISPLAY_PRESETS[btn.dataset.displayPreset];
     const on = !!p && p.fontscale === font && p.ovscale === size;
-    btn.classList.toggle('on', on);
-    btn.setAttribute('aria-pressed', String(on));
+    setPresetPressed(btn, on);
   });
   const interval = String(parseInt($('interval')?.value));
   document.querySelectorAll('[data-poll-preset]').forEach(btn => {
     const on = btn.dataset.pollPreset === interval;
-    btn.classList.toggle('on', on);
-    btn.setAttribute('aria-pressed', String(on));
+    setPresetPressed(btn, on);
   });
 }
 
