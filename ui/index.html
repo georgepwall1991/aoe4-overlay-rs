@@ -1832,6 +1832,9 @@ const PAL_COMMANDS = [
   { sect: 'Settings', name: 'Reset appearance defaults', icon: 'i-palette', run: () => { tabButtons[0].click(); resetAppearanceSettings(); } },
   { sect: 'Settings', name: 'Copy OBS browser source path', icon: 'i-monitor', run: () => { tabButtons[0].click(); $('copy-obs-path').click(); } },
   { sect: 'Settings', name: 'Copy version info', icon: 'i-gear', run: () => $('app-ver').click() },
+  { sect: 'Settings', name: 'Zoom UI in', icon: 'i-eye', key: 'Ctrl++', run: () => adjustUiZoom(10) },
+  { sect: 'Settings', name: 'Zoom UI out', icon: 'i-eye', key: 'Ctrl+-', run: () => adjustUiZoom(-10) },
+  { sect: 'Settings', name: 'Reset UI zoom', icon: 'i-eye', key: 'Ctrl+0', run: () => setUiZoom(100) },
   { sect: 'Overlay', name: 'Show / hide build order', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'toggle' }) },
   { sect: 'Overlay', name: 'Next build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'next' }) },
   { sect: 'Overlay', name: 'Previous build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'prev' }) },
@@ -1979,12 +1982,17 @@ function applyZoom(silent) {
   if (!silent) toast(`Zoom ${uiZoom}%`);
   moveTabInd();
 }
+function setUiZoom(next, silent = false) {
+  uiZoom = clampZoom(next);
+  applyZoom(silent);
+}
+function adjustUiZoom(delta) { setUiZoom(uiZoom + delta); }
 applyZoom(true);
 document.addEventListener('keydown', e => {
   if (!e.ctrlKey || e.altKey || e.target.classList?.contains('hotkey-input')) return;
-  if (e.key === '=' || e.key === '+') { e.preventDefault(); uiZoom = clampZoom(uiZoom + 10); applyZoom(); }
-  else if (e.key === '-') { e.preventDefault(); uiZoom = clampZoom(uiZoom - 10); applyZoom(); }
-  else if (e.key === '0') { e.preventDefault(); uiZoom = 100; applyZoom(); }
+  if (e.key === '=' || e.key === '+') { e.preventDefault(); adjustUiZoom(10); }
+  else if (e.key === '-') { e.preventDefault(); adjustUiZoom(-10); }
+  else if (e.key === '0') { e.preventDefault(); setUiZoom(100); }
 });
 
 // ---------- color helpers ----------
