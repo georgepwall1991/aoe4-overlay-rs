@@ -870,6 +870,8 @@
   .pal-empty { padding: 22px; text-align: center; color: var(--ink-muted); font-size: 13px; }
   .pal-foot { display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid #2c2c36;
     background: rgba(0,0,0,.18); font-size: 11px; color: var(--ink-muted); }
+  .pal-count { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pal-shortcuts { white-space: nowrap; }
 
   /* keyboard shortcuts cheat sheet */
   #shortcuts { position: fixed; inset: 0; z-index: 60; display: none; background: rgba(8,8,12,.55);
@@ -1346,14 +1348,15 @@
 
   <div id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
     <div class="pal-box">
-      <input id="pal-input" role="combobox" aria-autocomplete="list" aria-controls="pal-list"
+      <input id="pal-input" role="combobox" aria-label="Command" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="pal-list"
              aria-expanded="false" placeholder="Type a command…" autocomplete="off" spellcheck="false">
-      <div id="pal-list" role="listbox"></div>
+      <div id="pal-list" role="listbox" aria-label="Command results"></div>
       <div class="pal-foot">
         <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
         <span><kbd>Enter</kbd> run</span>
         <span><kbd>Esc</kbd> close</span>
-        <span style="margin-left:auto"><kbd>Ctrl</kbd>+<kbd>1…5</kbd> tabs &nbsp; <kbd>Ctrl</kbd>+<kbd>S</kbd> save</span>
+        <span id="pal-count" class="pal-count" aria-live="polite"></span>
+        <span class="pal-shortcuts"><kbd>Ctrl</kbd>+<kbd>1…5</kbd> tabs &nbsp; <kbd>Ctrl</kbd>+<kbd>S</kbd> save</span>
       </div>
     </div>
   </div>
@@ -1932,6 +1935,9 @@ function palRender() {
     matches = [...rec.map(c => ({ c, m: null, sect: 'Recent' })), ...PAL_COMMANDS.map(c => ({ c, m: null }))];
   }
   palShown = matches.map(x => x.c);
+  const countText = palShown.length === 1 ? '1 command shown' : `${palShown.length} commands shown`;
+  $('pal-count').textContent = palShown.length ? countText : 'No commands shown';
+  $('pal-list').setAttribute('aria-label', q ? `Command results for ${q}` : 'Command results');
   palSel = Math.min(palSel, Math.max(0, palShown.length - 1));
   if (!palShown.length) {
     $('pal-list').innerHTML = '<div class="pal-empty">No matching commands</div>';
