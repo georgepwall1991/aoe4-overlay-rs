@@ -813,6 +813,34 @@
     background: rgba(255,255,255,.07); overflow: hidden; }
   .tracked-bar i { display: block; height: 100%; border-radius: inherit; transition: width .3s ease;
     background: linear-gradient(90deg, #3a9c18, #6fe04a); box-shadow: 0 0 6px rgba(111,224,74,.6); }
+  #tab-buildorders { max-width: 1240px; }
+  .bo-workbench { position: relative; overflow: hidden; border: 1px solid rgba(224,186,94,.24);
+    border-radius: 18px; padding: 18px; background:
+      radial-gradient(720px 320px at 12% 0%, rgba(224,186,94,.12), transparent 64%),
+      radial-gradient(640px 300px at 98% 6%, rgba(122,182,255,.11), transparent 62%),
+      linear-gradient(135deg, rgba(38,38,48,.97), rgba(22,22,29,.98));
+    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 24px 58px -30px rgba(0,0,0,.95); }
+  .bo-workbench::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .12;
+    background-image:
+      linear-gradient(rgba(224,186,94,.16) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(122,182,255,.15) 1px, transparent 1px);
+    background-size: 68px 68px; mask-image: radial-gradient(ellipse at center, #000 26%, transparent 78%); }
+  .bo-workbench-head { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; margin-bottom: 14px; padding-bottom: 3px; }
+  .bo-workbench-kicker { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+  .bo-workbench-title { color: #fff; font-size: 29px; font-weight: 850; line-height: 1.16; min-height: 34px; margin-top: 5px;
+    text-shadow: 0 2px 18px rgba(0,0,0,.7); }
+  .bo-workbench-metrics { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .bo-workbench-metrics span { display: inline-flex; align-items: baseline; gap: 6px; padding: 5px 10px;
+    border-radius: 999px; color: #d5d8e0; background: rgba(9,9,13,.5);
+    border: 1px solid rgba(255,255,255,.09); font-size: 11px; font-weight: 700; }
+  .bo-workbench-metrics b { color: var(--gold-bright); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .bo-workbench .cards { position: relative; z-index: 1; }
+  .bo-workbench .card { border-color: rgba(255,255,255,.09); background: linear-gradient(180deg, rgba(43,43,53,.9), rgba(29,29,37,.96)); }
+  @media (max-width: 760px) {
+    .bo-workbench-head { align-items: flex-start; flex-direction: column; }
+    .bo-workbench-metrics { justify-content: flex-start; }
+  }
   /* build-order cards settle in with a slight stagger when the tab opens */
   #tab-buildorders .card { animation: card-in .38s cubic-bezier(.22,1,.36,1) backwards; }
   #tab-buildorders .card:nth-child(2) { animation-delay: .05s; }
@@ -1468,7 +1496,18 @@
 
   <!-- ============ BUILD ORDERS ============ -->
   <div class="tab" id="tab-buildorders">
-    <div class="cards">
+    <div class="bo-workbench">
+      <div class="bo-workbench-head">
+        <div>
+          <div class="bo-workbench-kicker">Build planner</div>
+          <div class="bo-workbench-title">Build order workbench</div>
+        </div>
+        <div class="bo-workbench-metrics">
+          <span><b id="bo-workbench-count">0</b> saved</span>
+          <span id="bo-workbench-current">Overlay idle</span>
+        </div>
+      </div>
+      <div class="cards">
 
       <div class="card">
         <h3><svg class="ic"><use href="#i-library"/></svg> Library <span id="bo-count" class="muted" style="font-weight:400"></span></h3>
@@ -1614,6 +1653,7 @@
           <span class="ov-head">Rating</span><span class="ov-head">Rank</span><span class="ov-head">Winrate</span>
           <span class="ov-head">Wins</span><span class="ov-head">Losses</span><span class="ov-head">Civ WR</span><span class="ov-head">Win time</span>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -3505,6 +3545,7 @@ function renderBoList() {
   const total = names.length;
   $('tab-bo-chip').textContent = total || '';
   $('tab-bo-chip').title = total ? `${total} build order${total === 1 ? '' : 's'} in the library` : '';
+  if ($('bo-workbench-count')) $('bo-workbench-count').textContent = String(total);
   const setCount = shown => {
     const el = $('bo-count');
     const txt = total ? (shown === total ? `(${total})` : `(${shown}/${total})`) : '';
@@ -4068,6 +4109,7 @@ listen('bo_data', e => {
   $('bo-now').textContent = b.name;
   const p = parseBo(b.content);
   $('bo-now-sub').textContent = `On overlay — step ${(b.step ?? 0) + 1}${p.steps ? '/' + p.steps : ''}`;
+  if ($('bo-workbench-current')) $('bo-workbench-current').textContent = `${b.name} · step ${(b.step ?? 0) + 1}${p.steps ? '/' + p.steps : ''}`;
   const box = $('bo-now').parentElement.parentElement;
   box.classList.add('live');
   let bar = box.querySelector('.tracked-bar');
