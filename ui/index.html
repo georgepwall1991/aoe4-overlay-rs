@@ -435,6 +435,43 @@
   .bo-step-res span { display: inline-flex; align-items: center; gap: 3px; height: 20px; padding: 2px 6px; border-radius: 999px;
     color: #dce1ea; font-size: 10.5px; font-weight: 850; background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.075); }
   .bo-step-res img { width: 15px; height: 15px; object-fit: contain; }
+  .bo-ageplan { min-width: 0; display: grid; gap: 8px; padding: 10px 11px; border-radius: 14px;
+    border: 1px solid rgba(224,186,94,.14); background:
+      radial-gradient(520px 120px at 50% 0, rgba(224,186,94,.085), transparent 72%),
+      rgba(6,7,11,.22); }
+  .bo-ageplan-head { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .bo-ageplan-title { min-width: 0; display: grid; gap: 2px; }
+  .bo-ageplan-title span { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+  .bo-ageplan-title b { min-width: 0; color: #fff; font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-age-lanes { min-width: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(142px, 1fr)); gap: 8px; }
+  .bo-age-lane { min-width: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 7px; padding: 9px;
+    border-radius: 13px; background: rgba(7,9,14,.36); border: 1px solid rgba(255,255,255,.075); }
+  .bo-age-lane.active { border-color: rgba(224,186,94,.32); background:
+    linear-gradient(180deg, rgba(224,186,94,.075), rgba(0,0,0,.08)), rgba(7,9,14,.4); }
+  .bo-age-lane-head { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .bo-age-lane-name { min-width: 0; display: inline-flex; align-items: center; gap: 6px; color: #f5f1e2;
+    font-size: 12px; font-weight: 900; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-age-lane-name img { width: 20px; height: 20px; object-fit: contain; }
+  .bo-age-unknown { width: 20px; height: 20px; border-radius: 50%; background:
+    radial-gradient(circle at 50% 42%, rgba(255,255,255,.28), transparent 42%),
+    rgba(143,201,255,.14); border: 1px solid rgba(143,201,255,.22); }
+  .bo-age-lane-count { flex: none; color: #ffe08a; font-size: 11px; font-weight: 850; font-variant-numeric: tabular-nums; }
+  .bo-age-events { display: grid; gap: 6px; align-content: start; min-height: 68px; }
+  .bo-age-event { min-width: 0; display: grid; gap: 4px; padding: 7px 8px; text-align: left; color: #e7ebf3;
+    border-radius: 10px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+  .bo-age-event:hover { border-color: rgba(143,201,255,.28); background: rgba(143,201,255,.065); }
+  .bo-age-event.sel { border-color: rgba(224,186,94,.52); box-shadow: 0 0 0 1px rgba(224,186,94,.12); }
+  .bo-age-event-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; min-width: 0; }
+  .bo-age-event-step { color: #ffe08a; font-size: 10.5px; font-weight: 900; white-space: nowrap; }
+  .bo-age-event-note { min-width: 0; color: #fff; font-size: 11.5px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bo-age-event-note img { height: 16px; vertical-align: middle; margin: -2px 2px 0; }
+  .bo-age-event-res { display: flex; flex-wrap: wrap; gap: 4px; overflow: hidden; }
+  .bo-age-event-res span { display: inline-flex; align-items: center; gap: 3px; height: 18px; padding: 1px 5px;
+    border-radius: 999px; color: #cfd5df; font-size: 10px; font-weight: 850; background: rgba(0,0,0,.24);
+    border: 1px solid rgba(255,255,255,.065); }
+  .bo-age-event-res img { width: 14px; height: 14px; object-fit: contain; }
+  .bo-age-empty { min-height: 56px; display: grid; place-items: center; border-radius: 10px; color: #858b98;
+    font-size: 11px; text-align: center; border: 1px dashed rgba(255,255,255,.11); background: rgba(0,0,0,.12); }
   .bo-editor-assist { min-width: 0; display: grid; align-content: start; gap: 12px; padding: 14px;
     border-left: 1px solid rgba(224,186,94,.16); background:
       linear-gradient(180deg, rgba(224,186,94,.07), transparent 38%),
@@ -2271,6 +2308,15 @@
                 </div>
               </div>
               <div class="bo-step-path empty" id="bo-step-path"></div>
+            </div>
+            <div class="bo-ageplan" id="bo-ageplan">
+              <div class="bo-ageplan-head">
+                <div class="bo-ageplan-title">
+                  <span>Age lanes</span>
+                  <b id="bo-age-summary">No milestones yet</b>
+                </div>
+              </div>
+              <div class="bo-age-lanes" id="bo-age-lanes"></div>
             </div>
             <div class="bo-source-card open" id="bo-source-card">
               <div class="bo-source-head">
@@ -5542,6 +5588,65 @@ function boStepboardRemove() {
   boStepboardWrite(json, Math.min(i, steps.length - 1), `Removed step ${i + 1}`);
 }
 
+const BO_AGE_LANES = [
+  { age: 1, label: 'Dark' },
+  { age: 2, label: 'Feudal' },
+  { age: 3, label: 'Castle' },
+  { age: 4, label: 'Imperial' },
+];
+function boAgeFromStep(step) {
+  const age = parseInt(step?.age, 10);
+  return age >= 1 && age <= 4 ? age : 0;
+}
+function boAgeEventHtml(step, i) {
+  const note = boFirstNote(step) || `Step ${i + 1}`;
+  const lead = boStepLead(step, i);
+  const res = boStepResHtml(step);
+  return `<button class="bo-age-event ${i === boPvStep ? 'sel' : ''}" type="button" data-age-step-index="${i}" aria-pressed="${i === boPvStep ? 'true' : 'false'}">
+    <div class="bo-age-event-top">
+      <span class="bo-age-event-step">S${i + 1}</span>
+      <span class="bo-age-event-step">${esc(lead)}</span>
+    </div>
+    <div class="bo-age-event-note">${boRenderLine(note)}</div>
+    ${res ? `<div class="bo-age-event-res">${res}</div>` : ''}
+  </button>`;
+}
+function boAgeLaneHtml(lane) {
+  const events = lane.events || [];
+  const icon = lane.age
+    ? `<img src="bo_img/age/age_${lane.age}.webp" alt="">`
+    : '<span class="bo-age-unknown" aria-hidden="true"></span>';
+  return `<div class="bo-age-lane ${events.length ? 'active' : ''}">
+    <div class="bo-age-lane-head">
+      <span class="bo-age-lane-name">${icon}${esc(lane.label)}</span>
+      <span class="bo-age-lane-count">${events.length}</span>
+    </div>
+    <div class="bo-age-events">
+      ${events.length ? events.map(({ step, i }) => boAgeEventHtml(step, i)).join('') : '<div class="bo-age-empty">No milestones</div>'}
+    </div>
+  </div>`;
+}
+function renderBoAgePlan(p) {
+  const lanesEl = $('bo-age-lanes');
+  if (!lanesEl) return;
+  if (!p.json || !Array.isArray(p.json.build_order)) {
+    $('bo-age-summary').textContent = p.steps ? 'Convert to JSON to unlock age lanes' : 'No milestones yet';
+    lanesEl.innerHTML = '<div class="bo-age-empty">JSON build steps unlock age lanes</div>';
+    return;
+  }
+  const lanes = BO_AGE_LANES.map(x => ({ ...x, events: [] }));
+  const unaged = { age: 0, label: 'Unaged', events: [] };
+  p.json.build_order.forEach((step, i) => {
+    const age = boAgeFromStep(step);
+    const lane = lanes.find(x => x.age === age) || unaged;
+    lane.events.push({ step, i });
+  });
+  const visible = unaged.events.length ? [...lanes, unaged] : lanes;
+  const active = visible.filter(x => x.events.length).length;
+  $('bo-age-summary').textContent = `${p.steps} ${p.steps === 1 ? 'milestone' : 'milestones'} across ${active || 0} ${active === 1 ? 'age' : 'ages'}`;
+  lanesEl.innerHTML = visible.map(boAgeLaneHtml).join('');
+}
+
 function updateBoPreview() {
   const pv = $('bo-preview');
   const p = parseBo($('bo-content').value);
@@ -5598,6 +5703,7 @@ function updateBoPreview() {
   }
   syncBoBuilderFromPreview(p);
   renderBoStepBoard(p);
+  renderBoAgePlan(p);
   updateBoDossier();
 }
 function syncPvPager(steps) {
@@ -5647,6 +5753,12 @@ $('bo-step-path').addEventListener('click', e => {
   const node = e.target.closest('.bo-step-node');
   if (!node) return;
   boPvStep = parseInt(node.dataset.stepIndex, 10) || 0;
+  updateBoPreview();
+});
+$('bo-age-lanes').addEventListener('click', e => {
+  const node = e.target.closest('.bo-age-event');
+  if (!node) return;
+  boPvStep = parseInt(node.dataset.ageStepIndex, 10) || 0;
   updateBoPreview();
 });
 $('bo-step-move-prev').onclick = () => boStepboardMove(-1);
