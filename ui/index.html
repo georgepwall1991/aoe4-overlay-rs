@@ -411,6 +411,42 @@
   .bo-repair-copy { color: #d4d0bd; font-size: 12px; line-height: 1.42; }
   .bo-repair-copy ul { margin: 7px 0 0; padding-left: 18px; }
   .bo-repair-copy li { margin: 3px 0; }
+  .bo-builder { display: grid; gap: 11px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); }
+  .bo-builder-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .bo-builder-kicker { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .11em; text-transform: uppercase; }
+  .bo-builder-title { color: #fff; font-size: 14px; font-weight: 850; line-height: 1.2; margin-top: 3px; }
+  .bo-builder-target { flex: none; max-width: 118px; color: #ffe08a; font-size: 11px; font-weight: 850; line-height: 1.2;
+    padding: 5px 8px; border-radius: 999px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    background: rgba(224,186,94,.1); border: 1px solid rgba(224,186,94,.22); }
+  .bo-builder-stage { min-height: 82px; display: grid; align-content: center; gap: 8px; padding: 11px; border-radius: 13px;
+    border: 1px solid rgba(143,201,255,.18); background:
+      radial-gradient(220px 110px at 100% 0, rgba(143,201,255,.12), transparent 70%),
+      linear-gradient(180deg, rgba(255,255,255,.055), rgba(0,0,0,.12)); }
+  .bo-builder-stage .builder-empty { color: #aeb3bf; font-size: 12px; line-height: 1.4; }
+  .builder-res-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 24px; }
+  .builder-res-line span { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 3px 7px;
+    border-radius: 999px; color: #f8f1dc; font-size: 12px; font-weight: 800; background: rgba(0,0,0,.28);
+    border: 1px solid rgba(255,255,255,.08); }
+  .builder-res-line img { width: 18px; height: 18px; object-fit: contain; }
+  .builder-note-line { color: #fff; font-size: 12.5px; line-height: 1.45; }
+  .builder-note-line img { height: 22px; vertical-align: middle; }
+  .bo-builder-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .bo-builder-field { min-width: 0; display: grid; gap: 5px; color: #b7bdc8; font-size: 10px; font-weight: 850;
+    letter-spacing: .07em; text-transform: uppercase; }
+  .bo-builder-field input, .bo-builder-field select, .bo-builder-field textarea {
+    width: 100%; min-width: 0; box-sizing: border-box; font-size: 12px; letter-spacing: 0; text-transform: none;
+  }
+  .bo-builder-field input, .bo-builder-field select { height: 32px; }
+  .bo-builder-field textarea { min-height: 66px; resize: vertical; line-height: 1.42; }
+  .bo-builder-field.wide { grid-column: 1 / -1; }
+  .bo-builder-resources { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .bo-builder-resource { min-width: 0; display: grid; grid-template-columns: 20px minmax(0, 1fr) 48px; align-items: center; gap: 6px;
+    padding: 7px 8px; border-radius: 12px; background: rgba(5,6,10,.32); border: 1px solid rgba(255,255,255,.075);
+    color: #d8d2bd; font-size: 11px; font-weight: 850; }
+  .bo-builder-resource img { width: 20px; height: 20px; object-fit: contain; }
+  .bo-builder-resource input { width: 100%; min-width: 0; height: 28px; padding: 4px 6px; text-align: center; box-sizing: border-box; }
+  .bo-builder-actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 58px; gap: 7px; }
+  .bo-builder-actions button { min-width: 0; padding-left: 8px; padding-right: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bo-assist-tip { color: #aeb3bf; font-size: 12px; line-height: 1.48; padding-top: 2px; }
   /* paired buttons render as one segmented control */
   .seg-group { display: inline-flex; }
@@ -1214,6 +1250,8 @@
     .bo-dossier-media { min-height: 150px; }
     .bo-editor-shell { grid-template-columns: 1fr; }
     .bo-editor-assist { border-left: 0; border-top: 1px solid rgba(224,186,94,.16); }
+    .bo-builder-actions { grid-template-columns: 1fr; }
+    .bo-builder-actions button { white-space: normal; }
   }
   /* build-order cards settle in with a slight stagger when the tab opens */
   #tab-buildorders .card { animation: card-in .38s cubic-bezier(.22,1,.36,1) backwards; }
@@ -2198,6 +2236,71 @@
               <div class="bo-repair-title">Repair available</div>
               <div class="bo-repair-copy" id="bo-repair-copy"></div>
               <button id="bo-repair-apply" class="primary" type="button">Apply repair</button>
+            </div>
+            <div class="bo-builder">
+              <div class="bo-builder-top">
+                <div>
+                  <div class="bo-builder-kicker">Step composer</div>
+                  <div class="bo-builder-title">Forge a build step</div>
+                </div>
+                <b class="bo-builder-target" id="bo-builder-target">Append</b>
+              </div>
+              <div class="bo-builder-stage" id="bo-builder-preview"></div>
+              <div class="bo-builder-grid">
+                <label class="bo-builder-field">
+                  <span>Time</span>
+                  <input id="bo-builder-time" placeholder="5:30" inputmode="decimal">
+                </label>
+                <label class="bo-builder-field">
+                  <span>Age</span>
+                  <select id="bo-builder-age">
+                    <option value="">Any</option>
+                    <option value="1">Dark</option>
+                    <option value="2">Feudal</option>
+                    <option value="3">Castle</option>
+                    <option value="4">Imperial</option>
+                  </select>
+                </label>
+                <label class="bo-builder-field">
+                  <span>Vills</span>
+                  <input id="bo-builder-vills" placeholder="14" inputmode="numeric">
+                </label>
+                <label class="bo-builder-field">
+                  <span>Pop</span>
+                  <input id="bo-builder-pop" placeholder="16" inputmode="numeric">
+                </label>
+              </div>
+              <div class="bo-builder-resources" aria-label="Resource allocation">
+                <label class="bo-builder-resource">
+                  <img src="bo_img/resource/resource_food.webp" alt="">
+                  <span>Food</span>
+                  <input id="bo-builder-food" placeholder="0" inputmode="numeric">
+                </label>
+                <label class="bo-builder-resource">
+                  <img src="bo_img/resource/resource_wood.webp" alt="">
+                  <span>Wood</span>
+                  <input id="bo-builder-wood" placeholder="0" inputmode="numeric">
+                </label>
+                <label class="bo-builder-resource">
+                  <img src="bo_img/resource/resource_gold.webp" alt="">
+                  <span>Gold</span>
+                  <input id="bo-builder-gold" placeholder="0" inputmode="numeric">
+                </label>
+                <label class="bo-builder-resource">
+                  <img src="bo_img/resource/resource_stone.webp" alt="">
+                  <span>Stone</span>
+                  <input id="bo-builder-stone" placeholder="0" inputmode="numeric">
+                </label>
+              </div>
+              <label class="bo-builder-field wide">
+                <span>Notes</span>
+                <textarea id="bo-builder-note" placeholder="Drop @building_military/barracks@ and rally spears"></textarea>
+              </label>
+              <div class="bo-builder-actions">
+                <button id="bo-builder-append" class="primary" type="button">Append step</button>
+                <button id="bo-builder-update" type="button">Update step</button>
+                <button id="bo-builder-clear" type="button">Clear</button>
+              </div>
             </div>
             <div class="bo-assist-tip">The preview uses the repaired structure when possible, so you can see whether a messy paste will become a clean build before committing it.</div>
           </aside>
@@ -5065,6 +5168,148 @@ const BO_RES_ICONS = {
   villager: 'bo_img/unit_worker/villager.webp', population: 'bo_img/building_economy/house.webp',
   time: 'bo_img/time/time.png',
 };
+const BO_BUILDER_RESOURCES = [
+  ['food', 'bo-builder-food'],
+  ['wood', 'bo-builder-wood'],
+  ['gold', 'bo-builder-gold'],
+  ['stone', 'bo-builder-stone'],
+];
+const BO_BUILDER_INPUTS = [
+  'bo-builder-time', 'bo-builder-age', 'bo-builder-vills', 'bo-builder-pop',
+  'bo-builder-food', 'bo-builder-wood', 'bo-builder-gold', 'bo-builder-stone', 'bo-builder-note',
+];
+
+function boBuilderNumber(id) {
+  const raw = ($(id)?.value || '').trim();
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) ? Math.max(0, n) : null;
+}
+function boBuilderSet(id, value) {
+  const el = $(id);
+  if (!el) return;
+  el.value = value === undefined || value === null || value < 0 ? '' : String(value);
+}
+function boBuilderStepFromInputs() {
+  const step = {};
+  const time = $('bo-builder-time').value.trim();
+  if (time) step.time = normalizeBoTime(time);
+  const age = parseInt($('bo-builder-age').value, 10);
+  if (age >= 1 && age <= 4) step.age = age;
+  const vills = boBuilderNumber('bo-builder-vills');
+  if (vills !== null) step.villager_count = vills;
+  const pop = boBuilderNumber('bo-builder-pop');
+  if (pop !== null) step.population_count = pop;
+  const resources = {};
+  BO_BUILDER_RESOURCES.forEach(([key, id]) => {
+    const value = boBuilderNumber(id);
+    if (value !== null) resources[key] = value;
+  });
+  if (Object.keys(resources).length) step.resources = resources;
+  const notes = $('bo-builder-note').value.split('\n').map(x => x.trim()).filter(Boolean);
+  if (notes.length) step.notes = notes;
+  return step;
+}
+function boBuilderHasStep(step) {
+  return !!(step.time || step.age || step.villager_count !== undefined || step.population_count !== undefined ||
+    step.resources || (step.notes && step.notes.length));
+}
+function boBuilderClearInputs(updatePreview = true) {
+  BO_BUILDER_INPUTS.forEach(id => boBuilderSet(id, ''));
+  if (updatePreview) renderBoBuilderDraft();
+}
+function boBuilderHydrateStep(step) {
+  if (!step) { boBuilderClearInputs(false); return; }
+  boBuilderSet('bo-builder-time', step.time || '');
+  boBuilderSet('bo-builder-age', step.age || '');
+  boBuilderSet('bo-builder-vills', step.villager_count);
+  boBuilderSet('bo-builder-pop', step.population_count);
+  const r = step.resources || {};
+  BO_BUILDER_RESOURCES.forEach(([key, id]) => boBuilderSet(id, r[key]));
+  boBuilderSet('bo-builder-note', Array.isArray(step.notes) ? step.notes.join('\n') : boFirstNote(step));
+}
+function boBuilderBaseJson() {
+  const content = $('bo-content').value || '';
+  const p = parseBo(content);
+  if (p.repair) {
+    const json = JSON.parse(JSON.stringify(p.repair.json));
+    if (!Array.isArray(json.build_order)) json.build_order = [];
+    return { json, repaired: true };
+  }
+  if (p.err) return { error: `Fix JSON before composing: ${p.err}` };
+  if (p.json) {
+    const json = JSON.parse(JSON.stringify(p.json));
+    if (!Array.isArray(json.build_order)) json.build_order = [];
+    if (!json.civilization) json.civilization = p.civ || 'English';
+    return { json, repaired: false };
+  }
+  const lines = content.split('\n').map(x => x.trim()).filter(Boolean);
+  return {
+    json: {
+      civilization: 'English',
+      build_order: lines.map(line => ({ notes: [line] })),
+    },
+    converted: lines.length > 0,
+    repaired: false,
+  };
+}
+function boBuilderWriteJson(json, stepIndex, message) {
+  $('bo-content').value = JSON.stringify(json, null, 2);
+  boPvStep = Math.min(Math.max(stepIndex, 0), Math.max(json.build_order.length - 1, 0));
+  setBoDirty(true);
+  validateBoContent();
+  updateBoPreview();
+  boBuilderHydrateStep(json.build_order[boPvStep]);
+  renderBoBuilderDraft();
+  markDirty();
+  if (message) toast(message);
+}
+function renderBoBuilderDraft() {
+  const stage = $('bo-builder-preview');
+  if (!stage) return;
+  const step = boBuilderStepFromInputs();
+  if (!boBuilderHasStep(step)) {
+    stage.innerHTML = '<div class="builder-empty">Select a preview step or start a new draft.</div>';
+    return;
+  }
+  const res = [];
+  const r = step.resources || {};
+  BO_BUILDER_RESOURCES.forEach(([key]) => {
+    if ((r[key] ?? -1) >= 0) res.push(`<span><img src="${BO_RES_ICONS[key]}" alt="">${r[key]}</span>`);
+  });
+  if (step.villager_count >= 0) res.push(`<span><img src="${BO_RES_ICONS.villager}" alt="">${step.villager_count}</span>`);
+  if (step.population_count >= 0) res.push(`<span><img src="${BO_RES_ICONS.population}" alt="">${step.population_count}</span>`);
+  if (step.age >= 1 && step.age <= 4) res.push(`<span><img src="bo_img/age/age_${step.age}.webp" alt="">Age ${step.age}</span>`);
+  if (step.time) res.push(`<span><img src="${BO_RES_ICONS.time}" alt="">${esc(step.time)}</span>`);
+  const notes = (step.notes || []).map(n => `<div class="builder-note-line">${boRenderLine(n)}</div>`).join('');
+  stage.innerHTML = `${res.length ? `<div class="builder-res-line">${res.join('')}</div>` : ''}${notes || '<div class="builder-empty">Resource-only step</div>'}`;
+}
+function syncBoBuilderFromPreview(p) {
+  const target = $('bo-builder-target');
+  if (!target) return;
+  const hasJsonStep = !!(p.json && Array.isArray(p.json.build_order) && p.steps);
+  target.textContent = hasJsonStep ? `Step ${boPvStep + 1}/${p.steps}` : (p.steps ? `Text ${boPvStep + 1}/${p.steps}` : 'Append');
+  if (document.activeElement?.closest?.('.bo-builder')) {
+    renderBoBuilderDraft();
+    return;
+  }
+  if (hasJsonStep) boBuilderHydrateStep(p.json.build_order[boPvStep]);
+  else boBuilderClearInputs(false);
+  renderBoBuilderDraft();
+}
+function boBuilderCommitStep(mode) {
+  const step = boBuilderStepFromInputs();
+  if (!boBuilderHasStep(step)) { toast('Add time, resources, counts, age, or notes first', true); return; }
+  const base = boBuilderBaseJson();
+  if (base.error) { toast(base.error, true); return; }
+  const steps = base.json.build_order;
+  const canUpdate = mode === 'update' && steps.length > 0;
+  const index = canUpdate ? Math.min(Math.max(boPvStep, 0), steps.length - 1) : steps.length;
+  if (canUpdate) steps[index] = step;
+  else steps.push(step);
+  const prefix = base.repaired ? 'Repaired JSON and ' : base.converted ? 'Converted text and ' : '';
+  boBuilderWriteJson(base.json, index, `${prefix}${canUpdate ? 'updated' : 'appended'} step ${index + 1}`);
+}
 function boRenderLine(line) {
   return String(line).split('@').map((part, i) => {
     if (!part) return '';
@@ -5121,6 +5366,7 @@ function updateBoPreview() {
     $('bo-pv-step').textContent = lines.length ? `${boPvStep + 1}/${lines.length}` : '';
     syncPvPager(lines.length);
   }
+  syncBoBuilderFromPreview(p);
   updateBoDossier();
 }
 function syncPvPager(steps) {
@@ -5166,6 +5412,14 @@ $('bo-preview').addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') { e.preventDefault(); boPvStep--; updateBoPreview(); }
   if (e.key === 'ArrowRight') { e.preventDefault(); boPvStep++; updateBoPreview(); }
 });
+BO_BUILDER_INPUTS.forEach(id => {
+  const el = $(id);
+  el.addEventListener('input', renderBoBuilderDraft);
+  el.addEventListener('change', renderBoBuilderDraft);
+});
+$('bo-builder-append').onclick = () => boBuilderCommitStep('append');
+$('bo-builder-update').onclick = () => boBuilderCommitStep('update');
+$('bo-builder-clear').onclick = () => boBuilderClearInputs();
 $('bo-content').addEventListener('input', () => { setBoDirty(true); validateBoContent(); updateBoPreview(); });
 $('bo-name').addEventListener('input', () => { setBoDirty(true); updateBoPreview(); });
 $('bo-name').addEventListener('keydown', e => {
