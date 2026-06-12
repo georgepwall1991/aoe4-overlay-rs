@@ -343,19 +343,64 @@
   #bo-preview .pv-empty { text-align: center; color: var(--ink-muted); font-size: 12px; line-height: 1.7;
     padding: 26px 10px; }
   #bo-pv-step { font-variant-numeric: tabular-nums; display: inline-block; min-width: 30px; text-align: center; }
-  .ov-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px 6px; font-size: 12px; margin-top: 8px;
+  #tab-override { max-width: 1220px; }
+  .override-stage { position: relative; overflow: hidden; border: 1px solid rgba(122,182,255,.22);
+    border-radius: 18px; padding: 18px; background:
+      radial-gradient(620px 280px at 16% -5%, rgba(122,182,255,.12), transparent 64%),
+      radial-gradient(620px 300px at 96% 0%, rgba(224,186,94,.12), transparent 62%),
+      linear-gradient(135deg, rgba(35,35,45,.97), rgba(22,22,29,.98));
+    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 24px 58px -30px rgba(0,0,0,.95); }
+  .override-stage::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .13;
+    background-image:
+      linear-gradient(90deg, rgba(122,182,255,.16) 1px, transparent 1px),
+      linear-gradient(rgba(224,186,94,.16) 1px, transparent 1px);
+    background-size: 72px 72px; mask-image: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent); }
+  .override-head { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; margin-bottom: 11px; padding-bottom: 3px; }
+  .override-kicker { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+  .override-title { color: #fff; font-size: 29px; font-weight: 850; line-height: 1.08; margin-top: 5px;
+    text-shadow: 0 2px 18px rgba(0,0,0,.7); }
+  .override-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .override-count { padding: 5px 10px; border-radius: 999px; color: #d5d8e0; background: rgba(9,9,13,.5);
+    border: 1px solid rgba(255,255,255,.09); font-size: 11px; font-weight: 750; font-variant-numeric: tabular-nums; }
+  .override-mapline { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(220px, 1fr) auto;
+    gap: 10px; align-items: center; margin-bottom: 12px; }
+  .override-mapfield { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: center;
+    padding: 10px 12px; border-radius: 13px; background: rgba(9,9,13,.42); border: 1px solid rgba(255,255,255,.09); }
+  .override-mapfield label { color: var(--gold); font-size: 10px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+  .override-mapfield input { width: 100%; box-sizing: border-box; border-radius: 10px; background: rgba(0,0,0,.28); }
+  .override-freeze { display: inline-flex; align-items: center; gap: 8px; min-width: 0; padding: 10px 12px;
+    border-radius: 13px; background: rgba(255,179,0,.08); border: 1px solid rgba(255,200,69,.18);
+    color: #d5d0bd; font-size: 12px; font-weight: 650; }
+  .override-grid-wrap { position: relative; z-index: 1; overflow-x: auto; border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.1); background: rgba(10,10,15,.34);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 16px 34px -28px rgba(0,0,0,.9); }
+  .ov-grid { min-width: 980px; display: grid;
+    grid-template-columns: minmax(136px, 1.35fr) minmax(130px, 1.2fr) 84px repeat(7, minmax(72px, .75fr));
+    gap: 6px; font-size: 12px; margin-top: 8px;
     background: linear-gradient(180deg, #26262e, #222129); border: 1px solid var(--card-border);
     border-radius: var(--radius); padding: 12px 14px 14px; box-shadow: var(--shadow-card); }
+  .override-grid-wrap .ov-grid { margin: 0; border: 0; border-radius: 0; box-shadow: none; background: transparent; }
   .ov-grid input, .ov-grid select { width: 100%; box-sizing: border-box; padding: 4px 6px;
     background: rgba(0,0,0,.18); }
+  #tab-override .ov-grid input, #tab-override .ov-grid select { min-height: 30px; border-radius: 8px;
+    border-color: rgba(255,255,255,.11); background: rgba(0,0,0,.24); }
+  #tab-override .ov-grid input:focus, #tab-override .ov-grid select:focus {
+    border-color: rgba(122,182,255,.7); box-shadow: 0 0 0 2px rgba(122,182,255,.18); }
   .ov-grid input:hover, .ov-grid select:hover { background: rgba(0,0,0,.26); }
   .ov-head { color: var(--gold); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
     padding: 0 2px 4px; border-bottom: 1px solid var(--gold-faint); margin-bottom: 2px; }
+  #tab-override .ov-head { position: sticky; top: 0; z-index: 1; padding: 8px 7px 7px; margin: -4px 0 0;
+    background: rgba(19,19,25,.92); border-radius: 8px; border: 1px solid rgba(224,186,94,.1); }
   /* zebra striping: cells 11-20, 31-40, … are odd player rows (10 columns per row) */
   .ov-grid > :nth-child(20n+11), .ov-grid > :nth-child(20n+12), .ov-grid > :nth-child(20n+13),
   .ov-grid > :nth-child(20n+14), .ov-grid > :nth-child(20n+15), .ov-grid > :nth-child(20n+16),
   .ov-grid > :nth-child(20n+17), .ov-grid > :nth-child(20n+18), .ov-grid > :nth-child(20n+19),
   .ov-grid > :nth-child(20n+20) { background-color: rgba(255,255,255,.045); }
+  @media (max-width: 760px) {
+    .override-head, .override-mapline { align-items: stretch; grid-template-columns: 1fr; flex-direction: column; }
+    .override-actions { justify-content: flex-start; }
+  }
   #tab-random { max-width: 1180px; }
   .random-stage { position: relative; overflow: hidden; border: 1px solid rgba(224,186,94,.24);
     border-radius: 18px; padding: 18px; background:
@@ -1543,19 +1588,33 @@
 
   <!-- ============ OVERRIDE ============ -->
   <div class="tab" id="tab-override">
-    <h2>Caster override</h2>
-    <div class="muted" style="margin: -2px 0 10px">Hand-edit what the overlay shows — perfect for casting games you're not playing in.</div>
-    <div class="row"><label>Map</label><input id="ov-map" placeholder="e.g. Dry Arabia" style="width:200px"></div>
-    <div class="ov-grid" id="ov-grid">
-      <span class="ov-head">Name</span><span class="ov-head">Civ</span><span class="ov-head">Team</span>
-      <span class="ov-head">Rating</span><span class="ov-head">Rank</span><span class="ov-head">Winrate</span>
-      <span class="ov-head">Wins</span><span class="ov-head">Losses</span><span class="ov-head">Civ WR</span><span class="ov-head">Win time</span>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <button id="ov-load">Load current data</button>
-      <button id="ov-send" class="primary">Send to overlay</button>
-      <button id="ov-reset">Reset to live data</button>
-      <label style="min-width:0"><input id="ov-prevent" type="checkbox"> prevent automatic updates</label>
+    <div class="override-stage">
+      <div class="override-head">
+        <div>
+          <div class="override-kicker">Caster control</div>
+          <div class="override-title">Manual match desk</div>
+        </div>
+        <div class="override-actions">
+          <span class="override-count" id="ov-count">0/8 slots</span>
+          <button id="ov-load">Load current data</button>
+          <button id="ov-reset">Reset to live data</button>
+          <button id="ov-send" class="primary">Send to overlay</button>
+        </div>
+      </div>
+      <div class="override-mapline">
+        <div class="override-mapfield">
+          <label for="ov-map">Map</label>
+          <input id="ov-map" placeholder="e.g. Dry Arabia">
+        </div>
+        <label class="override-freeze"><input id="ov-prevent" type="checkbox"> Prevent automatic updates</label>
+      </div>
+      <div class="override-grid-wrap">
+        <div class="ov-grid" id="ov-grid">
+          <span class="ov-head">Name</span><span class="ov-head">Civ</span><span class="ov-head">Team</span>
+          <span class="ov-head">Rating</span><span class="ov-head">Rank</span><span class="ov-head">Winrate</span>
+          <span class="ov-head">Wins</span><span class="ov-head">Losses</span><span class="ov-head">Civ WR</span><span class="ov-head">Win time</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -4031,15 +4090,29 @@ function buildOverrideGrid() {
   for (let i = 0; i < OV_ROWS; i++) {
     const row = {};
     row.name = document.createElement('input');
+    row.name.placeholder = `Player ${i + 1}`;
     row.civ = document.createElement('select');
     row.civ.innerHTML = '<option value=""></option>' + CIVS.map(c => `<option>${c}</option>`).join('');
     row.team = document.createElement('select');
     row.team.innerHTML = '<option value="0">No team</option><option value="1">Team 1</option><option value="2">Team 2</option>';
     for (const k of ['rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate', 'civ_win_length_median']) row[k] = document.createElement('input');
+    row.rating.placeholder = 'elo';
+    row.rank.placeholder = '#';
+    row.winrate.placeholder = '%';
+    row.wins.placeholder = 'W';
+    row.losses.placeholder = 'L';
+    row.civ_winrate.placeholder = '%';
+    row.civ_win_length_median.placeholder = 'mm:ss';
+    row.name.addEventListener('input', ovPlayerCount);
     ['name', 'civ', 'team', 'rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate', 'civ_win_length_median']
       .forEach(k => grid.appendChild(row[k]));
     ovInputs.push(row);
   }
+  ovPlayerCount();
+}
+function ovPlayerCount() {
+  const count = ovInputs.filter(r => r.name.value.trim()).length;
+  if ($('ov-count')) $('ov-count').textContent = `${count}/${OV_ROWS} slots`;
 }
 function ovLoad(d) {
   if (!d) return;
@@ -4057,6 +4130,7 @@ function ovLoad(d) {
     row.civ_winrate.value = p.civ_winrate ?? '';
     row.civ_win_length_median.value = p.civ_win_length_median ?? '';
   });
+  ovPlayerCount();
 }
 $('ov-load').onclick = async () => ovLoad(await invoke('get_current_data'));
 $('ov-send').onclick = () => {
@@ -4071,6 +4145,7 @@ $('ov-send').onclick = () => {
     }));
   const data = { map: $('ov-map').value, kind: 'override', started: '', server: '', match_id: 'override', ongoing: true, players };
   invoke('override_data', { data, prevent: $('ov-prevent').checked });
+  ovPlayerCount();
   setStatus('Override sent to overlay.', 'ok');
 };
 $('ov-reset').onclick = () => { $('ov-prevent').checked = false; invoke('reset_override'); setStatus('Reverted to live data.', 'ok'); };
