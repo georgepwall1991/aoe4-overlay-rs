@@ -250,8 +250,13 @@
   a { color: #7ab6ff; text-decoration-color: rgba(122,182,255,.35); transition: color .15s; }
   a:hover { color: #a3ccff; }
   .hotkey-input { width: 130px; }
-  #bo-list { max-height: 320px; overflow: auto; border: 1px solid var(--card-border); border-radius: 9px;
-    background: rgba(0,0,0,.14); }
+  #tab-buildorders #bo-filter { min-height: 34px; border-radius: 12px; background-color: rgba(8,10,15,.5);
+    border-color: rgba(224,186,94,.16); }
+  #bo-list { max-height: 360px; overflow: auto; border: 1px solid rgba(224,186,94,.16); border-radius: 14px;
+    background:
+      radial-gradient(380px 120px at 0 0, rgba(224,186,94,.08), transparent 70%),
+      rgba(5,6,10,.22);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
   /* scrollable lists hint at clipped content with soft edge fades */
   .scroll-fade { --fade-top: 0px; --fade-btm: 0px;
     -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--fade-top),
@@ -299,6 +304,36 @@
   .bo-empty { padding: 26px 16px; text-align: center; line-height: 1.65; }
   .bo-empty::before { content: "📜"; display: block; font-size: 26px; opacity: .45; margin-bottom: 8px;
     filter: grayscale(.4) drop-shadow(0 2px 4px rgba(0,0,0,.5)); }
+  .bo-library-empty { position: relative; overflow: hidden; min-height: 232px; display: grid; grid-template-columns: 86px minmax(0, 1fr);
+    gap: 18px; align-items: center; padding: 20px; border-radius: 14px;
+    background:
+      radial-gradient(420px 190px at 8% 8%, rgba(224,186,94,.13), transparent 70%),
+      radial-gradient(420px 190px at 94% 0, rgba(122,182,255,.1), transparent 72%),
+      linear-gradient(135deg, rgba(36,37,47,.88), rgba(17,18,25,.94));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06); }
+  .bo-library-empty::before { content: ""; position: absolute; inset: 0; opacity: .12; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.13) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(224,186,94,.16) 1px, transparent 1px);
+    background-size: 48px 48px; mask-image: radial-gradient(ellipse at center, #000 22%, transparent 78%); }
+  .bo-library-mark { position: relative; z-index: 1; width: 74px; height: 74px; display: grid; place-items: center;
+    border-radius: 18px; color: var(--gold-bright); background:
+      radial-gradient(circle at 50% 0, rgba(255,233,160,.22), transparent 62%),
+      rgba(224,186,94,.08);
+    border: 1px solid rgba(224,186,94,.3); box-shadow: 0 14px 34px -24px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.08); }
+  .bo-library-mark .ic { width: 32px; height: 32px; filter: drop-shadow(0 0 12px rgba(224,186,94,.34)); }
+  .bo-library-main { position: relative; z-index: 1; min-width: 0; }
+  .bo-library-kicker { color: #8fc9ff; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: 0; }
+  .bo-library-title { margin-top: 5px; padding-bottom: 1px; color: #fff; font-size: 23px; line-height: 1.18; font-weight: 850; }
+  .bo-library-copy { max-width: 560px; margin-top: 6px; color: #b6bac6; font-size: 12px; line-height: 1.55; }
+  .bo-library-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 13px; }
+  .bo-library-actions button { min-height: 31px; border-radius: 10px; font-weight: 760; }
+  .bo-library-tiles { grid-column: 1 / -1; position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .bo-library-tile { padding: 8px 10px; border-radius: 12px; background: rgba(8,10,15,.46);
+    border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.045); }
+  .bo-library-tile span { display: block; color: #9da3b0; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0; }
+  .bo-library-tile b { display: block; margin-top: 5px; color: #fff; font-size: 15px; font-weight: 850; font-variant-numeric: tabular-nums;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #games-list .bo-empty { border: 1px dashed #34343f; border-radius: 10px; margin-top: 10px;
     background: rgba(255,255,255,.015); }
   #games-list .bo-empty::before { content: "⚔️"; }
@@ -3748,6 +3783,37 @@ function parseBoUncached(content) {
   }
 }
 
+function boLibraryEmptyHtml(kind, total) {
+  const filtered = kind === 'filter';
+  const unchecked = new Set(settings.unchecked_buildorders || []);
+  const names = Object.keys(settings.buildorders || {});
+  const cycle = names.filter(n => !unchecked.has(n)).length;
+  const title = filtered ? 'No builds match that filter' : 'Build library waiting';
+  const copy = filtered
+    ? 'The library has saved builds, but this search is hiding all of them. Clear it or import another order.'
+    : 'Start from a web import, a JSON skeleton, or a plain text plan. Saved builds appear here with civ flags, step counts, and cycle state.';
+  const action = filtered
+    ? '<button id="bo-empty-clear" type="button" class="primary">Clear filter</button>'
+    : '<button id="bo-empty-browse" type="button" class="primary">Browse aoe4guides</button>';
+  return `<div class="bo-library-empty">
+    <div class="bo-library-mark"><svg class="ic"><use href="#i-scroll"/></svg></div>
+    <div class="bo-library-main">
+      <div class="bo-library-kicker">${filtered ? 'Filtered library' : 'Build library'}</div>
+      <div class="bo-library-title">${esc(title)}</div>
+      <div class="bo-library-copy">${esc(copy)}</div>
+      <div class="bo-library-actions">
+        ${action}
+        <button id="bo-empty-new" type="button">New build</button>
+      </div>
+    </div>
+    <div class="bo-library-tiles">
+      <div class="bo-library-tile"><span>Saved</span><b>${total}</b></div>
+      <div class="bo-library-tile"><span>Cycle</span><b>${cycle}</b></div>
+      <div class="bo-library-tile"><span>Open</span><b>${esc(boSelected || 'None')}</b></div>
+    </div>
+  </div>`;
+}
+
 function renderBoList() {
   const list = $('bo-list');
   const filter = ($('bo-filter').value || '').toLowerCase();
@@ -3767,13 +3833,20 @@ function renderBoList() {
       n.toLowerCase().includes(filter) ||
       (parseBo(settings.buildorders[n]).civ || '').toLowerCase().includes(filter) ||
       (settings.buildorders[n] || '').toLowerCase().includes(filter));
-    if (!names.length) { setCount(0); list.innerHTML = '<div class="bo-empty muted">No build orders match the filter.</div>'; return; }
+    if (!names.length) {
+      setCount(0);
+      list.innerHTML = boLibraryEmptyHtml('filter', total);
+      $('bo-empty-clear').onclick = () => { $('bo-filter').value = ''; renderBoList(); $('bo-filter').focus(); };
+      $('bo-empty-new').onclick = () => $('bo-new').onclick();
+      return;
+    }
   }
   setCount(names.length);
   if (!names.length) {
-    list.innerHTML = '<div class="bo-empty muted">No build orders yet.<br>Import one from the web, paste one from age4builder.com, or click ＋ New.<br><button id="bo-empty-browse" style="margin-top:10px">Browse aoe4guides</button></div>';
+    list.innerHTML = boLibraryEmptyHtml('empty', total);
     const browse = $('bo-empty-browse');
     if (browse) browse.onclick = () => { $('bo-g-search').onclick(); $('bo-g-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
+    $('bo-empty-new').onclick = () => $('bo-new').onclick();
     return;
   }
   list.innerHTML = names.map(name => {
