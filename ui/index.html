@@ -1430,20 +1430,33 @@
     border-bottom-color: rgba(224,186,94,.2); color: var(--gold-bright); }
   #last-match .bo-empty { border: 1px dashed rgba(224,186,94,.22); border-radius: 14px;
     background: rgba(0,0,0,.16); min-height: 120px; display: grid; place-items: center; }
-  .lm-arena { display: grid; grid-template-columns: minmax(300px, .92fr) minmax(0, 1.08fr); gap: 14px; align-items: stretch; }
-  .lm-banner { position: relative; border-radius: 14px; overflow: hidden; margin-bottom: 0; min-height: 238px;
+  .lm-arena { display: grid; grid-template-columns: minmax(340px, .95fr) minmax(0, 1.05fr); gap: 14px; align-items: stretch; }
+  .lm-banner { position: relative; display: grid; grid-template-rows: minmax(220px, 1fr) auto;
+    border-radius: 16px; overflow: hidden; margin-bottom: 0; min-height: 330px;
     background: #15151c center/cover no-repeat;
-    box-shadow: inset 0 0 0 1px rgba(230,198,100,.22), 0 18px 36px -24px rgba(0,0,0,.85); }
+    box-shadow: inset 0 0 0 1px rgba(230,198,100,.22), 0 22px 46px -28px rgba(0,0,0,.9); }
   .lm-banner::before { content: ""; position: absolute; inset: 0;
     background:
-      radial-gradient(420px 210px at 14% 88%, rgba(122,182,255,.12), transparent 68%),
-      linear-gradient(100deg, rgba(14,14,20,.96) 25%, rgba(14,14,20,.62) 67%, rgba(14,14,20,.28)); }
+      linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px),
+      radial-gradient(420px 210px at 14% 88%, rgba(122,182,255,.15), transparent 68%),
+      linear-gradient(100deg, rgba(11,12,18,.96) 22%, rgba(14,14,20,.72) 62%, rgba(14,14,20,.34));
+    background-size: 42px 42px, 42px 42px, auto, auto; }
   .lm-banner::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
     background: linear-gradient(to right, transparent, rgba(222,186,88,.55) 30%, rgba(222,186,88,.55) 70%, transparent); }
-  .lm-head { position: relative; min-height: 206px; display: flex; flex-direction: column; justify-content: flex-end;
-    align-items: flex-start; gap: 9px; padding: 16px; }
+  .lm-head { position: relative; min-height: 210px; display: flex; flex-direction: column; justify-content: flex-end;
+    align-items: flex-start; gap: 10px; padding: 17px; }
+  .lm-result-mark { position: absolute; top: 15px; left: 15px; display: inline-flex; align-items: center; gap: 8px;
+    min-height: 32px; padding: 5px 12px; border-radius: 12px; color: #fff; font-size: 12px; font-weight: 850;
+    background: rgba(10,12,17,.58); border: 1px solid rgba(255,255,255,.14);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 14px 30px -22px #000; }
+  .lm-result-mark::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+    box-shadow: 0 0 12px currentColor; }
+  .lm-result-mark.win { color: #91f172; border-color: rgba(111,224,74,.34); background: rgba(40,92,28,.38); }
+  .lm-result-mark.loss { color: #ff9a89; border-color: rgba(255,123,102,.34); background: rgba(96,35,29,.38); }
+  .lm-result-mark.live { color: #ffd86a; border-color: rgba(255,200,69,.4); background: rgba(92,67,16,.38); }
   .lm-badges { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
-  .lm-map { font-size: 31px; font-weight: 850; letter-spacing: 0; line-height: 1.16; min-height: 37px; text-shadow: none;
+  .lm-map { font-size: 35px; font-weight: 850; letter-spacing: 0; line-height: 1.12; min-height: 41px; text-shadow: none;
     background: linear-gradient(180deg, #fff6cf 15%, #ecc75d 55%, #c79a2e);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 1px 2px rgba(0,0,0,.9)); }
@@ -1452,17 +1465,50 @@
     background: rgba(122,182,255,.12); box-shadow: inset 0 0 0 1px rgba(122,182,255,.22);
     transition: background .15s; }
   .lm-head a.lm-sub:hover { background: rgba(122,182,255,.22); }
-  .lm-team-stage { border-radius: 14px; padding: 12px; background: rgba(8,8,12,.28);
+  .lm-dossier { position: relative; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px;
+    margin: 0 12px 12px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 13px;
+    background: rgba(255,255,255,.08); box-shadow: 0 16px 30px -26px #000; }
+  .lm-dossier span { min-width: 0; padding: 10px 11px 12px; background: rgba(8,10,14,.72); }
+  .lm-dossier b { display: block; color: #fff; font-size: 14px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lm-dossier em { display: block; margin-top: 5px; color: #9ea4b2; font-size: 9.5px; font-style: normal; font-weight: 850;
+    text-transform: uppercase; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lm-dossier .pos b { color: #8af26b; }
+  .lm-dossier .neg b { color: #ff9a89; }
+  .lm-team-stage { position: relative; overflow: hidden; border-radius: 16px; padding: 13px; background: rgba(8,8,12,.28);
     border: 1px solid rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.04); }
-  .lm-team-label { color: #aeb1bc; font-size: 10px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; margin: 1px 0 7px; }
-  .lm-teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: start; }
+  .lm-team-stage::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .12;
+    background-image:
+      linear-gradient(rgba(122,182,255,.18) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(224,186,94,.15) 1px, transparent 1px);
+    background-size: 54px 54px; mask-image: radial-gradient(ellipse at center, #000 20%, transparent 78%); }
+  .lm-stage-head { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: start;
+    gap: 12px; margin: 0 0 10px; }
+  .lm-team-label { display: block; color: #aeb1bc; font-size: 10px; font-weight: 850; letter-spacing: 0; text-transform: uppercase; }
+  .lm-stage-head b { display: block; margin-top: 4px; color: #fff; font-size: 18px; line-height: 1.15; }
+  .lm-swing { flex: none; min-width: 112px; padding: 8px 10px; border-radius: 12px; text-align: right;
+    background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.08); }
+  .lm-swing span { display: block; color: #9fa4b2; font-size: 9.5px; font-weight: 850; text-transform: uppercase; letter-spacing: 0; }
+  .lm-swing b { margin-top: 4px; font-size: 20px; font-variant-numeric: tabular-nums; }
+  .lm-swing.pos b { color: #8af26b; } .lm-swing.neg b { color: #ff9a89; }
+  .lm-teams { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: 12px; align-items: stretch; }
+  .lm-team-col { min-width: 0; padding: 9px; border-radius: 14px; border: 1px solid rgba(255,255,255,.08);
+    background: linear-gradient(180deg, rgba(29,31,39,.72), rgba(18,19,26,.78)); }
+  .lm-team-col.mine { border-color: rgba(224,186,94,.28); background:
+    linear-gradient(135deg, rgba(224,186,94,.1), rgba(18,19,26,.78) 48%),
+    linear-gradient(180deg, rgba(31,31,40,.82), rgba(18,19,26,.82)); }
+  .lm-team-col.win { box-shadow: inset 3px 0 0 rgba(111,224,74,.78); }
+  .lm-team-col.loss { box-shadow: inset 3px 0 0 rgba(255,123,102,.68); }
+  .lm-team-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 7px; }
+  .lm-team-top span { color: #aeb3c0; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: 0; }
+  .lm-team-top b { color: #fff; font-size: 12px; white-space: nowrap; }
   @media (max-width: 920px) { .lm-arena { grid-template-columns: 1fr; } }
   @media (max-width: 760px) { .lm-teams { grid-template-columns: 1fr; } .lm-vs { justify-self: center; } }
-  .lm-vs { align-self: center; color: var(--gold-dim); font-weight: 800; font-size: 13px; letter-spacing: .1em; padding: 0 4px; }
+  .lm-vs { align-self: center; color: var(--gold-dim); font-weight: 850; font-size: 13px; letter-spacing: 0; padding: 0 4px; }
   .lmp { display: grid; grid-template-columns: 38px minmax(90px, 1fr) auto; grid-template-rows: auto auto;
-    gap: 3px 10px; align-items: center; background: linear-gradient(to right, #20202a, #1d1d25);
-    border-radius: 8px; padding: 8px 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.03), 0 2px 6px -3px rgba(0,0,0,.4);
-    margin: 6px 0; border-left: 3px solid #2c2c36; transition: transform .15s, box-shadow .15s; }
+    gap: 3px 10px; align-items: center; background: linear-gradient(to right, rgba(32,32,42,.92), rgba(29,29,37,.8));
+    border-radius: 10px; padding: 9px 10px; box-shadow: inset 0 1px 0 rgba(255,255,255,.035), 0 2px 8px -5px rgba(0,0,0,.55);
+    margin: 7px 0; border-left: 3px solid #2c2c36; transition: transform .15s, box-shadow .15s; }
   .lmp:hover { transform: translateX(2px); }
   .lmp.res-win { border-left-color: #48bd21; }
   .lmp.res-loss { border-left-color: #e0452f; }
@@ -1478,12 +1524,18 @@
   .lmp .nm img.country { height: 11px; border-radius: 1px; flex: none; }
   .lmp.me { outline: 1px solid #ffd97a55; }
   .lmp.me .nm .nm-text { color: #ffd97a; }
-  .lmp .rt { color: #7ab6ff; font-weight: 700; text-align: right; white-space: nowrap; }
+  .lmp .rt { color: #7ab6ff; font-weight: 800; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lmp .delta { display: inline-flex; align-items: center; justify-content: center; min-width: 30px;
+    margin-left: 4px; padding: 1px 6px; border-radius: 999px; font-size: 11px; font-weight: 850; }
+  .lmp .delta.win { color: #99f47f; background: rgba(111,224,74,.11); }
+  .lmp .delta.loss { color: #ff9a89; background: rgba(255,123,102,.12); }
   .lmp .stats { grid-column: 2; display: flex; gap: 10px; font-size: 11px; color: #999; flex-wrap: wrap; align-items: center; }
   .lmp .stats .wr { color: #fffb78; }
   .lmp .stats .cv { color: var(--civstat, #bc8aea); }
   .lm-spark { grid-column: 3; grid-row: 2; justify-self: end; opacity: .9; }
   .lm-team-stage .lmp { grid-template-columns: 38px minmax(0, 1fr); grid-template-rows: auto auto auto auto; }
+  .lm-team-stage .lmp .nm { flex-wrap: wrap; row-gap: 4px; line-height: 1.3; }
+  .lm-team-stage .lmp .nm .nm-text { flex: 1 0 92px; min-width: 72px; overflow: visible; text-overflow: clip; white-space: normal; }
   .lm-team-stage .lmp .rt { grid-column: 2; grid-row: 2; justify-self: start; text-align: left; }
   .lm-team-stage .lmp .stats { grid-column: 2; grid-row: 3; }
   .lm-team-stage .lm-spark { grid-column: 2; grid-row: 4; justify-self: start; }
@@ -3275,15 +3327,15 @@ function lmSpark(hist) {
 }
 
 function lmPlayer(p) {
-  const me = settings.player_name && p.name === settings.player_name;
+  const me = (settings.player_name || '').toLowerCase() && String(p.name ?? '').toLowerCase() === String(settings.player_name).toLowerCase();
   const res = p.result === 'win' ? 'res-win' : p.result === 'loss' ? 'res-loss' : '';
   const country = p.country
     ? `<img class="country" src="countries/${esc(String(p.country).toLowerCase())}.png" onerror="this.remove()">` : '';
   const flag = `<img class="flag${p.avatar ? '' : ' solo'}" src="flags/${esc(p.civ)}.webp" title="${esc(p.civ)}" onerror="this.style.visibility='hidden'">`;
   const idbox = `<span class="idbox">${p.avatar ? `<img class="ava" src="${esc(p.avatar)}" onerror="this.remove()">` : ''}${flag}</span>`;
-  const d = p.rating_diff;
-  const diff = (d ?? null) !== null
-    ? ` <span class="${d >= 0 ? 'win' : 'loss'}" style="font-size:11px">${d >= 0 ? '+' : ''}${d}</span>` : '';
+  const d = Number(p.rating_diff);
+  const diff = Number.isFinite(d)
+    ? ` <span class="delta ${d >= 0 ? 'win' : 'loss'}">${d >= 0 ? '+' : ''}${d}</span>` : '';
   const peak = p.max_rating ? ` title="peak rating ${p.max_rating}"` : '';
   const civstats = `<span class="cv">${esc(p.civ)}${p.random_civ ? ' 🎲' : ''}${p.civ_winrate ? ' ' + esc(p.civ_winrate) : ''}${p.civ_games ? ' · ' + esc(p.civ_games) + 'g' : ''}</span>`;
   return `<div class="lmp ${me ? 'me' : ''} ${res}">
@@ -3306,22 +3358,49 @@ function lmPlayer(p) {
   </div>`;
 }
 
+function lmTeamResult(team) {
+  if (team.some(p => p.result === 'win')) return 'win';
+  if (team.some(p => p.result === 'loss')) return 'loss';
+  return '';
+}
+function lmTeamBlock(team, label) {
+  const mine = team.some(p => (settings.player_name || '').toLowerCase()
+    && String(p.name ?? '').toLowerCase() === String(settings.player_name).toLowerCase());
+  const rating = team
+    .map(p => Number(p.rating))
+    .filter(Number.isFinite);
+  const avg = rating.length ? Math.round(rating.reduce((a, b) => a + b, 0) / rating.length) : null;
+  const tone = lmTeamResult(team);
+  const title = mine ? 'Your side' : label;
+  const roster = team.length ? team.map(lmPlayer).join('') : '<div class="bo-empty muted">No players listed</div>';
+  return `<section class="lm-team-col ${mine ? 'mine' : ''} ${tone}">
+    <div class="lm-team-top"><span>${title}</span><b>${avg ? `${avg} avg` : `${team.length || '?'}P`}</b></div>
+    ${roster}
+  </section>`;
+}
+
 function renderMatch(d) {
   if (!d || !d.players) return;
   const t1 = d.players.filter(p => p.team === 1);
   const t2 = d.players.filter(p => p.team !== 1);
   const live = d.ongoing;
-  const meP = d.players.find(p => settings.player_name && p.name === settings.player_name);
-  const resBadge = live ? '<span class="badge live">Live</span>'
-    : meP?.result === 'win' ? '<span class="badge win">Victory</span>'
-    : meP?.result === 'loss' ? '<span class="badge loss">Defeat</span>'
-    : '<span class="badge mode">Finished</span>';
+  const meP = d.players.find(p => (settings.player_name || '').toLowerCase()
+    && String(p.name ?? '').toLowerCase() === String(settings.player_name).toLowerCase());
+  const resultTone = live ? 'live' : meP?.result === 'win' ? 'win' : meP?.result === 'loss' ? 'loss' : 'mode';
+  const resultText = live ? 'Live' : meP?.result === 'win' ? 'Victory' : meP?.result === 'loss' ? 'Defeat' : 'Finished';
+  const resBadge = `<span class="badge ${resultTone}">${resultText}</span>`;
+  const mode = fmtMode(d.kind) || 'Unknown mode';
+  const duration = d.duration ? fmtDur(d.duration) : live ? 'Live' : 'Unknown';
+  const started = d.started ? timeAgo(d.started) : 'Time unknown';
+  const ratingDelta = Number(meP?.rating_diff);
+  const deltaText = Number.isFinite(ratingDelta) ? `${ratingDelta >= 0 ? '+' : ''}${ratingDelta}` : '--';
+  const deltaClass = Number.isFinite(ratingDelta) ? (ratingDelta >= 0 ? 'pos' : 'neg') : '';
   const sub = [
     esc(d.server ?? ''),
-    d.duration ? '⏱ ' + fmtDur(d.duration) : '',
+    duration,
     d.avg_rating ? `~${d.avg_rating} avg elo` : '',
     d.season ? 'S' + d.season : '',
-    d.started ? timeAgo(d.started) : '',
+    started,
   ].filter(Boolean).join(' · ');
   const gameLink = settings.profile_id && d.match_id && d.match_id !== 'override'
     ? `<a href="https://aoe4world.com/players/${settings.profile_id}/games/${d.match_id}" target="_blank" class="lm-sub">details ↗</a>` : '';
@@ -3330,21 +3409,31 @@ function renderMatch(d) {
     <div class="lm-arena">
       <div class="lm-banner" style="background-image:url('${encodeURI(mapImg)}')">
         <div class="lm-head">
+          <span class="lm-result-mark ${resultTone}">${resultText}</span>
           <span class="lm-map">${esc(d.map ?? '?')}</span>
           <div class="lm-badges">
             ${resBadge}
-            <span class="badge mode">${fmtMode(d.kind)}</span>
+            <span class="badge mode">${mode}</span>
             <span class="lm-sub">${sub}</span>
             ${gameLink}
           </div>
         </div>
+        <div class="lm-dossier" aria-label="Last match summary">
+          <span><b>${esc(mode)}</b><em>Mode</em></span>
+          <span><b>${esc(duration)}</b><em>Duration</em></span>
+          <span><b>${esc(d.avg_rating ?? '--')}</b><em>Avg elo</em></span>
+          <span class="${deltaClass}"><b>${esc(deltaText)}</b><em>Your rating</em></span>
+        </div>
       </div>
       <div class="lm-team-stage">
-        <div class="lm-team-label">Players</div>
+        <div class="lm-stage-head">
+          <div><span class="lm-team-label">Players</span><b>${d.players.length} loaded</b></div>
+          <div class="lm-swing ${deltaClass}"><span>Your rating</span><b>${esc(deltaText)}</b></div>
+        </div>
         <div class="lm-teams">
-          <div>${t1.map(lmPlayer).join('')}</div>
+          ${lmTeamBlock(t1, 'Team 1')}
           <span class="lm-vs">VS</span>
-          <div>${t2.map(lmPlayer).join('')}</div>
+          ${lmTeamBlock(t2, 'Team 2')}
         </div>
       </div>
     </div>`;
