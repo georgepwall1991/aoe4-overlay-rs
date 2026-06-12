@@ -1126,7 +1126,8 @@
         <span class="dirty-pill" id="dirty-pill" role="status" aria-live="polite" aria-atomic="true">● Unsaved changes</span>
         <button class="dirty-detail" id="dirty-detail" type="button" hidden></button>
       </div>
-      <button id="revert-btn" title="Discard unsaved changes and reload saved settings" style="display:none">Revert</button>
+      <button id="revert-btn" title="Discard unsaved changes and reload saved settings"
+              aria-label="Discard unsaved changes and reload saved settings" style="display:none">Revert</button>
       <span class="muted save-shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd></span>
       <button id="save-btn" class="primary" disabled>Save settings</button>
     </div>
@@ -2279,7 +2280,9 @@ function setSettingsDirty(dirty) {
   if (!savingSettings) $('save-btn').title = invalidDirty ? validationMessage : dirty ? `Save ${dirtyText}: ${title}` : 'No unsaved settings';
   $('revert-btn').style.display = dirty ? '' : 'none';
   $('revert-btn').disabled = savingSettings;
-  $('revert-btn').title = dirty ? `Discard ${dirtyText}: ${title}` : 'Discard unsaved changes and reload saved settings';
+  const revertLabel = dirty ? `Discard ${dirtyText}: ${title}` : 'Discard unsaved changes and reload saved settings';
+  $('revert-btn').title = revertLabel;
+  $('revert-btn').setAttribute('aria-label', revertLabel);
   $('dirty-pill').textContent = `● ${dirtyPillText}`;
   $('dirty-pill').title = invalidDirty ? `${title} - ${validationMessage}` : title;
   if ($('dirty-detail')) {
