@@ -453,6 +453,59 @@
   .override-freeze { display: inline-flex; align-items: center; gap: 8px; min-width: 0; padding: 10px 12px;
     border-radius: 13px; background: rgba(255,179,0,.08); border: 1px solid rgba(255,200,69,.18);
     color: #d5d0bd; font-size: 12px; font-weight: 650; }
+  .override-preview { position: relative; z-index: 1; display: grid; grid-template-columns: 280px minmax(0, 1fr);
+    gap: 14px; margin-bottom: 14px; padding: 13px; overflow: hidden; border-radius: 17px;
+    border: 1px solid rgba(224,186,94,.22); background:
+      radial-gradient(620px 220px at 8% 0%, rgba(224,186,94,.13), transparent 64%),
+      radial-gradient(680px 260px at 98% 20%, rgba(122,182,255,.14), transparent 64%),
+      linear-gradient(135deg, rgba(34,36,45,.92), rgba(18,20,27,.96));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 20px 44px -30px rgba(0,0,0,.95); }
+  .override-preview::before { content: ""; position: absolute; inset: 0; opacity: .13; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(224,186,94,.18) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(122,182,255,.16) 1px, transparent 1px);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse at 36% 0, #000 0 36%, transparent 82%);
+    mask-image: radial-gradient(ellipse at 36% 0, #000 0 36%, transparent 82%); }
+  .override-preview-map { position: relative; min-height: 204px; overflow: hidden; border-radius: 15px;
+    border: 1px solid rgba(255,255,255,.1); background:
+      linear-gradient(135deg, rgba(122,182,255,.14), transparent 54%),
+      linear-gradient(180deg, rgba(0,0,0,.1), rgba(0,0,0,.42)); }
+  .override-preview-map img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    filter: saturate(1.05) contrast(1.03); }
+  .override-preview-map::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.58)); }
+  .override-map-fallback { position: absolute; inset: 0; display: grid; place-items: center; color: rgba(255,233,160,.42);
+    font-size: 42px; font-weight: 900; letter-spacing: .05em; background: radial-gradient(circle at 50% 35%, rgba(224,186,94,.14), transparent 64%); }
+  .override-map-label { position: absolute; left: 14px; right: 14px; bottom: 13px; z-index: 1; display: grid; gap: 3px; }
+  .override-map-label span { color: #8fc9ff; font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .12em; }
+  .override-map-label b { color: #fff; font-size: 24px; line-height: 1.08; text-shadow: 0 2px 18px rgba(0,0,0,.7);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .override-preview-main { position: relative; min-width: 0; display: grid; gap: 12px; align-content: start; }
+  .override-preview-top { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
+  .override-preview-kicker { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+  .override-preview-title { margin-top: 4px; color: #fff; font-size: 28px; line-height: 1.12; font-weight: 850; padding-bottom: 4px;
+    text-shadow: 0 2px 20px rgba(0,0,0,.72); }
+  .override-preview-copy { color: #bfc3ce; font-size: 12.5px; line-height: 1.45; }
+  .override-preview-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+  .override-preview-badges span { padding: 5px 9px; border-radius: 999px; color: #d9dce4; font-size: 11px; font-weight: 800;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1); }
+  .override-preview-badges .freeze { color: var(--gold-bright); background: rgba(224,186,94,.1); border-color: rgba(224,186,94,.28); }
+  .override-teams { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .override-team { min-width: 0; display: grid; gap: 7px; padding: 10px; border-radius: 14px;
+    background: rgba(7,8,12,.38); border: 1px solid rgba(255,255,255,.08); }
+  .override-team.team-1 { border-color: rgba(111,224,74,.22); background: linear-gradient(180deg, rgba(111,224,74,.08), rgba(7,8,12,.38)); }
+  .override-team.team-2 { border-color: rgba(122,182,255,.22); background: linear-gradient(180deg, rgba(122,182,255,.08), rgba(7,8,12,.38)); }
+  .override-team-head { display: flex; justify-content: space-between; gap: 8px; color: #aeb3bf; font-size: 10px; font-weight: 850;
+    text-transform: uppercase; letter-spacing: .08em; }
+  .override-team-head b { color: #fff; font-size: 11px; font-variant-numeric: tabular-nums; }
+  .override-player { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: 7px;
+    min-height: 28px; padding: 4px 6px; border-radius: 9px; background: rgba(255,255,255,.045); }
+  .override-player img { width: 22px; height: 15px; object-fit: cover; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255,255,255,.12); }
+  .override-player .blank-flag { width: 22px; height: 15px; border-radius: 3px; background: rgba(255,255,255,.08); }
+  .override-player span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #f1f2f5; font-weight: 750; }
+  .override-player em { color: #aeb3bf; font-size: 11px; font-style: normal; font-variant-numeric: tabular-nums; }
+  .override-empty-team { color: #747986; font-size: 12px; padding: 6px; border-radius: 9px; background: rgba(255,255,255,.035); }
   .override-grid-wrap { position: relative; z-index: 1; overflow-x: auto; border-radius: 14px;
     border: 1px solid rgba(255,255,255,.1); background: rgba(10,10,15,.34);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 16px 34px -28px rgba(0,0,0,.9); }
@@ -481,6 +534,8 @@
   @media (max-width: 760px) {
     .override-head, .override-mapline { align-items: stretch; grid-template-columns: 1fr; flex-direction: column; }
     .override-actions { justify-content: flex-start; }
+    .override-preview { grid-template-columns: 1fr; }
+    .override-teams { grid-template-columns: 1fr; }
   }
   #tab-random { max-width: 1180px; }
   .random-stage { position: relative; overflow: hidden; border: 1px solid rgba(224,186,94,.24);
@@ -2057,6 +2112,7 @@
 
     </div>
   </div>
+  </div>
 
   <!-- ============ OVERRIDE ============ -->
   <div class="tab" id="tab-override">
@@ -2080,13 +2136,33 @@
         </div>
         <label class="override-freeze"><input id="ov-prevent" type="checkbox"> Prevent automatic updates</label>
       </div>
+      <div class="override-preview" id="ov-desk-preview" aria-live="polite">
+        <div class="override-preview-map">
+          <img id="ov-desk-map-img" alt="">
+          <div class="override-map-fallback" id="ov-desk-map-fallback">MAP</div>
+          <div class="override-map-label">
+            <span>Manual map</span>
+            <b id="ov-desk-map">Map not set</b>
+          </div>
+        </div>
+        <div class="override-preview-main">
+          <div class="override-preview-top">
+            <div>
+              <div class="override-preview-kicker">Live desk preview</div>
+              <div class="override-preview-title" id="ov-desk-title">Awaiting lineup</div>
+            </div>
+            <div class="override-preview-badges" id="ov-desk-badges"></div>
+          </div>
+          <div class="override-preview-copy" id="ov-desk-copy">Fill names, civs, and teams below to stage the manual broadcast packet before sending it.</div>
+          <div class="override-teams" id="ov-desk-teams"></div>
+        </div>
+      </div>
       <div class="override-grid-wrap">
         <div class="ov-grid" id="ov-grid">
           <span class="ov-head">Name</span><span class="ov-head">Civ</span><span class="ov-head">Team</span>
           <span class="ov-head">Rating</span><span class="ov-head">Rank</span><span class="ov-head">Winrate</span>
           <span class="ov-head">Wins</span><span class="ov-head">Losses</span><span class="ov-head">Civ WR</span><span class="ov-head">Win time</span>
         </div>
-      </div>
       </div>
     </div>
   </div>
@@ -4753,6 +4829,7 @@ $('bo-now').parentElement.parentElement.onclick = () => {
 // ---------- override tab ----------
 const OV_ROWS = 8;
 const ovInputs = [];
+const OV_FIELD_KEYS = ['name', 'civ', 'team', 'rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate', 'civ_win_length_median'];
 function buildOverrideGrid() {
   const grid = $('ov-grid');
   for (let i = 0; i < OV_ROWS; i++) {
@@ -4771,16 +4848,76 @@ function buildOverrideGrid() {
     row.losses.placeholder = 'L';
     row.civ_winrate.placeholder = '%';
     row.civ_win_length_median.placeholder = 'mm:ss';
-    row.name.addEventListener('input', ovPlayerCount);
-    ['name', 'civ', 'team', 'rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate', 'civ_win_length_median']
-      .forEach(k => grid.appendChild(row[k]));
+    OV_FIELD_KEYS.forEach(k => {
+      row[k].addEventListener('input', ovRenderDeskPreview);
+      row[k].addEventListener('change', ovRenderDeskPreview);
+      grid.appendChild(row[k]);
+    });
     ovInputs.push(row);
   }
-  ovPlayerCount();
+  ovRenderDeskPreview();
 }
 function ovPlayerCount() {
   const count = ovInputs.filter(r => r.name.value.trim()).length;
   if ($('ov-count')) $('ov-count').textContent = `${count}/${OV_ROWS} slots`;
+}
+function ovStagedPlayers() {
+  return ovInputs
+    .filter(r => r.name.value.trim())
+    .map(r => ({
+      name: r.name.value.trim(), civ: r.civ.value, team: parseInt(r.team.value),
+      rating: r.rating.value.trim(), rank: r.rank.value.trim(), winrate: r.winrate.value.trim(),
+      wins: r.wins.value.trim(), losses: r.losses.value.trim(), civ_winrate: r.civ_winrate.value.trim(),
+      civ_win_length_median: r.civ_win_length_median.value.trim(),
+    }));
+}
+function ovMapInitials(map) {
+  return (map || 'MAP').split(/\s+/).filter(Boolean).map(w => w[0]).join('').slice(0, 3).toUpperCase() || 'MAP';
+}
+function ovDeskPlayer(p) {
+  const flag = p.civ ? civFlag(p.civ) : '<span class="blank-flag"></span>';
+  const rating = p.rating ? esc(p.rating) : '';
+  return `<div class="override-player">${flag}<span title="${esc(p.name)}">${esc(p.name)}</span><em>${rating}</em></div>`;
+}
+function ovTeamBlock(label, players, cls) {
+  const ratings = players.map(p => Number(p.rating)).filter(Number.isFinite);
+  const avg = ratings.length ? Math.round(ratings.reduce((a, b) => a + b, 0) / ratings.length) : null;
+  const roster = players.length
+    ? players.slice(0, 4).map(ovDeskPlayer).join('') + (players.length > 4 ? `<div class="override-empty-team">+${players.length - 4} more</div>` : '')
+    : '<div class="override-empty-team">No players staged</div>';
+  return `<section class="override-team ${cls}">
+    <div class="override-team-head"><span>${label}</span><b>${avg ? `${avg} avg` : `${players.length}P`}</b></div>
+    ${roster}
+  </section>`;
+}
+function ovRenderDeskPreview() {
+  ovPlayerCount();
+  const players = ovStagedPlayers();
+  const t1 = players.filter(p => p.team === 1);
+  const t2 = players.filter(p => p.team === 2);
+  const flex = players.filter(p => p.team !== 1 && p.team !== 2);
+  const map = $('ov-map').value.trim();
+  $('ov-desk-map').textContent = map || 'Map not set';
+  $('ov-desk-map-fallback').textContent = ovMapInitials(map);
+  const img = $('ov-desk-map-img');
+  img.hidden = !map;
+  img.onerror = () => { img.hidden = true; };
+  if (map) img.src = gameMapAsset(map);
+  $('ov-desk-title').textContent = players.length
+    ? `${players.length} player${players.length === 1 ? '' : 's'} staged`
+    : 'Awaiting lineup';
+  $('ov-desk-copy').textContent = players.length
+    ? `${t1.length} on Team 1, ${t2.length} on Team 2, ${flex.length} unassigned. Review the desk before sending it live.`
+    : 'Fill names, civs, and teams below to stage the manual broadcast packet before sending it.';
+  $('ov-desk-badges').innerHTML = [
+    `<span>${players.length}/${OV_ROWS} slots</span>`,
+    `<span>${map ? esc(map) : 'No map'}</span>`,
+    $('ov-prevent').checked ? '<span class="freeze">Auto updates paused</span>' : '<span>Live updates allowed</span>',
+  ].join('');
+  $('ov-desk-teams').innerHTML =
+    ovTeamBlock('Team 1', t1, 'team-1') +
+    ovTeamBlock('Team 2', t2, 'team-2') +
+    ovTeamBlock('Unassigned', flex, 'free');
 }
 function ovLoad(d) {
   if (!d) return;
@@ -4798,26 +4935,19 @@ function ovLoad(d) {
     row.civ_winrate.value = p.civ_winrate ?? '';
     row.civ_win_length_median.value = p.civ_win_length_median ?? '';
   });
-  ovPlayerCount();
+  ovRenderDeskPreview();
 }
 $('ov-load').onclick = async () => ovLoad(await invoke('get_current_data'));
 $('ov-send').onclick = () => {
-  const players = ovInputs
-    .filter(r => r.name.value.trim())
-    .map(r => ({
-      name: r.name.value, civ: r.civ.value, team: parseInt(r.team.value),
-      country: '', rating: r.rating.value, rank: r.rank.value, winrate: r.winrate.value,
-      wins: r.wins.value, losses: r.losses.value,
-      civ_games: '', civ_winrate: r.civ_winrate.value,
-      civ_win_length_median: r.civ_win_length_median.value,
-    }));
+  const players = ovStagedPlayers().map(p => ({ ...p, country: '', civ_games: '' }));
   const data = { map: $('ov-map').value, kind: 'override', started: '', server: '', match_id: 'override', ongoing: true, players };
   invoke('override_data', { data, prevent: $('ov-prevent').checked });
-  ovPlayerCount();
+  ovRenderDeskPreview();
   setStatus('Override sent to overlay.', 'ok');
 };
 $('ov-reset').onclick = () => { $('ov-prevent').checked = false; invoke('reset_override'); setStatus('Reverted to live data.', 'ok'); };
-$('ov-prevent').onchange = () => { if (!$('ov-prevent').checked) invoke('reset_override'); };
+$('ov-map').addEventListener('input', ovRenderDeskPreview);
+$('ov-prevent').onchange = () => { ovRenderDeskPreview(); if (!$('ov-prevent').checked) invoke('reset_override'); };
 
 // ---------- random tab ----------
 // Each card rolls without repeating the previous result and keeps a short history of past rolls.
