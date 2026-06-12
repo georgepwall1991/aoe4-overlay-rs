@@ -1416,7 +1416,7 @@
     <span id="status-text">Starting…</span>
     <span class="status-right">
       <button class="status-chip" id="palette-open" title="Command palette (Ctrl+K)" aria-keyshortcuts="Control+K"><kbd>Ctrl</kbd> <kbd>K</kbd> commands</button>
-      <span class="status-chip" id="app-ver"></span>
+      <button class="status-chip" id="app-ver" type="button" aria-label="Copy version info"></button>
     </span>
   </div>
 
@@ -3836,7 +3836,13 @@ $('status-dot').onkeydown = e => {
 };
 $('copy-obs-path').onclick = () => copyTextWithButton($('copy-obs-path'), $('obs-source-path').textContent, 'OBS path');
 $('app-ver').title = 'Copy version info';
-$('app-ver').onclick = () => copyText(`AoE4 Overlay ${$('app-ver').textContent} · ${navigator.userAgent}`, 'Version info');
+const copyVersionInfo = () => copyText(`AoE4 Overlay ${$('app-ver').textContent} · ${navigator.userAgent}`, 'Version info');
+$('app-ver').onclick = copyVersionInfo;
+$('app-ver').onkeydown = e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  copyVersionInfo();
+};
 
 listen('game_data', e => { renderMatch(e.payload); setStatus('Match data updated.', 'ok'); });
 let lastPollAt = null, lastPollLive = false;
@@ -3938,6 +3944,7 @@ loadSettings().then(async () => {
   restoreTab();
   invoke('get_app_version').then(v => {
     $('app-ver').textContent = 'v' + v;
+    $('app-ver').setAttribute('aria-label', `Copy version info (v${v})`);
     $('about-ver').textContent = `v${v} — free & open source`;
   }).catch(() => {});
   if (!settings.player_name) {
