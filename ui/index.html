@@ -1615,6 +1615,7 @@ function updatePreview() {
   syncColorMetadata();
   updateSettingsSummary();
   updatePresetButtons();
+  updateAppearanceResetButton();
 }
 function schedulePreviewUpdate() {
   if (previewFrame) return;
@@ -1663,7 +1664,24 @@ function applyPollPreset(seconds) {
 }
 function resetAppearanceSettings() {
   Object.entries(APPEARANCE_DEFAULTS).forEach(([id, value]) => setSettingInput(id, value));
-  toast('Appearance defaults restored - click Save to apply');
+  updateAppearanceResetButton();
+  const needsSave = savedSettingsSnapshot ? settingsSnapshot() !== savedSettingsSnapshot : true;
+  toast(needsSave ? 'Appearance defaults restored - click Save to apply' : 'Appearance matches saved defaults');
+}
+function appearanceValueMatches(id, expected) {
+  const el = $(id);
+  if (!el) return false;
+  const current = String(el.value ?? '');
+  const target = String(expected);
+  return el.type === 'color' ? current.toLowerCase() === target.toLowerCase() : current === target;
+}
+function updateAppearanceResetButton() {
+  const btn = $('appearance-reset');
+  if (!btn) return;
+  const atDefaults = Object.entries(APPEARANCE_DEFAULTS).every(([id, value]) => appearanceValueMatches(id, value));
+  btn.disabled = atDefaults;
+  btn.setAttribute('aria-disabled', String(atDefaults));
+  btn.title = atDefaults ? 'Appearance already matches defaults' : 'Restore default team colors, opacity, civ stats color and font scale';
 }
 function setPresetPressed(btn, on) {
   btn.classList.toggle('on', on);
