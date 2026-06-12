@@ -188,8 +188,8 @@
     position: sticky; bottom: 0; background: rgba(18,18,23,.92); backdrop-filter: blur(6px); z-index: 15;
     box-shadow: 0 -6px 16px -12px rgba(0,0,0,.8); font-variant-numeric: tabular-nums;
     display: flex; align-items: center; gap: 8px; user-select: none; }
-  #status .sdot { width: 7px; height: 7px; border-radius: 50%; background: #4a4a55; flex: none;
-    transition: background .3s, box-shadow .3s; cursor: pointer; position: relative; }
+  #status .sdot { appearance: none; width: 7px; height: 7px; border-radius: 50%; border: 0; padding: 0;
+    background: #4a4a55; flex: none; transition: background .3s, box-shadow .3s; cursor: pointer; position: relative; }
   #status .sdot::after { content: ""; position: absolute; inset: -6px; border-radius: 50%; }
   #status .sdot:hover { box-shadow: 0 0 0 3px rgba(255,255,255,.12); }
   #status .sdot.ok { background: #48bd21; box-shadow: 0 0 5px rgba(72,189,33,.6); }
@@ -1412,7 +1412,7 @@
   <div id="offline-pill" role="alert">Offline — reconnecting…</div>
   <div id="toasts" role="status" aria-live="polite"></div>
   <div id="status">
-    <span class="sdot" id="status-dot" role="button" tabindex="0" aria-label="Refresh overlay data now"></span>
+    <button class="sdot" id="status-dot" type="button" aria-label="Refresh overlay data now"></button>
     <span id="status-text">Starting…</span>
     <span class="status-right">
       <button class="status-chip" id="palette-open" title="Command palette (Ctrl+K)" aria-keyshortcuts="Control+K"><kbd>Ctrl</kbd> <kbd>K</kbd> commands</button>
@@ -3827,8 +3827,13 @@ $('edit-btn').onclick = () => {
 };
 $('games-refresh').onclick = loadGames;
 $('status-dot').title = 'Refresh overlay data now';
-$('status-dot').onclick = () => $('refresh-btn').click();
-$('status-dot').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('refresh-btn').click(); } };
+const refreshNow = () => $('refresh-btn').click();
+$('status-dot').onclick = refreshNow;
+$('status-dot').onkeydown = e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  refreshNow();
+};
 $('copy-obs-path').onclick = () => copyTextWithButton($('copy-obs-path'), $('obs-source-path').textContent, 'OBS path');
 $('app-ver').title = 'Copy version info';
 $('app-ver').onclick = () => copyText(`AoE4 Overlay ${$('app-ver').textContent} · ${navigator.userAgent}`, 'Version info');
