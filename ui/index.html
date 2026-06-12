@@ -168,8 +168,14 @@
   .result { padding: 7px 12px; cursor: pointer; display: flex; justify-content: space-between;
     border-left: 2px solid transparent; transition: background .12s, border-color .12s; }
   .result:hover { background: #33333d; border-left-color: var(--gold-dim); }
+  .result[aria-selected="true"] { background: #33333d; border-left-color: var(--gold); }
   .result .elo { font-size: 11px; color: #9cc6ff; background: rgba(122,182,255,.12); border-radius: 8px;
     padding: 1px 7px; margin-left: 8px; }
+  .result-state { padding: 10px 12px; color: var(--ink-muted); font-size: 12px; display: flex; align-items: center; gap: 8px; }
+  .result-state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #6b6d78; flex: none; }
+  .result-state.busy::before { background: var(--blue-bright); box-shadow: 0 0 7px rgba(122,182,255,.7); animation: pulse 1.2s infinite; }
+  .result-state.empty::before { background: #9a6a28; }
+  .result-state.err::before { background: #e0452f; box-shadow: 0 0 7px rgba(224,69,47,.55); }
   .result-hint { padding: 5px 12px; font-size: 11px; color: var(--ink-muted);
     border-top: 1px solid #34343f; background: rgba(0,0,0,.18); position: sticky; bottom: 0; }
   .muted { color: var(--ink-muted); font-size: 12px; }
@@ -1980,54 +1986,114 @@ async function stopTrackingPlayer() {
 }
 
 // ---------- player search ----------
+const searchCache = new Map();
+let searchSeq = 0;
+const SEARCH_CACHE_LIMIT = 8;
+
+function setSearchBusy(busy) {
+  $('search-btn').disabled = busy;
+  $('search-btn').classList.toggle('btn-busy', busy);
+  $('results').setAttribute('aria-busy', String(busy));
+}
+function clearSearchResults() {
+  searchSeq++;
+  setSearchBusy(false);
+  $('results').innerHTML = '';
+}
+function renderSearchState(kind, message) {
+  const list = document.createElement('div');
+  list.className = 'result-list';
+  const state = document.createElement('div');
+  state.className = `result-state ${kind}`;
+  state.textContent = message;
+  list.appendChild(state);
+  $('results').innerHTML = '';
+  $('results').appendChild(list);
+}
+function cacheSearch(q, players) {
+  const key = q.toLowerCase();
+  searchCache.delete(key);
+  searchCache.set(key, players);
+  while (searchCache.size > SEARCH_CACHE_LIMIT) searchCache.delete(searchCache.keys().next().value);
+}
+async function trackPlayer(p) {
+  settings.profile_id = p.profile_id;
+  settings.player_name = p.name;
+  await invoke('save_settings', { newSettings: settings });
+  clearSearchResults();
+  $('search').value = '';
+  await loadSettings();
+  toast(`Now tracking ${p.name}`);
+}
+function setKbResult(next) {
+  const items = [...document.querySelectorAll('#results .result')];
+  items.forEach((item, i) => {
+    const on = i === next;
+    item.classList.toggle('kb', on);
+    item.setAttribute('aria-selected', String(on));
+    if (on) item.scrollIntoView({ block: 'nearest' });
+  });
+}
+function renderSearchResults(q, players) {
+  if (!players.length) {
+    renderSearchState('empty', `No players found for "${q}"`);
+    return;
+  }
+  const list = document.createElement('div');
+  list.className = 'result-list';
+  list.setAttribute('role', 'listbox');
+  list.setAttribute('aria-label', 'Player search results');
+  // bold the part of each name that matched the query
+  const hlName = n => {
+    const i = n.toLowerCase().indexOf(q.toLowerCase());
+    if (i < 0) return esc(n);
+    return esc(n.slice(0, i)) + `<b class="pal-hl">${esc(n.slice(i, i + q.length))}</b>` + esc(n.slice(i + q.length));
+  };
+  for (const p of players) {
+    const div = document.createElement('div');
+    div.className = 'result';
+    div.setAttribute('role', 'option');
+    div.setAttribute('aria-selected', 'false');
+    div.innerHTML = `<span>${hlName(p.name)}${p.rating ? `<span class="elo">${p.rating} elo</span>` : ''}</span><span class="muted">#${p.profile_id}</span>`;
+    div.onclick = () => trackPlayer(p);
+    list.appendChild(div);
+  }
+  const hint = document.createElement('div');
+  hint.className = 'result-hint';
+  hint.innerHTML = '<kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>Enter</kbd> track · <kbd>Esc</kbd> dismiss';
+  list.appendChild(hint);
+  $('results').innerHTML = '';
+  $('results').appendChild(list);
+  setKbResult(0);
+}
 async function doSearch() {
   const q = $('search').value.trim();
-  if (!q) return;
-  $('search-btn').disabled = true;
-  $('search-btn').classList.add('btn-busy');
+  if (!q) { clearSearchResults(); $('search').focus(); return; }
+  const token = ++searchSeq;
+  const key = q.toLowerCase();
+  setSearchBusy(true);
+  if (searchCache.has(key)) {
+    renderSearchResults(q, searchCache.get(key));
+    setSearchBusy(false);
+    return;
+  }
+  renderSearchState('busy', `Searching "${q}"...`);
   try {
     const players = await invoke('search_player', { query: q });
-    if (!players.length) { $('results').innerHTML = ''; toast('No players found', true); return; }
-    const list = document.createElement('div');
-    list.className = 'result-list';
-    // bold the part of each name that matched the query
-    const hlName = n => {
-      const i = n.toLowerCase().indexOf(q.toLowerCase());
-      if (i < 0) return esc(n);
-      return esc(n.slice(0, i)) + `<b class="pal-hl">${esc(n.slice(i, i + q.length))}</b>` + esc(n.slice(i + q.length));
-    };
-    for (const p of players) {
-      const div = document.createElement('div');
-      div.className = 'result';
-      div.innerHTML = `<span>${hlName(p.name)}${p.rating ? `<span class="elo">${p.rating} elo</span>` : ''}</span><span class="muted">#${p.profile_id}</span>`;
-      div.onclick = async () => {
-        settings.profile_id = p.profile_id;
-        settings.player_name = p.name;
-        await invoke('save_settings', { newSettings: settings });
-        $('results').innerHTML = '';
-        $('search').value = '';
-        await loadSettings();
-        toast(`Now tracking ${p.name}`);
-      };
-      list.appendChild(div);
-    }
-    const hint = document.createElement('div');
-    hint.className = 'result-hint';
-    hint.innerHTML = '<kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>Enter</kbd> track · <kbd>Esc</kbd> dismiss';
-    list.appendChild(hint);
-    $('results').innerHTML = '';
-    $('results').appendChild(list);
-    // Pre-highlight the first result so Enter selects it immediately
-    list.firstElementChild?.classList.add('kb');
+    if (token !== searchSeq || $('search').value.trim() !== q) return;
+    cacheSearch(q, players);
+    renderSearchResults(q, players);
+    if (!players.length) toast('No players found', true);
   } catch (e) {
+    if (token !== searchSeq) return;
+    renderSearchState('err', 'Search failed. Check the connection and try again.');
     toast('Search failed: ' + e, true);
   } finally {
-    $('search-btn').disabled = false;
-    $('search-btn').classList.remove('btn-busy');
+    if (token === searchSeq) setSearchBusy(false);
   }
 }
 document.addEventListener('click', e => {
-  if (!$('results').contains(e.target) && e.target !== $('search')) $('results').innerHTML = '';
+  if (!$('results').contains(e.target) && !e.target.closest('.searchbar')) clearSearchResults();
 });
 
 // ---------- last match panel ----------
@@ -3208,7 +3274,7 @@ $('search').addEventListener('input', () => {
   clearTimeout(searchTimer);
   const q = $('search').value.trim();
   if (q.length >= 3) searchTimer = setTimeout(doSearch, 450);
-  else $('results').innerHTML = '';
+  else clearSearchResults();
 });
 $('search').addEventListener('keydown', e => {
   const items = [...document.querySelectorAll('#results .result')];
@@ -3216,15 +3282,15 @@ $('search').addEventListener('keydown', e => {
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
     e.preventDefault();
     if (!items.length) return;
-    const next = e.key === 'ArrowDown' ? Math.min(cur + 1, items.length - 1) : Math.max(cur - 1, 0);
-    items.forEach(i => i.classList.remove('kb'));
-    items[next].classList.add('kb');
-    items[next].scrollIntoView({ block: 'nearest' });
+    const next = e.key === 'ArrowDown'
+      ? Math.min((cur < 0 ? 0 : cur + 1), items.length - 1)
+      : Math.max((cur < 0 ? items.length - 1 : cur - 1), 0);
+    setKbResult(next);
   } else if (e.key === 'Enter') {
     clearTimeout(searchTimer);
     if (cur >= 0) items[cur].click(); else doSearch();
   } else if (e.key === 'Escape') {
-    $('results').innerHTML = '';
+    clearSearchResults();
   }
 });
 $('save-btn').onclick = save;
