@@ -1822,6 +1822,7 @@ const PAL_COMMANDS = [
   { sect: 'Overlay', name: 'Show / hide overlay', icon: 'i-monitor', run: () => $('toggle-btn').click() },
   { sect: 'Overlay', name: 'Reposition overlay', icon: 'i-monitor', run: () => $('edit-btn').click() },
   { sect: 'Overlay', name: 'Refresh overlay data', icon: 'i-signal', run: () => $('refresh-btn').click() },
+  { sect: 'Settings', name: 'Focus player search', icon: 'i-user', key: 'Ctrl+F', run: () => { tabButtons[0].click(); $('search').focus(); $('search').select(); } },
   { sect: 'Settings', name: 'Stop tracking player', icon: 'i-user', run: () => { tabButtons[0].click(); stopTrackingPlayer(); } },
   { sect: 'Settings', name: 'Review unsaved settings', icon: 'i-gear', run: () => { tabButtons[0].click(); reviewSettingsState(); } },
   { sect: 'Settings', name: 'Revert unsaved settings', icon: 'i-gear', run: () => { tabButtons[0].click(); revertSettingsChanges(); } },
