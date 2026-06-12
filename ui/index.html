@@ -1457,33 +1457,53 @@ function makeHotkeyRecorder(el) {
   });
 }
 
-function updatePreview() {
-  const a = ($('tcalpha').value | 0) / 100;
-  const t1 = fromHex($('tc1').value), t2 = fromHex($('tc2').value);
-  const civc = $('civstatcolor').value;
-  const fs = Math.round(12 * ($('fontscale').value | 0) / 100 * ($('ovscale').value | 0) / 100);
-  const row = (civ, name, rating, wr, w, l, cw, c, dir) => {
+let previewFrame = 0;
+function ensurePreviewTable() {
+  const wrap = $('ov-preview');
+  if (wrap.querySelector('table')) return;
+  const row = (civ, name, rating, wr, w, l, cw, dir, team) => {
     let cells = [
       `<td><img src="flags/${civ}.webp"></td>`,
       `<td style="font-weight:600">${name}</td>`,
       `<td style="color:#7ab6ff">${rating}</td>`,
       `<td style="color:#fffb78">${wr}</td>`,
       `<td><span style="color:#48bd21">${w}</span>/<span style="color:#ff6060">${l}</span></td>`,
-      `<td style="color:${civc}">${cw}</td>`,
+      `<td class="preview-civstat">${cw}</td>`,
     ];
     if (dir === 'right') cells = cells.reverse();
-    return `<tr style="background:linear-gradient(to ${dir}, rgba(0,0,0,0), rgba(${c[0]},${c[1]},${c[2]},${a}))">${cells.join('')}</tr>`;
+    return `<tr data-dir="${dir}" data-team="${team}">${cells.join('')}</tr>`;
   };
-  $('ov-preview').innerHTML = `<table style="font-size:${fs}px">
-    ${row('English', 'You', '1244', '54%', '120', '101', '61% (33)', t1, 'right')}
-    ${row('Mongols', 'Opponent', '1198', '51%', '98', '95', '48% (21)', t2, 'left')}
+  wrap.innerHTML = `<table>
+    ${row('English', 'You', '1244', '54%', '120', '101', '61% (33)', 'right', '1')}
+    ${row('Mongols', 'Opponent', '1198', '51%', '98', '95', '48% (21)', 'left', '2')}
   </table>`;
+}
+function updatePreview() {
+  ensurePreviewTable();
+  const a = ($('tcalpha').value | 0) / 100;
+  const t1 = fromHex($('tc1').value), t2 = fromHex($('tc2').value);
+  const civc = $('civstatcolor').value;
+  const fs = Math.round(12 * ($('fontscale').value | 0) / 100 * ($('ovscale').value | 0) / 100);
+  $('ov-preview').querySelector('table').style.fontSize = `${fs}px`;
+  $('ov-preview').querySelectorAll('tr').forEach(tr => {
+    const c = tr.dataset.team === '1' ? t1 : t2;
+    const dir = tr.dataset.dir;
+    tr.style.background = `linear-gradient(to ${dir}, rgba(0,0,0,0), rgba(${c[0]},${c[1]},${c[2]},${a}))`;
+  });
+  $('ov-preview').querySelectorAll('.preview-civstat').forEach(td => { td.style.color = civc; });
   $('interval-val').textContent = $('interval').value + 's';
   $('alpha-val').textContent = $('tcalpha').value + '%';
   $('fontscale-val').textContent = $('fontscale').value + '%';
   $('ovscale-val').textContent = $('ovscale').value + '%';
   updateSettingsSummary();
   updatePresetButtons();
+}
+function schedulePreviewUpdate() {
+  if (previewFrame) return;
+  previewFrame = requestAnimationFrame(() => {
+    previewFrame = 0;
+    updatePreview();
+  });
 }
 
 function updateSettingsSummary() {
@@ -3397,7 +3417,7 @@ const NO_DIRTY = new Set(['search', 'bo-filter', 'bo-import-file']);
   $(id).addEventListener('input', e => { if (!NO_DIRTY.has(e.target.id) && SETTINGS_DIRTY_IDS.has(e.target.id)) markDirty(); });
   $(id).addEventListener('change', e => { if (!NO_DIRTY.has(e.target.id) && SETTINGS_DIRTY_IDS.has(e.target.id)) markDirty(); });
 });
-['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'ovscale', 'interval'].forEach(id => $(id).addEventListener('input', updatePreview));
+['tc1', 'tc2', 'tc3', 'tcalpha', 'civstatcolor', 'fontscale', 'ovscale', 'interval'].forEach(id => $(id).addEventListener('input', schedulePreviewUpdate));
 ['autoshow', 'wsport', 'hotkey'].forEach(id => {
   $(id).addEventListener('input', updateSettingsSummary);
   $(id).addEventListener('change', updateSettingsSummary);
