@@ -651,6 +651,10 @@
   .sum-item.dirty b { color: #ffc845; }
   .sum-item.good b { color: #8ae86a; }
   .sum-item.invalid b { color: #ffb3a6; }
+  .sum-item.actionable { cursor: pointer; transition: background .15s, box-shadow .15s; }
+  .sum-item.actionable:hover { background: linear-gradient(180deg, #2b2b34, #24242c);
+    box-shadow: inset 0 0 0 1px rgba(255,200,69,.22); }
+  .sum-item.actionable:focus-visible { outline: 2px solid #3d7fb0; outline-offset: -2px; }
   @media (max-width: 880px) { .settings-summary { grid-column: auto; } }
   @media (max-width: 760px) { .settings-summary { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 430px) { .settings-summary { grid-template-columns: minmax(0, 1fr); } }
@@ -2063,6 +2067,11 @@ function focusInvalidSetting() {
 function focusFirstChangedSetting() {
   focusSettingControl(changedSettings()[0]);
 }
+function reviewSettingsState() {
+  const invalid = firstInvalidSettingId();
+  if (invalid) focusSettingControl(invalid);
+  else focusFirstChangedSetting();
+}
 function setSettingsDirty(dirty) {
   const changes = dirty ? changedSettings() : [];
   const count = changes.length;
@@ -2091,9 +2100,17 @@ function setSettingsDirty(dirty) {
   tabButtons[0].classList.toggle('unsaved', dirty);
   if ($('sum-save')) $('sum-save').textContent = invalidDirty ? 'Fix invalid setting' : dirty ? dirtyText : 'Saved';
   if ($('sum-save')) $('sum-save').title = invalidDirty ? validationMessage : title;
-  $('sum-save-box')?.classList.toggle('dirty', dirty);
-  $('sum-save-box')?.classList.toggle('invalid', invalidDirty);
-  $('sum-save-box')?.classList.toggle('good', !dirty);
+  const sumBox = $('sum-save-box');
+  if (sumBox) {
+    sumBox.classList.toggle('dirty', dirty);
+    sumBox.classList.toggle('invalid', invalidDirty);
+    sumBox.classList.toggle('good', !dirty);
+    sumBox.classList.toggle('actionable', dirty);
+    sumBox.tabIndex = dirty ? 0 : -1;
+    sumBox.setAttribute('role', dirty ? 'button' : 'status');
+    sumBox.setAttribute('aria-label', invalidDirty ? `${validationMessage}. Click to review.` : dirty ? `${dirtyText}: ${title}. Click to review.` : 'Settings saved');
+    sumBox.title = invalidDirty ? `${validationMessage} - click to review` : dirty ? `Review ${dirtyText}: ${title}` : 'Settings saved';
+  }
 }
 function markDirty() {
   setSettingsDirty(savedSettingsSnapshot ? settingsSnapshot() !== savedSettingsSnapshot : true);
@@ -3517,6 +3534,13 @@ $('search').addEventListener('keydown', e => {
 });
 $('save-btn').onclick = save;
 $('dirty-detail').onclick = focusFirstChangedSetting;
+$('sum-save-box').onclick = () => { if (changedSettings().length) reviewSettingsState(); };
+$('sum-save-box').onkeydown = e => {
+  if ((e.key === 'Enter' || e.key === ' ') && changedSettings().length) {
+    e.preventDefault();
+    reviewSettingsState();
+  }
+};
 $('revert-btn').onclick = async () => { await loadSettings(); toast('Reverted to saved settings'); };
 $('clear-player').onclick = stopTrackingPlayer;
 $('toggle-btn').onclick = () => invoke('toggle_overlay');
