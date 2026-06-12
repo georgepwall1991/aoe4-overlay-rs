@@ -2366,6 +2366,7 @@ function setSearchExpanded(expanded) {
   if (!expanded) $('search').removeAttribute('aria-activedescendant');
 }
 function clearSearchResults() {
+  clearSearchTimer();
   searchSeq++;
   setSearchBusy(false);
   $('results').innerHTML = '';
