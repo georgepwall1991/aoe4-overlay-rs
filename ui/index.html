@@ -1830,6 +1830,7 @@ const PAL_COMMANDS = [
   { sect: 'Settings', name: 'Polling preset: Default 15s', icon: 'i-signal', run: () => { tabButtons[0].click(); applyPollPreset(15); } },
   { sect: 'Settings', name: 'Polling preset: Quiet 30s', icon: 'i-signal', run: () => { tabButtons[0].click(); applyPollPreset(30); } },
   { sect: 'Settings', name: 'Reset appearance defaults', icon: 'i-palette', run: () => { tabButtons[0].click(); resetAppearanceSettings(); } },
+  { sect: 'Settings', name: 'Copy OBS browser source path', icon: 'i-monitor', run: () => { tabButtons[0].click(); $('copy-obs-path').click(); } },
   { sect: 'Overlay', name: 'Show / hide build order', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'toggle' }) },
   { sect: 'Overlay', name: 'Next build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'next' }) },
   { sect: 'Overlay', name: 'Previous build order step', icon: 'i-scroll', run: () => invoke('bo_action', { action: 'prev' }) },
