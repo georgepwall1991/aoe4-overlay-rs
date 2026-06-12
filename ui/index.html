@@ -868,8 +868,13 @@
   .pal-sect { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
     color: var(--ink-muted); padding: 8px 11px 3px; }
   .pal-empty { padding: 22px; text-align: center; color: var(--ink-muted); font-size: 13px; }
-  .pal-foot { display: flex; gap: 14px; padding: 8px 14px; border-top: 1px solid #2c2c36;
+  .pal-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding: 8px 14px; border-top: 1px solid #2c2c36;
     background: rgba(0,0,0,.18); font-size: 11px; color: var(--ink-muted); }
+  #palette .pal-close { appearance: none; display: inline-flex; align-items: center; gap: 4px; margin: -2px 0;
+    border: 1px solid transparent; border-radius: 7px; padding: 2px 5px; background: transparent;
+    box-shadow: none; font-size: 11px; color: var(--ink-muted); font-weight: 400; }
+  #palette .pal-close:hover,
+  #palette .pal-close:focus-visible { color: var(--ink-strong); background: rgba(255,255,255,.06); border-color: #3a3d4b; }
   .pal-count { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .pal-shortcuts { white-space: nowrap; }
 
@@ -1359,7 +1364,7 @@
       <div class="pal-foot">
         <span><kbd>↑</kbd><kbd>↓</kbd><kbd>Home</kbd><kbd>End</kbd> navigate</span>
         <span><kbd>Enter</kbd> run</span>
-        <span><kbd>Esc</kbd> close</span>
+        <button id="pal-close" type="button" class="pal-close" aria-label="Close command palette"><kbd>Esc</kbd> close</button>
         <span id="pal-count" class="pal-count" aria-live="polite"></span>
         <span class="pal-shortcuts"><kbd>Ctrl</kbd>+<kbd>1…5</kbd> tabs &nbsp; <kbd>Ctrl</kbd>+<kbd>S</kbd> save</span>
       </div>
@@ -2011,6 +2016,12 @@ try {
   }
 } catch (e) { /* storage unavailable */ }
 $('palette').addEventListener('mousedown', e => { if (e.target === $('palette')) palClose(); });
+$('pal-close').onclick = palClose;
+$('pal-close').addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  palClose();
+});
 $('pal-list').addEventListener('click', e => { const it = e.target.closest('.pal-item'); if (it) palRun(+it.dataset.i); });
 $('pal-list').addEventListener('mousemove', e => {
   const it = e.target.closest('.pal-item');
@@ -2050,7 +2061,11 @@ const scToggle = open => {
   else if (scPrevFocus?.focus && document.contains(scPrevFocus)) scPrevFocus.focus();
 };
 // keep keyboard focus inside open dialogs
-$('palette').addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); $('pal-input').focus(); } });
+$('palette').addEventListener('keydown', e => {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  (document.activeElement === $('pal-close') ? $('pal-input') : $('pal-close')).focus();
+});
 $('shortcuts').addEventListener('keydown', e => {
   if (e.key !== 'Tab') return;
   e.preventDefault();
