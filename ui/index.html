@@ -603,6 +603,16 @@
   #bo-count.pop { animation: count-pop .3s cubic-bezier(.34,1.56,.64,1); }
   @keyframes count-pop { 50% { transform: scale(1.25); color: var(--gold-bright); } }
   .tracked-info { min-width: 0; flex: 1; }
+  .tracked-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .tracked-actions a { white-space: nowrap; }
+  .link-btn { padding: 3px 8px; font-size: 11px; border-radius: 7px; background: rgba(255,255,255,.04);
+    color: var(--ink-muted); border-color: #353541; box-shadow: none; }
+  .link-btn:hover { color: #fff; border-color: #515160; background: rgba(255,255,255,.08); }
+  @media (max-width: 560px) {
+    .tracked { align-items: flex-start; flex-wrap: wrap; }
+    .tracked-info { flex: 1 1 calc(100% - 64px); }
+    .tracked-actions { flex: 0 0 calc(100% - 44px); justify-content: flex-start; margin-left: 44px; }
+  }
   .tracked-ava { width: 34px; height: 34px; border-radius: 50%; flex: none; display: flex;
     align-items: center; justify-content: center; font-weight: 800; font-size: 15px; color: var(--gold);
     background: radial-gradient(circle at 35% 30%, #34343f, #232329);
@@ -921,7 +931,10 @@
             <div class="muted" id="tracked-sub">Search for your profile to start polling</div>
           </div>
           <span class="dot" id="poll-dot" title="Poll status"></span>
-          <a id="profile-link" href="#" target="_blank" style="display:none">aoe4world ↗</a>
+          <span class="tracked-actions">
+            <a id="profile-link" href="#" target="_blank" style="display:none">aoe4world ↗</a>
+            <button id="clear-player" class="link-btn" type="button" style="display:none">Stop tracking</button>
+          </span>
         </div>
       </div>
 
@@ -1606,6 +1619,7 @@ const PAL_COMMANDS = [
   { sect: 'Overlay', name: 'Show / hide overlay', icon: 'i-monitor', run: () => $('toggle-btn').click() },
   { sect: 'Overlay', name: 'Reposition overlay', icon: 'i-monitor', run: () => $('edit-btn').click() },
   { sect: 'Overlay', name: 'Refresh overlay data', icon: 'i-signal', run: () => $('refresh-btn').click() },
+  { sect: 'Settings', name: 'Stop tracking player', icon: 'i-user', run: () => { tabButtons[0].click(); stopTrackingPlayer(); } },
   { sect: 'Settings', name: 'Display preset: Compact', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('compact'); } },
   { sect: 'Settings', name: 'Display preset: Default', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('default'); } },
   { sect: 'Settings', name: 'Display preset: Readable', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('readable'); } },
@@ -1790,10 +1804,15 @@ async function loadSettings() {
     $('tracked-sub').textContent = `profile #${settings.profile_id} — polling every ${settings.interval}s`;
     $('profile-link').href = `https://aoe4world.com/players/${settings.profile_id}`;
     $('profile-link').style.display = '';
+    $('clear-player').style.display = '';
     $('tracked-ava').textContent = settings.player_name.trim()[0] || '?';
   } else {
     $('current-player').textContent = 'No player tracked';
     $('tracked-sub').textContent = 'Search for your profile to start polling';
+    $('profile-link').style.display = 'none';
+    $('clear-player').style.display = 'none';
+    $('poll-dot').className = 'dot';
+    $('poll-dot').title = 'Poll status';
     $('tracked-ava').innerHTML = '<svg class="ic"><use href="#i-user"/></svg>';
   }
   updatePreview();
@@ -1921,6 +1940,42 @@ async function save() {
     setTimeout(() => { btn.textContent = 'Save settings'; }, 1400);
   } catch (e) {
     toast('Failed to save: ' + e, true);
+  }
+}
+
+function showEmptyMatch(message = 'No match data yet — your latest game will appear here after the first poll.') {
+  $('last-match').innerHTML = `<div class="bo-empty match muted">${esc(message)}</div>`;
+}
+
+async function stopTrackingPlayer() {
+  const previous = { profile_id: settings.profile_id, player_name: settings.player_name };
+  if (!previous.profile_id) { $('search').focus(); return; }
+  settings.profile_id = null;
+  settings.player_name = null;
+  try {
+    await invoke('save_settings', { newSettings: settings });
+    allGames = [];
+    if ($('games-list')) $('games-list').innerHTML = '';
+    if ($('gf-count')) $('gf-count').textContent = '';
+    if ($('games-stats')) $('games-stats').style.display = 'none';
+    showEmptyMatch('Tracking is paused. Search for a profile to resume polling.');
+    await loadSettings();
+    setStatus('Tracking paused — search for a profile to resume.');
+    toast(`Stopped tracking ${previous.player_name || 'profile'}`, false, {
+      label: 'Undo',
+      run: async () => {
+        settings.profile_id = previous.profile_id;
+        settings.player_name = previous.player_name;
+        await invoke('save_settings', { newSettings: settings });
+        await loadSettings();
+        showEmptyMatch();
+        setStatus(`Tracking ${settings.player_name} — Ctrl+K for commands`, 'ok');
+      },
+    });
+  } catch (e) {
+    settings.profile_id = previous.profile_id;
+    settings.player_name = previous.player_name;
+    toast('Could not stop tracking: ' + e, true);
   }
 }
 
@@ -3174,6 +3229,7 @@ $('search').addEventListener('keydown', e => {
 });
 $('save-btn').onclick = save;
 $('revert-btn').onclick = async () => { await loadSettings(); toast('Reverted to saved settings'); };
+$('clear-player').onclick = stopTrackingPlayer;
 $('toggle-btn').onclick = () => invoke('toggle_overlay');
 $('refresh-btn').onclick = () => { invoke('force_refresh'); setStatus('Refreshing…', 'busy'); };
 $('edit-btn').onclick = () => {
