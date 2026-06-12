@@ -356,29 +356,78 @@
   .ov-grid > :nth-child(20n+14), .ov-grid > :nth-child(20n+15), .ov-grid > :nth-child(20n+16),
   .ov-grid > :nth-child(20n+17), .ov-grid > :nth-child(20n+18), .ov-grid > :nth-child(20n+19),
   .ov-grid > :nth-child(20n+20) { background-color: rgba(255,255,255,.045); }
-  .rand-wrap { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; padding-top: 26px; }
-  .rand-box { text-align: center; flex: 0 1 360px;
-    background: linear-gradient(180deg, #26262e, #222129); border: 1px solid var(--card-border);
-    border-radius: var(--radius); padding: 26px 26px 30px; box-shadow: var(--shadow-card);
-    transition: border-color .2s, box-shadow .2s, transform .2s; position: relative; }
+  #tab-random { max-width: 1180px; }
+  .random-stage { position: relative; overflow: hidden; border: 1px solid rgba(224,186,94,.24);
+    border-radius: 18px; padding: 18px; background:
+      radial-gradient(680px 300px at 18% -8%, rgba(122,182,255,.1), transparent 65%),
+      radial-gradient(620px 320px at 92% 15%, rgba(224,186,94,.12), transparent 62%),
+      linear-gradient(135deg, rgba(39,39,49,.96), rgba(22,22,29,.98));
+    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 24px 58px -30px rgba(0,0,0,.95); }
+  .random-stage::before { content: ""; position: absolute; inset: 0; opacity: .13; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.13) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(224,186,94,.18) 1px, transparent 1px);
+    background-size: 64px 64px; mask-image: radial-gradient(ellipse at center, #000 25%, transparent 78%); }
+  .random-head { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between;
+    gap: 18px; margin-bottom: 13px; padding-bottom: 3px; }
+  .random-kicker { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .14em; text-transform: uppercase; }
+  .random-title { color: #fff; font-size: 29px; font-weight: 850; line-height: 1.08; margin-top: 5px;
+    text-shadow: 0 2px 18px rgba(0,0,0,.7); }
+  .random-actions { display: flex; align-items: center; justify-content: flex-end; gap: 9px; flex-wrap: wrap; }
+  .random-counts { display: flex; gap: 7px; flex-wrap: wrap; justify-content: flex-end; }
+  .random-counts span { display: inline-flex; align-items: baseline; gap: 5px; padding: 5px 9px; border-radius: 999px;
+    color: #b8bbc6; background: rgba(9,9,13,.48); border: 1px solid rgba(255,255,255,.09); font-size: 11px; font-weight: 650; }
+  .random-counts b { color: var(--gold-bright); font-size: 14px; font-variant-numeric: tabular-nums; }
+  .random-roll-all { min-width: 116px; border-radius: 11px; padding: 9px 14px; font-weight: 800; }
+  .rand-wrap { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .rand-box { min-width: 0; display: grid; grid-template-rows: auto 242px auto auto auto; gap: 12px;
+    background: linear-gradient(180deg, rgba(43,43,53,.9), rgba(29,29,37,.96)); border: 1px solid rgba(255,255,255,.09);
+    border-radius: 16px; padding: 15px; box-shadow: var(--shadow-card);
+    transition: border-color .2s, box-shadow .2s, transform .2s; position: relative; overflow: hidden; }
   .rand-box::before { content: ""; position: absolute; inset: 0 0 auto; height: 1px; border-radius: inherit;
     background: linear-gradient(90deg, transparent 5%, rgba(255,255,255,.07) 50%, transparent 95%); pointer-events: none; }
   .rand-box:hover { border-color: var(--card-border-hover); transform: translateY(-2px);
     box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 16px 34px -14px rgba(0,0,0,.8); }
-  .rand-box h3 { margin: 0 0 16px; font-size: 12px; color: var(--gold); letter-spacing: .09em;
-    text-transform: uppercase; }
-  .rand-box > button { padding: 11px 24px; font-size: 14px; border-radius: 9px; }
-  .rand-box img { display: block; margin: 18px auto 4px; max-width: 270px; max-height: 270px; border-radius: 8px;
+  .rand-box.rolling { border-color: rgba(255,200,69,.38); box-shadow: 0 0 28px -18px rgba(255,179,0,.9), var(--shadow-card); }
+  .rand-box h3 { position: relative; z-index: 1; margin: 0; font-size: 12px; color: var(--gold); letter-spacing: .11em;
+    text-transform: uppercase; display: flex; align-items: center; gap: 7px; }
+  .rand-media { position: relative; overflow: hidden; border-radius: 14px; border: 1px solid rgba(255,255,255,.09);
+    background:
+      linear-gradient(135deg, rgba(0,0,0,.12), rgba(0,0,0,.38)),
+      radial-gradient(circle at 50% 25%, rgba(255,255,255,.08), transparent 56%); }
+  .rand-media::after { content: ""; position: absolute; inset: auto 0 0; height: 45%;
+    background: linear-gradient(0deg, rgba(0,0,0,.42), transparent); pointer-events: none; }
+  .rand-box.rolling .rand-media::before { content: ""; position: absolute; inset: 0; z-index: 2;
+    background: linear-gradient(115deg, transparent 0 35%, rgba(255,255,255,.16) 48%, transparent 62% 100%);
+    animation: reel-scan .62s linear infinite; pointer-events: none; }
+  @keyframes reel-scan { from { transform: translateX(-80%); } to { transform: translateX(80%); } }
+  .rand-box img { display: block; width: 100%; height: 100%; object-fit: cover; margin: 0; border-radius: 0;
     box-shadow: 0 0 0 1px rgba(230,198,100,.35), 0 8px 22px -8px rgba(0,0,0,.7);
     animation: rand-pop .3s cubic-bezier(.22,1,.36,1); }
+  .rand-civ-card .rand-media img { object-fit: contain; padding: 24px; box-sizing: border-box;
+    filter: drop-shadow(0 16px 24px rgba(0,0,0,.55)); }
+  .rand-placeholder { height: 100%; display: grid; place-items: center; color: rgba(255,233,160,.4);
+    font-size: 56px; font-weight: 900; text-shadow: 0 0 24px rgba(224,186,94,.24); }
+  .rand-box.has-roll .rand-placeholder { display: none; }
   @keyframes rand-pop { from { opacity: 0; transform: scale(.94); } }
-  .rand-name { font-size: 22px; font-weight: 800; margin-top: 14px; letter-spacing: .02em; min-height: 28px;
+  .rand-name { font-size: 28px; font-weight: 850; letter-spacing: 0; min-height: 34px; line-height: 1.1;
     background: linear-gradient(180deg, #fff6cf 15%, #ecc75d 55%, #c79a2e);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     filter: drop-shadow(0 2px 5px rgba(0,0,0,.5)); }
-  .rand-hist { margin-top: 12px; min-height: 20px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .rand-box > button { justify-self: start; padding: 10px 16px; font-size: 13px; border-radius: 10px; font-weight: 760; }
+  .rand-hist { min-height: 24px; display: flex; gap: 6px; align-items: center; justify-content: flex-start; flex-wrap: wrap; }
+  .rand-hist:not(:empty)::before { content: "Previous"; color: #777b86; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
   .rand-hist span { font-size: 11px; color: var(--ink-muted); background: rgba(255,255,255,.05);
     border: 1px solid #34343f; border-radius: 9px; padding: 1px 8px; animation: tab-in .25s ease-out; }
+  .random-footer { position: relative; z-index: 1; display: flex; justify-content: center; gap: 8px; margin-top: 14px;
+    color: #9397a3; font-size: 11px; }
+  .random-footer span { padding: 4px 9px; border-radius: 999px; background: rgba(0,0,0,.22);
+    border: 1px solid rgba(255,255,255,.07); }
+  @media (max-width: 860px) {
+    .random-head { align-items: flex-start; flex-direction: column; }
+    .random-actions, .random-counts { justify-content: flex-start; }
+    .rand-wrap { grid-template-columns: 1fr; }
+  }
 
   /* ---- games tab ---- */
   .game-card { display: flex; align-items: stretch; gap: 0; background: linear-gradient(180deg, #26262e, #232229);
@@ -566,7 +615,7 @@
     100% { border-color: #32323c; } }
   @media (prefers-reduced-motion: reduce) {
     .game-card, .games-hero, #games-stats, .civ-row .bar i, .wr-ring, .game-map, #map-peek img,
-    .badge.live, .game-card.res-live { animation: none !important; transition: none !important; } }
+    .badge.live, .game-card.res-live, .rand-box.rolling .rand-media::before { animation: none !important; transition: none !important; } }
   input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; width: 13px; height: 13px;
     cursor: pointer; opacity: .55; transition: opacity .15s;
     background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="%239094a0" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>') center/contain no-repeat; }
@@ -1512,23 +1561,45 @@
 
   <!-- ============ RANDOM ============ -->
   <div class="tab" id="tab-random">
-    <div class="rand-wrap">
-      <div class="rand-box">
-        <h3><svg class="ic"><use href="#i-swords"/></svg> Civilization</h3>
-        <button class="primary" id="rand-civ">🎲 Roll a civilization</button>
-        <img id="rand-civ-img" style="display:none">
-        <div class="rand-name" id="rand-civ-name">—</div>
-        <div class="rand-hist" id="rand-civ-hist"></div>
+    <div class="random-stage">
+      <div class="random-head">
+        <div>
+          <div class="random-kicker">Draft lab</div>
+          <div class="random-title">Randomizer</div>
+        </div>
+        <div class="random-actions">
+          <div class="random-counts">
+            <span><b id="rand-civ-total">--</b> civs</span>
+            <span><b id="rand-map-total">--</b> maps</span>
+            <span>No-repeat queue</span>
+          </div>
+          <button class="primary random-roll-all" id="rand-both"><svg class="ic"><use href="#i-dice"/></svg> Roll both</button>
+        </div>
       </div>
-      <div class="rand-box">
-        <h3><svg class="ic"><use href="#i-map"/></svg> Map</h3>
-        <button class="primary" id="rand-map">🎲 Roll a map</button>
-        <img id="rand-map-img" style="display:none">
-        <div class="rand-name" id="rand-map-name">—</div>
-        <div class="rand-hist" id="rand-map-hist"></div>
+      <div class="rand-wrap">
+        <div class="rand-box rand-civ-card">
+          <h3><svg class="ic"><use href="#i-swords"/></svg> Civilization</h3>
+          <div class="rand-media">
+            <img id="rand-civ-img" style="display:none">
+            <div class="rand-placeholder"><svg class="ic"><use href="#i-swords"/></svg></div>
+          </div>
+          <div class="rand-name" id="rand-civ-name">—</div>
+          <button class="primary" id="rand-civ">Roll civilization</button>
+          <div class="rand-hist" id="rand-civ-hist"></div>
+        </div>
+        <div class="rand-box rand-map-card">
+          <h3><svg class="ic"><use href="#i-map"/></svg> Map</h3>
+          <div class="rand-media">
+            <img id="rand-map-img" style="display:none">
+            <div class="rand-placeholder"><svg class="ic"><use href="#i-map"/></svg></div>
+          </div>
+          <div class="rand-name" id="rand-map-name">—</div>
+          <button class="primary" id="rand-map">Roll map</button>
+          <div class="rand-hist" id="rand-map-hist"></div>
+        </div>
       </div>
+      <div class="random-footer"><span>Selection history</span><span>No-repeat reels</span></div>
     </div>
-    <div class="muted" style="text-align:center; margin-top:18px">Rerolls never repeat the previous result. The last few rolls stay listed under each card.</div>
   </div>
 
   <div id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
@@ -4011,8 +4082,11 @@ function makeRoller(btnId, nameId, imgId, histId, pool, srcFor) {
   let last = null;
   const hist = [];
   let spinning = false;
-  $(btnId).onclick = () => {
+  const btn = $(btnId);
+  const box = btn.closest('.rand-box');
+  btn.onclick = () => {
     if (spinning) return;
+    box.classList.add('rolling');
     let v;
     do { v = pool[Math.floor(Math.random() * pool.length)]; } while (v === last && pool.length > 1);
     if (last) {
@@ -4025,10 +4099,14 @@ function makeRoller(btnId, nameId, imgId, histId, pool, srcFor) {
     const nm = $(nameId);
     const settle = () => {
       spinning = false;
+      box.classList.remove('rolling');
+      box.classList.add('has-roll');
       nm.style.opacity = '';
       nm.textContent = v;
       nm.style.animation = 'none'; void nm.offsetWidth; nm.style.animation = 'rand-pop .3s cubic-bezier(.22,1,.36,1)';
       const img = $(imgId);
+      img.onload = () => box.classList.add('has-roll');
+      img.onerror = () => { img.style.display = 'none'; box.classList.remove('has-roll'); };
       img.src = srcFor(v); img.style.display = '';
       img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
     };
@@ -4043,6 +4121,12 @@ function makeRoller(btnId, nameId, imgId, histId, pool, srcFor) {
     }, 55);
   };
 }
+$('rand-civ-total').textContent = CIVS.length;
+$('rand-map-total').textContent = MAPS.length;
+$('rand-both').onclick = () => {
+  $('rand-civ').click();
+  $('rand-map').click();
+};
 makeRoller('rand-civ', 'rand-civ-name', 'rand-civ-img', 'rand-civ-hist', CIVS, c => `flags/${c}.webp`);
 makeRoller('rand-map', 'rand-map-name', 'rand-map-img', 'rand-map-hist', MAPS, m => `maps/${m.replace(/ /g, '_')}.png`);
 
