@@ -754,6 +754,10 @@
   .dirty-pill { color: #ffc845; font-size: 12px; opacity: 0; transition: .2s; margin-right: auto;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: min(48vw, 360px); }
   .savebar.dirty .dirty-pill { opacity: 1; animation: pulse 1.8s infinite; }
+  @media (max-width: 560px) {
+    .savebar .save-shortcut { display: none; }
+    .dirty-pill { max-width: min(62vw, 360px); }
+  }
   button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
   /* async buttons swap their label for a spinner so width never jumps */
   .btn-busy { position: relative; color: transparent !important; pointer-events: none; }
@@ -1068,9 +1072,9 @@
     </div>
 
     <div class="savebar" id="savebar">
-      <span class="dirty-pill" id="dirty-pill">● Unsaved changes</span>
+      <span class="dirty-pill" id="dirty-pill" role="status" aria-live="polite" aria-atomic="true">● Unsaved changes</span>
       <button id="revert-btn" title="Discard unsaved changes and reload saved settings" style="display:none">Revert</button>
-      <span class="muted"><kbd>Ctrl</kbd>+<kbd>S</kbd></span>
+      <span class="muted save-shortcut"><kbd>Ctrl</kbd>+<kbd>S</kbd></span>
       <button id="save-btn" class="primary" disabled>Save settings</button>
     </div>
 
@@ -2014,6 +2018,7 @@ function setSettingsDirty(dirty) {
   const title = changedSettingsTitle(changes);
   const validationMessage = syncSettingsValidity();
   const invalidDirty = dirty && !!validationMessage;
+  const dirtyPillText = invalidDirty ? validationMessage : dirty ? dirtyText : 'Saved';
   setChangedSettingHighlights(changes);
   $('savebar').classList.toggle('dirty', dirty);
   $('savebar').classList.toggle('invalid', invalidDirty);
@@ -2022,7 +2027,7 @@ function setSettingsDirty(dirty) {
   $('revert-btn').style.display = dirty ? '' : 'none';
   $('revert-btn').disabled = savingSettings;
   $('revert-btn').title = dirty ? `Discard ${dirtyText}: ${title}` : 'Discard unsaved changes and reload saved settings';
-  $('dirty-pill').textContent = `● ${dirty ? dirtyText : 'Saved'}`;
+  $('dirty-pill').textContent = `● ${dirtyPillText}`;
   $('dirty-pill').title = invalidDirty ? `${title} - ${validationMessage}` : title;
   tabButtons[0].classList.toggle('unsaved', dirty);
   if ($('sum-save')) $('sum-save').textContent = invalidDirty ? 'Fix invalid setting' : dirty ? dirtyText : 'Saved';
