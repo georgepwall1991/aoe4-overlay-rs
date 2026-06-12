@@ -1346,7 +1346,8 @@
 
   <div id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
     <div class="pal-box">
-      <input id="pal-input" placeholder="Type a command…" autocomplete="off" spellcheck="false">
+      <input id="pal-input" role="combobox" aria-autocomplete="list" aria-controls="pal-list"
+             aria-expanded="false" placeholder="Type a command…" autocomplete="off" spellcheck="false">
       <div id="pal-list" role="listbox"></div>
       <div class="pal-foot">
         <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
@@ -1932,7 +1933,11 @@ function palRender() {
   }
   palShown = matches.map(x => x.c);
   palSel = Math.min(palSel, Math.max(0, palShown.length - 1));
-  if (!palShown.length) { $('pal-list').innerHTML = '<div class="pal-empty">No matching commands</div>'; return; }
+  if (!palShown.length) {
+    $('pal-list').innerHTML = '<div class="pal-empty">No matching commands</div>';
+    $('pal-input').removeAttribute('aria-activedescendant');
+    return;
+  }
   const hl = (name, m) => {
     if (!m) return esc(name);  // matched via section only: no in-name highlight
     const set = new Set(m.idx);
@@ -1942,10 +1947,11 @@ function palRender() {
   matches.forEach(({ c, m, sect }, i) => {
     const label = sect ?? c.sect;
     if (!q && label !== lastSect) { html += `<div class="pal-sect">${label}</div>`; lastSect = label; }
-    html += `<div class="pal-item${i === palSel ? ' sel' : ''}" data-i="${i}" role="option" aria-selected="${i === palSel}">
+    html += `<div class="pal-item${i === palSel ? ' sel' : ''}" id="pal-opt-${i}" data-i="${i}" role="option" aria-selected="${i === palSel}">
       <svg class="ic"><use href="#${c.icon}"/></svg><span>${hl(c.name, m)}</span>${c.key ? `<kbd class="pal-k">${c.key}</kbd>` : ''}</div>`;
   });
   $('pal-list').innerHTML = html;
+  $('pal-input').setAttribute('aria-activedescendant', `pal-opt-${palSel}`);
   $('pal-list').querySelector('.pal-item.sel')?.scrollIntoView({ block: 'nearest' });
 }
 function palRecents() {
@@ -1959,6 +1965,7 @@ let palPrevFocus = null;
 function palOpen() {
   palPrevFocus = document.activeElement;
   $('palette').classList.add('open');
+  $('pal-input').setAttribute('aria-expanded', 'true');
   $('pal-input').value = '';
   palSel = 0;
   palRender();
@@ -1966,6 +1973,8 @@ function palOpen() {
 }
 function palClose() {
   $('palette').classList.remove('open');
+  $('pal-input').setAttribute('aria-expanded', 'false');
+  $('pal-input').removeAttribute('aria-activedescendant');
   if (palPrevFocus?.focus && document.contains(palPrevFocus)) palPrevFocus.focus();
 }
 function palRun(i) { const c = palShown[i]; if (c) { palClose(); palRemember(c.name); c.run(); } }
