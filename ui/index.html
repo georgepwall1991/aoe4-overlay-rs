@@ -472,6 +472,44 @@
   .bo-age-event-res img { width: 14px; height: 14px; object-fit: contain; }
   .bo-age-empty { min-height: 56px; display: grid; place-items: center; border-radius: 10px; color: #858b98;
     font-size: 11px; text-align: center; border: 1px dashed rgba(255,255,255,.11); background: rgba(0,0,0,.12); }
+  .bo-flow { min-width: 0; display: grid; gap: 9px; padding: 10px 11px; border-radius: 14px;
+    border: 1px solid rgba(143,201,255,.15); background:
+      radial-gradient(500px 150px at 100% 0, rgba(143,201,255,.1), transparent 72%),
+      linear-gradient(180deg, rgba(255,255,255,.035), rgba(0,0,0,.1)); }
+  .bo-flow-head { min-width: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .bo-flow-title { min-width: 0; display: grid; gap: 2px; }
+  .bo-flow-title span { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+  .bo-flow-title b { min-width: 0; color: #fff; font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-flow-legend { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; max-width: 300px; }
+  .bo-flow-legend span, .bo-flow-readout span { display: inline-flex; align-items: center; gap: 4px; min-height: 20px; padding: 2px 6px;
+    border-radius: 999px; color: #d7dde8; font-size: 10px; font-weight: 850; background: rgba(0,0,0,.23);
+    border: 1px solid rgba(255,255,255,.075); }
+  .bo-flow-legend img, .bo-flow-readout img { width: 14px; height: 14px; object-fit: contain; }
+  .bo-flow-readout { min-width: 0; display: flex; flex-wrap: wrap; gap: 5px; padding: 7px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,.075); background: rgba(5,6,10,.22); }
+  .bo-flow-readout b { color: #ffe08a; }
+  .bo-flow-chart { min-width: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(74px, 1fr);
+    gap: 8px; align-items: end; overflow-x: auto; overscroll-behavior-x: contain; padding: 1px 2px 7px; }
+  .bo-flow-step { min-width: 0; height: 142px; display: grid; grid-template-rows: 1fr auto auto; gap: 5px; padding: 8px 7px;
+    border-radius: 12px; color: #e9edf5; text-align: left; border: 1px solid rgba(255,255,255,.08);
+    background: linear-gradient(180deg, rgba(255,255,255,.052), rgba(0,0,0,.12)), rgba(8,10,15,.4); }
+  .bo-flow-step:hover { border-color: rgba(143,201,255,.32); background-color: rgba(13,17,25,.62); }
+  .bo-flow-step.sel { border-color: rgba(224,186,94,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 0 0 1px rgba(224,186,94,.13); }
+  .bo-flow-stack { min-height: 80px; display: flex; align-items: flex-end; justify-content: center; border-radius: 10px;
+    background: linear-gradient(180deg, rgba(255,255,255,.035), transparent), rgba(0,0,0,.2);
+    border: 1px solid rgba(255,255,255,.06); overflow: hidden; }
+  .bo-flow-stack-fill { width: min(42px, 76%); min-height: 7px; display: flex; flex-direction: column-reverse;
+    overflow: hidden; border-radius: 9px 9px 3px 3px; box-shadow: 0 -6px 18px rgba(0,0,0,.18); }
+  .bo-flow-seg.food { background: linear-gradient(180deg, #ff725f, #963c34); }
+  .bo-flow-seg.wood { background: linear-gradient(180deg, #ce8849, #704217); }
+  .bo-flow-seg.gold { background: linear-gradient(180deg, #ffd95a, #a97808); }
+  .bo-flow-seg.stone { background: linear-gradient(180deg, #d4d7dc, #6d737d); }
+  .bo-flow-foot { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  .bo-flow-foot b { color: #ffe08a; font-size: 11px; font-weight: 950; white-space: nowrap; }
+  .bo-flow-foot span { min-width: 0; color: #dce1ea; font-size: 10.5px; font-weight: 850; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-flow-total { color: #8fc9ff; font-size: 10px; font-weight: 900; font-variant-numeric: tabular-nums; text-align: right; }
+  .bo-flow-empty { min-height: 92px; display: grid; place-items: center; border-radius: 12px; color: #858b98;
+    font-size: 11px; text-align: center; border: 1px dashed rgba(255,255,255,.11); background: rgba(0,0,0,.12); }
   .bo-editor-assist { min-width: 0; display: grid; align-content: start; gap: 12px; padding: 14px;
     border-left: 1px solid rgba(224,186,94,.16); background:
       linear-gradient(180deg, rgba(224,186,94,.07), transparent 38%),
@@ -2317,6 +2355,22 @@
                 </div>
               </div>
               <div class="bo-age-lanes" id="bo-age-lanes"></div>
+            </div>
+            <div class="bo-flow" id="bo-flow">
+              <div class="bo-flow-head">
+                <div class="bo-flow-title">
+                  <span>Resource flow</span>
+                  <b id="bo-flow-summary">No economy yet</b>
+                </div>
+                <div class="bo-flow-legend" aria-label="Resource legend">
+                  <span><img src="bo_img/resource/resource_food.webp" alt="">Food</span>
+                  <span><img src="bo_img/resource/resource_wood.webp" alt="">Wood</span>
+                  <span><img src="bo_img/resource/resource_gold.webp" alt="">Gold</span>
+                  <span><img src="bo_img/resource/resource_stone.webp" alt="">Stone</span>
+                </div>
+              </div>
+              <div class="bo-flow-readout" id="bo-flow-readout"></div>
+              <div class="bo-flow-chart" id="bo-flow-chart" aria-label="Resource allocation by build step"></div>
             </div>
             <div class="bo-source-card open" id="bo-source-card">
               <div class="bo-source-head">
@@ -5647,6 +5701,77 @@ function renderBoAgePlan(p) {
   lanesEl.innerHTML = visible.map(boAgeLaneHtml).join('');
 }
 
+const BO_FLOW_RESOURCES = [
+  { key: 'food', label: 'Food' },
+  { key: 'wood', label: 'Wood' },
+  { key: 'gold', label: 'Gold' },
+  { key: 'stone', label: 'Stone' },
+];
+function boFlowValue(step, key) {
+  const n = Number(step?.resources?.[key]);
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+function boFlowTotal(step) {
+  return BO_FLOW_RESOURCES.reduce((sum, r) => sum + boFlowValue(step, r.key), 0);
+}
+function boFlowReadoutHtml(step, i, total) {
+  const lead = boStepLead(step, i);
+  const chips = [
+    `<span><b>S${i + 1}</b>${esc(lead)}</span>`,
+    `<span><b>${total}</b> allocated</span>`,
+  ];
+  BO_FLOW_RESOURCES.forEach(r => chips.push(`<span><img src="${BO_RES_ICONS[r.key]}" alt="">${boFlowValue(step, r.key)}</span>`));
+  if (step?.villager_count >= 0) chips.push(`<span><img src="${BO_RES_ICONS.villager}" alt="">${step.villager_count} vills</span>`);
+  if (step?.population_count >= 0) chips.push(`<span><img src="${BO_RES_ICONS.population}" alt="">${step.population_count} pop</span>`);
+  return chips.join('');
+}
+function boFlowStepHtml(step, i, maxTotal) {
+  const total = boFlowTotal(step);
+  const lead = boStepLead(step, i);
+  const height = maxTotal ? Math.max(7, Math.round((total / maxTotal) * 100)) : 0;
+  const segments = BO_FLOW_RESOURCES
+    .map(r => ({ ...r, value: boFlowValue(step, r.key) }))
+    .filter(r => r.value > 0)
+    .map(r => `<span class="bo-flow-seg ${r.key}" style="flex:${r.value}" title="${r.label}: ${r.value}"></span>`)
+    .join('');
+  return `<button class="bo-flow-step ${i === boPvStep ? 'sel' : ''}" type="button" data-flow-step-index="${i}" aria-pressed="${i === boPvStep ? 'true' : 'false'}">
+    <div class="bo-flow-stack"><div class="bo-flow-stack-fill" style="height:${height}%">${segments}</div></div>
+    <div class="bo-flow-foot"><b>S${i + 1}</b><span>${esc(lead)}</span></div>
+    <div class="bo-flow-total">${total ? `${total} allocated` : 'No split'}</div>
+  </button>`;
+}
+function renderBoResourceFlow(p) {
+  const chart = $('bo-flow-chart');
+  if (!chart) return;
+  const readout = $('bo-flow-readout');
+  if (!p.json || !Array.isArray(p.json.build_order)) {
+    $('bo-flow-summary').textContent = p.steps ? 'Convert to JSON to graph resources' : 'No economy yet';
+    readout.innerHTML = '<span>JSON resource counts unlock the economy curve</span>';
+    chart.innerHTML = '<div class="bo-flow-empty">JSON build steps unlock resource flow</div>';
+    return;
+  }
+  const steps = p.json.build_order;
+  if (!steps.length) {
+    $('bo-flow-summary').textContent = '0 steps · no economy yet';
+    readout.innerHTML = '<span>Add build steps to see the economy curve</span>';
+    chart.innerHTML = '<div class="bo-flow-empty">No economy staged</div>';
+    return;
+  }
+  const totals = steps.map(boFlowTotal);
+  const maxTotal = Math.max(...totals);
+  if (!maxTotal) {
+    $('bo-flow-summary').textContent = `${steps.length} ${steps.length === 1 ? 'step' : 'steps'} · add resource counts`;
+    readout.innerHTML = '<span>Add food, wood, gold, or stone counts to graph pressure</span>';
+    chart.innerHTML = '<div class="bo-flow-empty">No resource allocations yet</div>';
+    return;
+  }
+  const peakIndex = totals.indexOf(maxTotal);
+  const selectedIndex = Math.min(Math.max(boPvStep, 0), steps.length - 1);
+  $('bo-flow-summary').textContent = `Peak ${maxTotal} allocated at ${boStepLead(steps[peakIndex], peakIndex)}`;
+  readout.innerHTML = boFlowReadoutHtml(steps[selectedIndex], selectedIndex, totals[selectedIndex]);
+  chart.innerHTML = steps.map((step, i) => boFlowStepHtml(step, i, maxTotal)).join('');
+}
+
 function updateBoPreview() {
   const pv = $('bo-preview');
   const p = parseBo($('bo-content').value);
@@ -5704,6 +5829,7 @@ function updateBoPreview() {
   syncBoBuilderFromPreview(p);
   renderBoStepBoard(p);
   renderBoAgePlan(p);
+  renderBoResourceFlow(p);
   updateBoDossier();
 }
 function syncPvPager(steps) {
@@ -5759,6 +5885,12 @@ $('bo-age-lanes').addEventListener('click', e => {
   const node = e.target.closest('.bo-age-event');
   if (!node) return;
   boPvStep = parseInt(node.dataset.ageStepIndex, 10) || 0;
+  updateBoPreview();
+});
+$('bo-flow-chart').addEventListener('click', e => {
+  const node = e.target.closest('.bo-flow-step');
+  if (!node) return;
+  boPvStep = parseInt(node.dataset.flowStepIndex, 10) || 0;
   updateBoPreview();
 });
 $('bo-step-move-prev').onclick = () => boStepboardMove(-1);
