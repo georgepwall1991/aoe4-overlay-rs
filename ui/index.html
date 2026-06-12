@@ -2254,6 +2254,10 @@ function validateSettings() {
 async function save() {
   if (savingSettings) return;
   if (!validateSettings()) return;
+  if (savedSettingsSnapshot && !changedSettings().length) {
+    toast('No unsaved settings');
+    return;
+  }
   savingSettings = true;
   let savedOk = false;
   const btn = $('save-btn');
