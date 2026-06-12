@@ -1823,6 +1823,7 @@ const PAL_COMMANDS = [
   { sect: 'Overlay', name: 'Reposition overlay', icon: 'i-monitor', run: () => $('edit-btn').click() },
   { sect: 'Overlay', name: 'Refresh overlay data', icon: 'i-signal', run: () => $('refresh-btn').click() },
   { sect: 'Settings', name: 'Stop tracking player', icon: 'i-user', run: () => { tabButtons[0].click(); stopTrackingPlayer(); } },
+  { sect: 'Settings', name: 'Review unsaved settings', icon: 'i-gear', run: () => { tabButtons[0].click(); reviewSettingsState(); } },
   { sect: 'Settings', name: 'Display preset: Compact', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('compact'); } },
   { sect: 'Settings', name: 'Display preset: Default', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('default'); } },
   { sect: 'Settings', name: 'Display preset: Readable', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('readable'); } },
@@ -2180,8 +2181,10 @@ function focusFirstChangedSetting() {
 }
 function reviewSettingsState() {
   const invalid = firstInvalidSettingId();
-  if (invalid) focusSettingControl(invalid);
-  else focusFirstChangedSetting();
+  if (invalid) { focusSettingControl(invalid); return; }
+  const changed = changedSettings();
+  if (changed.length) focusSettingControl(changed[0]);
+  else toast('No unsaved settings');
 }
 function setSettingsDirty(dirty) {
   const changes = dirty ? changedSettings() : [];
