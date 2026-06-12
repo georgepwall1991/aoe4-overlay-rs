@@ -1353,7 +1353,7 @@
              aria-expanded="false" placeholder="Type a command…" autocomplete="off" spellcheck="false">
       <div id="pal-list" role="listbox" aria-label="Command results"></div>
       <div class="pal-foot">
-        <span><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+        <span><kbd>↑</kbd><kbd>↓</kbd><kbd>Home</kbd><kbd>End</kbd> navigate</span>
         <span><kbd>Enter</kbd> run</span>
         <span><kbd>Esc</kbd> close</span>
         <span id="pal-count" class="pal-count" aria-live="polite"></span>
@@ -2015,6 +2015,8 @@ $('pal-input').addEventListener('input', () => { palSel = 0; palRender(); });
 $('pal-input').addEventListener('keydown', e => {
   if (e.key === 'ArrowDown') { e.preventDefault(); palSel = Math.min(palSel + 1, palShown.length - 1); palRender(); }
   else if (e.key === 'ArrowUp') { e.preventDefault(); palSel = Math.max(palSel - 1, 0); palRender(); }
+  else if (e.key === 'Home') { e.preventDefault(); palSel = 0; palRender(); }
+  else if (e.key === 'End') { e.preventDefault(); palSel = Math.max(0, palShown.length - 1); palRender(); }
   else if (e.key === 'Enter') { e.preventDefault(); palRun(palSel); }
   else if (e.key === 'Escape') { e.preventDefault(); palClose(); }
 });
