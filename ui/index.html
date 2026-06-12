@@ -552,6 +552,7 @@
   @media (max-width: 880px) {
     .cards { grid-template-columns: minmax(0, 1fr); }
     .cards .card { grid-column: auto !important; }
+    .control-deck { grid-column: auto; }
     .appearance-grid { grid-template-columns: 1fr; }
   }
   .card { background: linear-gradient(180deg, #26262e, #222129); border: 1px solid var(--card-border);
@@ -630,6 +631,41 @@
   .link-btn { padding: 3px 8px; font-size: 11px; border-radius: 7px; background: rgba(255,255,255,.04);
     color: var(--ink-muted); border-color: #353541; box-shadow: none; }
   .link-btn:hover { color: #fff; border-color: #515160; background: rgba(255,255,255,.08); }
+  .control-deck { grid-column: span 2; position: relative; display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(340px, .75fr); gap: 14px; min-width: 0;
+    padding: 16px; overflow: hidden; border: 1px solid rgba(224,186,94,.28); border-radius: 16px;
+    background:
+      linear-gradient(135deg, rgba(52,52,65,.94), rgba(31,31,41,.97) 46%, rgba(23,38,45,.9)),
+      linear-gradient(180deg, rgba(255,255,255,.04), transparent 52%);
+    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 20px 42px -26px rgba(0,0,0,.95),
+      0 0 26px -18px rgba(224,186,94,.65); }
+  .control-deck::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .18;
+    background-image:
+      linear-gradient(rgba(224,186,94,.26) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(122,182,255,.22) 1px, transparent 1px);
+    background-size: 56px 56px; mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent); }
+  .control-deck::after { content: ""; position: absolute; inset: 0 0 auto; height: 1px; pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), rgba(224,186,94,.28), transparent); }
+  .deck-player, .deck-summary { position: relative; z-index: 1; min-width: 0; }
+  .deck-player { display: grid; align-content: start; gap: 12px; }
+  .deck-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-width: 0; }
+  .deck-head h3 { margin: 0; color: var(--gold-bright); border: 0; padding: 0; font-size: 12px;
+    letter-spacing: .12em; text-transform: uppercase; display: flex; align-items: center; gap: 7px; }
+  .deck-source { flex: none; color: #91cfff; font-size: 11px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; text-shadow: 0 0 10px rgba(122,182,255,.24); }
+  .control-deck .searchbar { margin: 0; }
+  .control-deck .searchbar input { padding-top: 11px; padding-bottom: 11px; border-radius: 11px;
+    background-color: rgba(8,8,12,.38); border-color: rgba(255,255,255,.11); font-size: 15px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 12px 22px -20px #000; }
+  .control-deck .searchbar input:focus { background-color: rgba(9,15,20,.58); }
+  .control-deck .searchbar button { min-width: 96px; border-radius: 11px; font-weight: 750; }
+  .control-deck .tracked { margin: 0; padding: 15px 16px; border-radius: 14px;
+    border-color: rgba(255,255,255,.1); background:
+      linear-gradient(90deg, rgba(0,0,0,.28), rgba(0,0,0,.12)),
+      linear-gradient(180deg, rgba(255,255,255,.05), transparent);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 14px 28px -24px #000; }
+  .control-deck .tracked-ava { width: 46px; height: 46px; border-radius: 14px; font-size: 18px; }
+  .control-deck .tracked-name { font-size: 15px; }
   @media (max-width: 560px) {
     .tracked { align-items: flex-start; flex-wrap: wrap; }
     .tracked-info { flex: 1 1 calc(100% - 64px); }
@@ -644,7 +680,8 @@
   .settings-summary { grid-column: span 2; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); min-width: 0;
     gap: 1px; overflow: hidden; border: 1px solid #2e2e38; border-radius: 11px;
     background: #2e2e38; box-shadow: var(--shadow-card); }
-  .sum-item { min-width: 0; padding: 10px 12px; background: linear-gradient(180deg, #24242b, #202027); }
+  .sum-item { min-width: 0; padding: 10px 12px; background: linear-gradient(180deg, #24242b, #202027);
+    border: 0; border-radius: 0; box-shadow: none; color: inherit; font: inherit; text-align: left; }
   .sum-item span { display: block; margin-bottom: 3px; color: var(--ink-muted); font-size: 10px;
     text-transform: uppercase; letter-spacing: .08em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sum-item b { display: block; color: var(--ink-strong); font-size: 13px; font-weight: 650;
@@ -652,10 +689,30 @@
   .sum-item.dirty b { color: #ffc845; }
   .sum-item.good b { color: #8ae86a; }
   .sum-item.invalid b { color: #ffb3a6; }
+  button.sum-item { appearance: none; }
+  button.sum-item:disabled { opacity: 1; cursor: default; transform: none; }
+  button.sum-item:disabled:hover { background: linear-gradient(180deg, #24242b, #202027); box-shadow: none; }
   .sum-item.actionable { cursor: pointer; transition: background .15s, box-shadow .15s; }
   .sum-item.actionable:hover { background: linear-gradient(180deg, #2b2b34, #24242c);
     box-shadow: inset 0 0 0 1px rgba(255,200,69,.22); }
   .sum-item.actionable:focus-visible { outline: 2px solid #3d7fb0; outline-offset: -2px; }
+  .deck-summary.settings-summary { grid-column: auto; grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-self: stretch; border-color: rgba(255,255,255,.1); border-radius: 14px;
+    background: rgba(11,12,16,.52); box-shadow: inset 0 1px 0 rgba(255,255,255,.04), 0 16px 30px -26px #000; }
+  .deck-summary .sum-item { min-height: 70px; padding: 15px 16px;
+    background: linear-gradient(180deg, rgba(38,38,47,.82), rgba(29,29,38,.88)); }
+  .deck-summary .sum-item span { margin-bottom: 7px; color: #aeb2be; }
+  .deck-summary .sum-item b { font-size: 15px; letter-spacing: 0; line-height: 1.25;
+    white-space: normal; overflow: visible; }
+  .deck-summary .sum-item.good b { color: #9af282; }
+  .deck-summary .sum-item.dirty { background:
+    linear-gradient(135deg, rgba(255,200,69,.16), rgba(31,31,39,.88) 55%),
+    linear-gradient(180deg, rgba(255,255,255,.05), transparent); }
+  .deck-summary button.sum-item:disabled:hover { background: linear-gradient(180deg, rgba(38,38,47,.82), rgba(29,29,38,.88)); }
+  @media (max-width: 1000px) {
+    .control-deck { grid-template-columns: minmax(0, 1fr); }
+    .deck-summary.settings-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
   @media (max-width: 880px) { .settings-summary { grid-column: auto; } }
   @media (max-width: 760px) { .settings-summary { grid-template-columns: 1fr 1fr; } }
   @media (max-width: 430px) { .settings-summary { grid-template-columns: minmax(0, 1fr); } }
@@ -988,44 +1045,49 @@
   <div class="tab active" id="tab-settings">
     <div class="cards">
 
-      <div class="card" style="grid-column: span 2">
-        <h3><svg class="ic"><use href="#i-user"/></svg> Player</h3>
-        <div class="searchbar">
-          <input id="search" type="search" placeholder="Search aoe4world by name or profile ID…" autocomplete="off" spellcheck="false"
-                 role="combobox" aria-label="Player search" aria-autocomplete="list" aria-controls="results" aria-expanded="false">
-          <button id="search-btn" class="primary">Search</button>
-        </div>
-        <div id="results" aria-live="polite" aria-atomic="true" aria-busy="false"></div>
-        <div class="tracked" id="tracked-box">
-          <span class="tracked-ava" id="tracked-ava" aria-hidden="true"><svg class="ic"><use href="#i-user"/></svg></span>
-          <div class="tracked-info">
-            <div id="current-player" class="tracked-name">No player tracked</div>
-            <div class="muted" id="tracked-sub">Search for your profile to start polling</div>
+      <div class="control-deck">
+        <div class="deck-player">
+          <div class="deck-head">
+            <h3><svg class="ic"><use href="#i-user"/></svg> Player command</h3>
+            <span class="deck-source">aoe4world</span>
           </div>
-          <span class="dot" id="poll-dot" title="Poll status"></span>
-          <span class="tracked-actions">
-            <a id="profile-link" href="#" target="_blank" style="display:none">aoe4world ↗</a>
-            <button id="clear-player" class="link-btn" type="button" style="display:none">Stop tracking</button>
-          </span>
+          <div class="searchbar">
+            <input id="search" type="search" placeholder="Search aoe4world by name or profile ID…" autocomplete="off" spellcheck="false"
+                   role="combobox" aria-label="Player search" aria-autocomplete="list" aria-controls="results" aria-expanded="false">
+            <button id="search-btn" class="primary">Search</button>
+          </div>
+          <div id="results" aria-live="polite" aria-atomic="true" aria-busy="false"></div>
+          <div class="tracked" id="tracked-box">
+            <span class="tracked-ava" id="tracked-ava" aria-hidden="true"><svg class="ic"><use href="#i-user"/></svg></span>
+            <div class="tracked-info">
+              <div id="current-player" class="tracked-name">No player tracked</div>
+              <div class="muted" id="tracked-sub">Search for your profile to start polling</div>
+            </div>
+            <span class="dot" id="poll-dot" title="Poll status"></span>
+            <span class="tracked-actions">
+              <a id="profile-link" href="#" target="_blank" style="display:none">aoe4world ↗</a>
+              <button id="clear-player" class="link-btn" type="button" style="display:none">Stop tracking</button>
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div class="settings-summary" aria-label="Current settings summary">
-        <div class="sum-item">
-          <span>Tracking</span>
-          <b id="sum-player">No profile</b>
-        </div>
-        <div class="sum-item">
-          <span>Polling</span>
-          <b id="sum-poll">15s</b>
-        </div>
-        <div class="sum-item">
-          <span>Display</span>
-          <b id="sum-display">100% / 100%</b>
-        </div>
-        <div class="sum-item good" id="sum-save-box">
-          <span>State</span>
-          <b id="sum-save">Saved</b>
+        <div class="settings-summary deck-summary" aria-label="Current settings summary">
+          <div class="sum-item">
+            <span>Tracking</span>
+            <b id="sum-player">No profile</b>
+          </div>
+          <div class="sum-item">
+            <span>Polling</span>
+            <b id="sum-poll">15s</b>
+          </div>
+          <div class="sum-item">
+            <span>Display</span>
+            <b id="sum-display">100% / 100%</b>
+          </div>
+          <button class="sum-item good" id="sum-save-box" type="button" aria-label="Settings saved" disabled>
+            <span>State</span>
+            <b id="sum-save">Saved</b>
+          </button>
         </div>
       </div>
 
@@ -2346,8 +2408,7 @@ function setSettingsDirty(dirty) {
     sumBox.classList.toggle('invalid', invalidDirty);
     sumBox.classList.toggle('good', !dirty);
     sumBox.classList.toggle('actionable', dirty);
-    sumBox.tabIndex = dirty ? 0 : -1;
-    sumBox.setAttribute('role', dirty ? 'button' : 'status');
+    sumBox.disabled = savingSettings || !dirty;
     sumBox.setAttribute('aria-label', invalidDirty ? `${validationMessage}. Click to review.` : dirty ? `${dirtyText}: ${title}. Click to review.` : 'Settings saved');
     sumBox.title = invalidDirty ? `${validationMessage} - click to review` : dirty ? `Review ${dirtyText}: ${title}` : 'Settings saved';
   }
@@ -2389,6 +2450,7 @@ async function save() {
   btn.setAttribute('aria-label', 'Saving settings');
   revert.disabled = true;
   $('savebar').classList.add('saving');
+  setSettingsDirty(savedSettingsSnapshot ? settingsSnapshot() !== savedSettingsSnapshot : true);
   setStatus('Saving settings...', 'busy');
   collectCommon();
   settings.bo_hotkey_show = $('bo-hk-show').value.trim();
@@ -3808,12 +3870,11 @@ $('search').addEventListener('keydown', e => {
 });
 $('save-btn').onclick = save;
 $('dirty-detail').onclick = focusFirstChangedSetting;
-$('sum-save-box').onclick = () => { if (changedSettings().length) reviewSettingsState(); };
+$('sum-save-box').onclick = reviewSettingsState;
 $('sum-save-box').onkeydown = e => {
-  if ((e.key === 'Enter' || e.key === ' ') && changedSettings().length) {
-    e.preventDefault();
-    reviewSettingsState();
-  }
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  e.preventDefault();
+  reviewSettingsState();
 };
 $('revert-btn').onclick = revertSettingsChanges;
 $('clear-player').onclick = stopTrackingPlayer;
