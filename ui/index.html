@@ -1135,45 +1135,100 @@
   body.busy #busybar { opacity: 1; }
 
   /* command palette */
-  #palette { position: fixed; inset: 0; z-index: 60; display: none; background: rgba(8,8,12,.55);
-    backdrop-filter: blur(3px) saturate(.9); }
-  #palette.open { display: block; animation: pal-bg .18s ease-out; }
+  #palette { position: fixed; inset: 0; z-index: 60; display: none; background:
+      radial-gradient(900px 520px at 50% 0, rgba(61,127,176,.26), transparent 64%),
+      radial-gradient(720px 420px at 22% 14%, rgba(224,186,94,.16), transparent 62%),
+      rgba(5,6,10,.72);
+    backdrop-filter: blur(12px) saturate(1.15); }
+  #palette::before { content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .18;
+    background-image:
+      linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+    background-size: 42px 42px; mask-image: radial-gradient(closest-side at 50% 20%, #000, transparent); }
+  #palette.open { display: grid; place-items: start center; animation: pal-bg .18s ease-out; }
   @keyframes pal-bg { from { opacity: 0; } }
-  #palette .pal-box, #shortcuts .pal-box { width: min(520px, calc(100vw - 48px)); margin: 12vh auto 0;
-    background: linear-gradient(180deg, #25252e, #1e1e26); border: 1px solid #3a3a46; border-radius: 13px;
-    box-shadow: 0 24px 70px -18px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 1px rgba(0,0,0,.4);
+  #palette .pal-box { position: relative; width: min(720px, calc(100vw - 48px)); margin: 8vh auto 0;
+    background:
+      linear-gradient(135deg, rgba(122,182,255,.12), transparent 30%),
+      linear-gradient(180deg, #232631, #151820 68%, #101218);
+    border: 1px solid rgba(122,182,255,.28); border-radius: 14px;
+    box-shadow: 0 32px 100px -22px rgba(0,0,0,.96), 0 0 0 1px rgba(0,0,0,.55),
+      inset 0 1px 0 rgba(255,255,255,.09), 0 0 42px rgba(61,127,176,.18);
     overflow: hidden; animation: pal-in .22s cubic-bezier(.22,1,.36,1); }
+  #palette .pal-box::before { content: ""; position: absolute; inset: 0 0 auto; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--blue-bright), var(--gold-bright), transparent);
+    opacity: .9; pointer-events: none; }
+  #palette .pal-box::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(320px 180px at 86% 0, rgba(224,186,94,.16), transparent 70%),
+      linear-gradient(180deg, rgba(255,255,255,.045), transparent 28%);
+    mix-blend-mode: screen; }
   @keyframes pal-in { from { opacity: 0; transform: translateY(-10px) scale(.985); } }
-  #pal-input { width: 100%; box-sizing: border-box; border: none; border-bottom: 1px solid #32323c;
-    border-radius: 0; background: rgba(0,0,0,.18); padding: 13px 16px; font-size: 15px; }
-  #pal-input:focus { box-shadow: none; border-color: #32323c; }
-  #pal-list { max-height: 320px; overflow: auto; padding: 6px; }
-  .pal-item { display: flex; align-items: center; gap: 10px; padding: 8px 11px; border-radius: 8px;
-    cursor: pointer; font-size: 13px; color: var(--ink); }
-  .pal-item .ic { color: var(--ink-muted); }
+  .pal-search { position: relative; z-index: 1; padding: 16px 16px 12px;
+    background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,0)); }
+  .pal-search::after { content: ""; position: absolute; left: 16px; right: 16px; bottom: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(122,182,255,.22), rgba(224,186,94,.18), transparent); }
+  .pal-search-ic { position: absolute; left: 30px; top: 50%; width: 17px; height: 17px;
+    transform: translateY(-35%); color: var(--blue-bright); filter: drop-shadow(0 0 8px rgba(122,182,255,.45)); }
+  #pal-input { width: 100%; box-sizing: border-box; border: 1px solid rgba(122,182,255,.22);
+    border-radius: 11px; background: rgba(5,8,14,.62); padding: 17px 20px 17px 48px; font-size: 16px;
+    font-weight: 650; color: var(--ink-strong); box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 14px 28px -22px #000; }
+  #pal-input::placeholder { color: #a8acb8; }
+  #pal-input:focus { box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 0 0 3px rgba(61,127,176,.24);
+    border-color: rgba(122,182,255,.58); outline: none; }
+  #pal-list { position: relative; z-index: 1; max-height: min(430px, calc(100vh - 238px)); overflow: auto; padding: 11px 13px 13px;
+    scrollbar-color: rgba(224,186,94,.42) transparent; }
+  .pal-item { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; align-items: center;
+    gap: 12px; min-height: 48px; margin: 3px 0; padding: 7px 10px; border: 1px solid transparent; border-radius: 10px;
+    cursor: pointer; font-size: 13px; color: var(--ink); background: rgba(255,255,255,.018);
+    transition: background .16s, border-color .16s, box-shadow .16s, transform .16s; }
+  .pal-item::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; border-radius: 0 2px 2px 0;
+    background: linear-gradient(180deg, var(--blue-bright), var(--gold)); opacity: 0; }
+  .pal-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 9px;
+    color: var(--ink-muted); background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+    border: 1px solid rgba(255,255,255,.07); box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+  .pal-item .ic { width: 16px; height: 16px; color: currentColor; }
+  .pal-text { min-width: 0; display: grid; gap: 1px; }
+  .pal-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-strong); font-weight: 720; }
+  .pal-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; color: var(--ink-muted); }
   .pal-hl { color: var(--gold-bright); font-weight: 700; font-style: normal; }
-  .pal-item .pal-k { margin-left: auto; flex: none; opacity: .75; }
-  .pal-item.sel { background: linear-gradient(to right, rgba(224,186,94,.14), rgba(224,186,94,.05));
-    box-shadow: inset 2px 0 0 var(--gold); color: var(--ink-strong); }
-  .pal-item.sel .ic { color: var(--gold); }
-  .pal-sect { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
-    color: var(--ink-muted); padding: 8px 11px 3px; }
-  .pal-empty { padding: 22px; text-align: center; color: var(--ink-muted); font-size: 13px; }
-  .pal-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; padding: 8px 14px; border-top: 1px solid #2c2c36;
-    background: rgba(0,0,0,.18); font-size: 11px; color: var(--ink-muted); }
+  .pal-item .pal-k { justify-self: end; margin-left: 8px; flex: none; opacity: 1; color: #e2e6f0;
+    background: linear-gradient(180deg, rgba(45,52,66,.92), rgba(28,31,40,.96)); border-color: rgba(122,182,255,.28); }
+  .pal-item:hover { background: rgba(122,182,255,.075); border-color: rgba(122,182,255,.18); }
+  .pal-item.sel { background:
+      linear-gradient(90deg, rgba(61,127,176,.22), rgba(224,186,94,.13)),
+      rgba(255,255,255,.035);
+    border-color: rgba(224,186,94,.42); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 14px 28px -22px #000;
+    color: var(--ink-strong); transform: translateX(2px); }
+  .pal-item.sel::before { opacity: 1; }
+  .pal-item.sel .pal-icon { color: var(--gold-bright); border-color: rgba(224,186,94,.35);
+    background: radial-gradient(circle at 50% 0, rgba(255,233,160,.18), transparent 62%), rgba(224,186,94,.08);
+    box-shadow: 0 0 16px rgba(224,186,94,.18), inset 0 1px 0 rgba(255,255,255,.08); }
+  .pal-item.sel .pal-meta { color: #b9c6d8; }
+  .pal-sect { display: flex; align-items: center; gap: 10px; font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0; color: var(--gold-bright); padding: 12px 9px 4px; }
+  .pal-sect::after { content: ""; height: 1px; flex: 1; background: linear-gradient(90deg, rgba(224,186,94,.24), transparent); }
+  .pal-empty { margin: 10px 0 2px; padding: 32px 22px; text-align: center; color: var(--ink-muted); font-size: 13px;
+    border: 1px dashed rgba(122,182,255,.2); border-radius: 10px; background: rgba(255,255,255,.025); }
+  .pal-foot { position: relative; z-index: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 7px 14px; padding: 11px 16px;
+    border-top: 1px solid rgba(122,182,255,.18); background: rgba(4,6,10,.48); font-size: 11px; color: var(--ink-muted); }
   #palette .pal-close { appearance: none; display: inline-flex; align-items: center; gap: 4px; margin: -2px 0;
-    border: 1px solid transparent; border-radius: 7px; padding: 2px 5px; background: transparent;
-    box-shadow: none; font-size: 11px; color: var(--ink-muted); font-weight: 400; }
+    border: 1px solid rgba(255,255,255,.06); border-radius: 7px; padding: 2px 7px; background: rgba(255,255,255,.035);
+    box-shadow: none; font-size: 11px; color: var(--ink-muted); font-weight: 500; }
   #palette .pal-close:hover,
-  #palette .pal-close:focus-visible { color: var(--ink-strong); background: rgba(255,255,255,.06); border-color: #3a3d4b; }
-  .pal-count { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #palette .pal-close:focus-visible { color: var(--ink-strong); background: rgba(255,255,255,.075); border-color: rgba(122,182,255,.28); }
+  .pal-count { margin-left: auto; font-variant-numeric: tabular-nums; white-space: nowrap; color: #dce4f0;
+    padding: 2px 8px; border: 1px solid rgba(122,182,255,.16); border-radius: 999px; background: rgba(122,182,255,.07); }
   .pal-shortcuts { white-space: nowrap; }
 
   /* keyboard shortcuts cheat sheet */
   #shortcuts { position: fixed; inset: 0; z-index: 60; display: none; background: rgba(8,8,12,.55);
     backdrop-filter: blur(3px) saturate(.9); }
   #shortcuts.open { display: block; animation: pal-bg .18s ease-out; }
-  #shortcuts .pal-box { width: min(620px, calc(100vw - 48px)); padding: 18px 22px 20px; }
+  #shortcuts .pal-box { width: min(620px, calc(100vw - 48px)); margin: 12vh auto 0; padding: 18px 22px 20px;
+    background: linear-gradient(180deg, #25252e, #1e1e26); border: 1px solid #3a3a46; border-radius: 13px;
+    box-shadow: 0 24px 70px -18px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 1px rgba(0,0,0,.4);
+    overflow: hidden; animation: pal-in .22s cubic-bezier(.22,1,.36,1); }
   #shortcuts h4 { margin: 14px 0 6px; font-size: 11px; color: var(--gold); text-transform: uppercase;
     letter-spacing: .08em; border-bottom: 1px solid var(--gold-faint); padding-bottom: 4px; }
   #shortcuts h4:first-of-type { margin-top: 4px; }
@@ -1726,8 +1781,11 @@
 
   <div id="palette" role="dialog" aria-modal="true" aria-label="Command palette">
     <div class="pal-box">
-      <input id="pal-input" role="combobox" aria-label="Command" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="pal-list"
-             aria-expanded="false" placeholder="Type a command…" autocomplete="off" spellcheck="false">
+      <div class="pal-search">
+        <svg class="ic pal-search-ic"><use href="#i-keyboard"/></svg>
+        <input id="pal-input" role="combobox" aria-label="Command" aria-autocomplete="list" aria-haspopup="listbox" aria-controls="pal-list"
+               aria-expanded="false" placeholder="Type a command…" autocomplete="off" spellcheck="false">
+      </div>
       <div id="pal-list" role="listbox" aria-label="Command results"></div>
       <div class="pal-foot">
         <span><kbd>↑</kbd><kbd>↓</kbd><kbd>Home</kbd><kbd>End</kbd> navigate</span>
@@ -2334,8 +2392,11 @@ function palRender() {
   matches.forEach(({ c, m, sect }, i) => {
     const label = sect ?? c.sect;
     if (!q && label !== lastSect) { html += `<div class="pal-sect">${label}</div>`; lastSect = label; }
-    html += `<div class="pal-item${i === palSel ? ' sel' : ''}" id="pal-opt-${i}" data-i="${i}" role="option" aria-selected="${i === palSel}">
-      <svg class="ic"><use href="#${c.icon}"/></svg><span>${hl(c.name, m)}</span>${c.key ? `<kbd class="pal-k">${c.key}</kbd>` : ''}</div>`;
+    const aria = `${c.name} ${c.sect}${c.key ? ` ${c.key}` : ''}`;
+    html += `<div class="pal-item${i === palSel ? ' sel' : ''}" id="pal-opt-${i}" data-i="${i}" role="option" aria-selected="${i === palSel}" aria-label="${esc(aria)}">
+      <span class="pal-icon"><svg class="ic"><use href="#${c.icon}"/></svg></span>
+      <span class="pal-text"><span class="pal-name">${hl(c.name, m)}</span><span class="pal-meta">${esc(c.sect)}</span></span>
+      ${c.key ? `<kbd class="pal-k">${c.key}</kbd>` : ''}</div>`;
   });
   $('pal-list').innerHTML = html;
   $('pal-input').setAttribute('aria-activedescendant', `pal-opt-${palSel}`);
