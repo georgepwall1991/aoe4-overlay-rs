@@ -386,6 +386,72 @@
                box-shadow: var(--shadow-card);
                transition: border-color .15s, transform .15s, box-shadow .15s;
                content-visibility: auto; contain-intrinsic-size: auto 104px; }
+  #tab-games { max-width: 1240px; }
+  .games-hero { --hero-map: linear-gradient(135deg, #26262e, #16161c);
+    position: relative; overflow: hidden; min-height: 232px; margin: 0 0 14px; padding: 18px;
+    border: 1px solid rgba(224,186,94,.24); border-radius: 18px;
+    background:
+      radial-gradient(720px 260px at 70% 10%, rgba(224,186,94,.13), transparent 62%),
+      linear-gradient(90deg, rgba(16,16,21,.96) 0%, rgba(20,20,26,.86) 48%, rgba(20,20,26,.48) 100%),
+      var(--hero-map);
+    background-size: cover; background-position: center; background-blend-mode: normal, normal, normal;
+    box-shadow: 0 1px 0 rgba(255,255,255,.06) inset, 0 24px 60px -28px rgba(0,0,0,.9);
+    animation: hero-rise .36s cubic-bezier(.22,1,.36,1); }
+  .games-hero::before { content: ""; position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.08), transparent 1px),
+      radial-gradient(420px 220px at 10% 95%, rgba(122,182,255,.13), transparent 68%);
+    pointer-events: none; }
+  .games-hero::after { content: ""; position: absolute; left: 18px; right: 18px; bottom: 0; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,233,160,.55), transparent); opacity: .8; }
+  .games-hero.hero-win { border-color: rgba(111,224,74,.26); }
+  .games-hero.hero-loss { border-color: rgba(255,123,102,.26); }
+  .games-hero.hero-live { border-color: rgba(255,200,69,.46); box-shadow: 0 0 28px -18px rgba(255,179,0,.9), 0 24px 60px -28px rgba(0,0,0,.9); }
+  @keyframes hero-rise { from { opacity: 0; transform: translateY(9px) scale(.995); } }
+  .games-hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .75fr);
+    gap: 18px; min-height: inherit; align-items: stretch; }
+  .games-hero-main { display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-width: 0; }
+  .games-hero-kicker { display: inline-flex; align-items: center; gap: 8px; color: #f2d986;
+    font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+  .games-hero-kicker .ic { width: 13px; height: 13px; }
+  .games-hero-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    color: #fff; font-size: 31px; font-weight: 850; letter-spacing: 0; line-height: 1.16; min-height: 38px; margin-top: 7px;
+    text-shadow: 0 2px 18px rgba(0,0,0,.75); }
+  .games-hero-sub { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 11px; }
+  .hero-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+    color: #cfd2dc; background: rgba(15,15,19,.54); border: 1px solid rgba(255,255,255,.1);
+    box-shadow: 0 1px 0 rgba(255,255,255,.04) inset; font-size: 11px; font-weight: 650; }
+  .hero-pill.win { color: #91f172; border-color: rgba(111,224,74,.34); background: rgba(72,189,33,.15); }
+  .hero-pill.loss { color: #ff9a89; border-color: rgba(255,123,102,.34); background: rgba(224,69,47,.16); }
+  .hero-pill.live { color: #ffd86a; border-color: rgba(255,200,69,.4); background: rgba(255,179,0,.16); }
+  .games-hero-teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: stretch; }
+  .hero-team { min-width: 0; padding: 11px; border-radius: 13px; background: rgba(13,13,17,.58);
+    border: 1px solid rgba(255,255,255,.09); box-shadow: 0 10px 28px -20px rgba(0,0,0,.85); }
+  .hero-team.mine { border-color: rgba(224,186,94,.28); background: rgba(44,37,20,.5); }
+  .hero-team-label { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    color: #aeb1bc; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
+  .hero-player { display: flex; gap: 7px; align-items: center; min-width: 0; margin: 5px 0; }
+  .hero-player > div { flex: 1; min-width: 0; }
+  .hero-player img { width: 24px; height: 16px; object-fit: cover; border-radius: 3px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.13); }
+  .hero-player-name { color: #f4f5f8; font-size: 13px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hero-player-civ { color: #9da0ab; font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hero-versus { display: grid; place-items: center; color: rgba(255,233,160,.9); font-size: 10px; font-weight: 900; letter-spacing: .12em; }
+  .games-hero-panel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; align-content: end; }
+  .hero-metric { min-height: 70px; padding: 11px 12px; border-radius: 13px; background: rgba(13,13,17,.63);
+    border: 1px solid rgba(255,255,255,.1); box-shadow: 0 1px 0 rgba(255,255,255,.04) inset; }
+  .hero-metric.primary { grid-column: span 2; min-height: 82px;
+    background: linear-gradient(135deg, rgba(224,186,94,.18), rgba(13,13,17,.68) 52%); border-color: rgba(224,186,94,.26); }
+  .hero-metric .label { color: #9ca0ac; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+  .hero-metric .value { color: #fff; font-size: 24px; font-weight: 850; line-height: 1.08; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .hero-metric .value.pos { color: #85ec65; } .hero-metric .value.neg { color: #ff8d79; }
+  .hero-metric .note { color: #a4a7b2; font-size: 11px; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  @media (max-width: 960px) {
+    .games-hero-inner { grid-template-columns: 1fr; }
+    .games-hero-panel { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .hero-metric.primary { grid-column: span 2; }
+    .games-hero-title { font-size: 26px; }
+  }
   .game-card[data-url] { cursor: pointer; }
   .gp .pname[data-pfilter] { cursor: pointer; }
   .gp .pname[data-pfilter]:hover { text-decoration: underline; text-decoration-color: rgba(255,255,255,.35); }
@@ -499,7 +565,7 @@
     0% { border-color: rgba(255,200,69,.9); box-shadow: 0 0 22px -2px rgba(255,179,0,.55); }
     100% { border-color: #32323c; } }
   @media (prefers-reduced-motion: reduce) {
-    .game-card, #games-stats, .civ-row .bar i, .wr-ring, .game-map, #map-peek img,
+    .game-card, .games-hero, #games-stats, .civ-row .bar i, .wr-ring, .game-map, #map-peek img,
     .badge.live, .game-card.res-live { animation: none !important; transition: none !important; } }
   input[type=search]::-webkit-search-cancel-button { -webkit-appearance: none; width: 13px; height: 13px;
     cursor: pointer; opacity: .55; transition: opacity .15s;
@@ -1257,6 +1323,7 @@
 
   <!-- ============ GAMES ============ -->
   <div class="tab" id="tab-games">
+    <section id="games-hero" class="games-hero" style="display:none" aria-live="polite"></section>
     <div class="games-toolbar">
       <select id="gf-mode">
         <option value="">All modes</option>
@@ -2856,6 +2923,104 @@ function gameResult(g, pid) {
   return { me, result: g.ongoing ? 'live' : (me?.result ?? '') };
 }
 
+function gameTeams(g) {
+  return (g.teams || []).map(t => t.map(m => m.player || m));
+}
+
+function gameMapAsset(map) {
+  return `maps/${(map ?? '').replace(/ /g, '_')}.png`;
+}
+
+function heroPlayer(p) {
+  return `<div class="hero-player">${civFlag(p.civilization)}
+    <div>
+      <div class="hero-player-name" title="${esc(p.name ?? '?')}">${esc(p.name ?? '?')}</div>
+      <div class="hero-player-civ">${esc(civTitle(p.civilization))}</div>
+    </div>
+  </div>`;
+}
+
+function heroTeam(team, pid, label) {
+  const mine = team.some(p => p.profile_id === pid);
+  const players = team.length
+    ? team.map(heroPlayer).join('')
+    : '<div class="hero-player-name">Unknown side</div>';
+  return `<div class="hero-team ${mine ? 'mine' : ''}">
+    <div class="hero-team-label"><span>${label}</span><span>${team.length || '?'}P</span></div>
+    ${players}
+  </div>`;
+}
+
+function renderGamesHero(games, pid, filtered) {
+  const hero = $('games-hero');
+  if (!hero || !games.length || !pid) {
+    if (hero) { hero.style.display = 'none'; hero.innerHTML = ''; }
+    return;
+  }
+
+  const g = games[0];
+  const teams = gameTeams(g);
+  const { me, result } = gameResult(g, pid);
+  const live = !!g.ongoing;
+  const tone = live ? 'live' : (result === 'win' ? 'win' : result === 'loss' ? 'loss' : 'unknown');
+  const myTeam = teams.find(t => t.some(p => p.profile_id === pid)) || teams[0] || [];
+  const opposition = teams.filter(t => t !== myTeam).flat();
+  const finished = games.map(game => gameResult(game, pid)).filter(r => r.result === 'win' || r.result === 'loss');
+  const wins = finished.filter(r => r.result === 'win').length;
+  const losses = finished.length - wins;
+  const wr = finished.length ? Math.round(wins / finished.length * 100) : null;
+  const d = me?.rating_diff;
+  const ratingClass = !live && (d ?? null) !== null ? (d >= 0 ? 'pos' : 'neg') : '';
+  const ratingValue = live ? 'Live now' : ((d ?? null) !== null ? `${d >= 0 ? '+' : ''}${d}` : 'Unrated');
+  const opponentNames = opposition.map(p => p.name).filter(Boolean).slice(0, 2).join(', ') || 'Opposition';
+  const badge = live ? '<span class="hero-pill live">Live</span>'
+    : result ? `<span class="hero-pill ${result}">${result}</span>` : '<span class="hero-pill">Result pending</span>';
+  const mapUrl = encodeURI(gameMapAsset(g.map)).replace(/["\\]/g, '');
+
+  hero.className = `games-hero hero-${tone}`;
+  hero.style.display = '';
+  hero.style.setProperty('--hero-map', `url("${mapUrl}")`);
+  hero.innerHTML = `
+    <div class="games-hero-inner">
+      <div class="games-hero-main">
+        <div>
+          <div class="games-hero-kicker"><svg class="ic"><use href="#i-map"/></svg>${filtered ? 'Filtered highlight' : 'Latest match intel'}</div>
+          <div class="games-hero-title">
+            <span>${esc(g.map ?? 'Unknown map')}</span>
+            ${badge}
+          </div>
+          <div class="games-hero-sub">
+            <span class="hero-pill">${esc(fmtMode(g.kind) || 'Unknown mode')}</span>
+            <span class="hero-pill">${esc(g.started_at ? timeAgo(g.started_at) : 'Time unknown')}</span>
+            ${fmtDur(g.duration) ? `<span class="hero-pill">${esc(fmtDur(g.duration))}</span>` : ''}
+          </div>
+        </div>
+        <div class="games-hero-teams">
+          ${heroTeam(myTeam, pid, 'Your side')}
+          <div class="hero-versus">VS</div>
+          ${heroTeam(opposition, pid, 'Opposition')}
+        </div>
+      </div>
+      <div class="games-hero-panel">
+        <div class="hero-metric primary">
+          <div class="label">Rating move</div>
+          <div class="value ${ratingClass}">${ratingValue}</div>
+          <div class="note">${esc(me?.rating ? `Now ${me.rating}` : opponentNames)}</div>
+        </div>
+        <div class="hero-metric">
+          <div class="label">Viewed set</div>
+          <div class="value">${games.length}</div>
+          <div class="note">${filtered ? 'Filtered games' : 'Loaded games'}</div>
+        </div>
+        <div class="hero-metric">
+          <div class="label">Record</div>
+          <div class="value ${wr !== null && wr >= 50 ? 'pos' : wr !== null ? 'neg' : ''}">${finished.length ? `${wins}W ${losses}L` : '-'}</div>
+          <div class="note">${wr !== null ? `${wr}% winrate` : 'No finished games'}</div>
+        </div>
+      </div>
+    </div>`;
+}
+
 function applyGameFilters() {
   const mode = $('gf-mode').value, res = $('gf-result').dataset.value;
   const text = $('gf-text').value.trim().toLowerCase();
@@ -2990,6 +3155,7 @@ function renderGames() {
     ? (games.length === allGames.length ? `${games.length} games` : `${games.length}/${allGames.length} games`) : '';
   $('gf-clearbar').style.display = filtered && allGames.length ? '' : 'none';
   $('gf-text').classList.toggle('filter-on', !!$('gf-text').value.trim());
+  renderGamesHero(games, pid, filtered);
   renderGameStats(games, pid);
   let wins = 0, losses = 0, html = '';
   {
@@ -3020,7 +3186,7 @@ function renderGames() {
           ? ` <span class="day-rec"><b class="w">${rec.w}W</b>–<b class="l">${rec.l}L</b></span>` : ''}</div>`;
         lastBucket = bucket;
       }
-      const teams = (g.teams || []).map(t => t.map(m => m.player || m));
+      const teams = gameTeams(g);
       const me = teams.flat().find(p => p.profile_id === pid);
       const live = !!g.ongoing;
       const result = live ? 'live' : (me?.result === 'win' ? 'win' : me?.result === 'loss' ? 'loss' : '');
@@ -3029,7 +3195,7 @@ function renderGames() {
       const rdiff = live ? '' : (d ?? null) !== null
         ? `<div class="rdiff ${d >= 0 ? 'pos' : 'neg'}" title="Rating ${d >= 0 ? 'gained' : 'lost'}${me?.rating ? ` — now ${me.rating}` : ''}">${d >= 0 ? '+' : ''}${d}</div>`
         : '<div class="rdiff na" title="Unrated game">—</div>';
-      const mapImg = `maps/${(g.map ?? '').replace(/ /g, '_')}.png`;
+      const mapImg = gameMapAsset(g.map);
       const badge = live ? '<span class="badge live">Live</span>'
         : result ? `<span class="badge ${result}">${result}</span>` : '';
       html += `
