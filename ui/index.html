@@ -2011,6 +2011,26 @@ function syncSettingsValidity() {
   if (portBad) return 'OBS websocket port must be between 1024 and 65535';
   return '';
 }
+function firstInvalidSettingId() {
+  const duplicates = hotkeyDuplicateIds();
+  if (duplicates.size) return HOTKEY_IDS.find(id => duplicates.has(id)) || '';
+  return syncPortValidity() ? 'wsport' : '';
+}
+function focusInvalidSetting() {
+  const id = firstInvalidSettingId();
+  const el = id ? $(id) : null;
+  if (!el) return;
+  const tab = el.closest('.tab');
+  if (tab && !tab.classList.contains('active')) {
+    const target = tabButtons.find(btn => btn.dataset.tab === tab.id.replace(/^tab-/, ''));
+    if (target) target.click();
+  }
+  requestAnimationFrame(() => {
+    el.scrollIntoView({ block: 'center', behavior: 'auto' });
+    el.focus({ preventScroll: true });
+    if (typeof el.select === 'function' && el.type !== 'color') el.select();
+  });
+}
 function setSettingsDirty(dirty) {
   const changes = dirty ? changedSettings() : [];
   const count = changes.length;
@@ -2047,6 +2067,7 @@ function clearDirty() {
 function validateSettings() {
   const message = syncSettingsValidity();
   if (message) {
+    focusInvalidSetting();
     toast(message, true);
     return false;
   }
