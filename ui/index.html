@@ -377,7 +377,7 @@
   #bo-content.json-ok:focus { border-color: rgba(72,189,33,.6); box-shadow: 0 0 0 2px rgba(72,189,33,.18); }
   #bo-format.warn { background: rgba(255,179,0,.18); color: #ffc845; }
   .bo-editor-shell { display: grid; grid-template-columns: minmax(0, 1fr) 292px; gap: 16px; align-items: stretch; }
-  .bo-editor-main { min-width: 0; display: grid; grid-template-rows: auto auto minmax(300px, 1fr) auto auto auto; gap: 10px; }
+  .bo-editor-main { min-width: 0; display: grid; align-content: start; gap: 10px; }
   .bo-editor-card #bo-content { height: 330px; min-height: 300px; margin: 0; font-size: 12.5px; line-height: 1.58;
     background:
       linear-gradient(90deg, rgba(122,182,255,.045), transparent 18%),
@@ -385,6 +385,21 @@
   .bo-editor-name { margin: 0; }
   .bo-editor-actions { margin: 0; gap: 9px; }
   .bo-editor-flags { margin: 0; }
+  .bo-source-card { min-width: 0; display: grid; gap: 9px; padding: 10px 11px; border-radius: 14px;
+    border: 1px solid rgba(255,255,255,.08); background:
+      radial-gradient(420px 110px at 100% 0, rgba(224,186,94,.075), transparent 70%),
+      rgba(6,7,11,.24); }
+  .bo-source-head { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .bo-source-title { min-width: 0; display: grid; gap: 2px; }
+  .bo-source-title span { color: #8fc9ff; font-size: 10px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+  .bo-source-title b { min-width: 0; color: #fff; font-size: 13px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bo-source-actions { flex: none; display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+  .bo-source-actions button { min-height: 28px; padding: 5px 9px; font-size: 11px; }
+  .bo-source-card:not(.open) { border-style: dashed; background:
+      radial-gradient(380px 100px at 100% 0, rgba(143,201,255,.08), transparent 70%),
+      rgba(6,7,11,.18); }
+  .bo-source-card:not(.open) #bo-content { display: none; }
+  .bo-source-card.force-open { border-color: rgba(255,179,0,.25); }
   .bo-stepboard { min-width: 0; display: grid; gap: 8px; padding: 10px 11px 9px; border-radius: 14px;
     border: 1px solid rgba(143,201,255,.16); background:
       radial-gradient(520px 120px at 0 0, rgba(143,201,255,.09), transparent 70%),
@@ -2257,7 +2272,19 @@
               </div>
               <div class="bo-step-path empty" id="bo-step-path"></div>
             </div>
-            <textarea id="bo-content" spellcheck="false" placeholder='Plain text (one step per line), or RTS_Overlay JSON ({"civilization": ..., "build_order": [...]})'></textarea>
+            <div class="bo-source-card open" id="bo-source-card">
+              <div class="bo-source-head">
+                <div class="bo-source-title">
+                  <span>Source tray</span>
+                  <b id="bo-source-summary">Paste or inspect source</b>
+                </div>
+                <div class="bo-source-actions">
+                  <button id="bo-source-copy" type="button">Copy source</button>
+                  <button id="bo-source-toggle" type="button" aria-expanded="true" aria-controls="bo-content">Hide source</button>
+                </div>
+              </div>
+              <textarea id="bo-content" spellcheck="false" placeholder='Plain text (one step per line), or RTS_Overlay JSON ({"civilization": ..., "build_order": [...]})'></textarea>
+            </div>
             <div class="row bo-editor-actions">
               <button id="bo-add" class="primary">Save build order</button>
               <button id="bo-dup">Duplicate</button>
@@ -2269,7 +2296,7 @@
               <button id="bo-showbtn">Show on overlay</button>
               <label style="min-width:0; flex:1"><input id="bo-checked" type="checkbox" checked> include in hotkey cycle</label>
             </div>
-            <div class="hint" style="margin-top:2px"><svg class="ic"><use href="#i-pencil"/></svg><span>Paste plain text, RTS_Overlay JSON, age4builder-style JSON, or a build link. The editor can repair common JSON paste mistakes before saving. Use <code>@folder/image@</code> tokens for icons. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves.</span></div>
+            <div class="hint" style="margin-top:2px"><svg class="ic"><use href="#i-pencil"/></svg><span>Paste plain text, RTS_Overlay JSON, age4builder-style JSON, or a build link into the source tray. It opens automatically for repairs, plain text, and empty drafts. Use <code>@folder/image@</code> tokens for icons. <kbd>Ctrl</kbd>+<kbd>Enter</kbd> saves.</span></div>
           </div>
           <aside class="bo-editor-assist" aria-live="polite">
             <div class="bo-assist-head">
@@ -4471,6 +4498,10 @@ function setBoDirty(d) {
 }
 let boPvStep = 0;        // preview step index
 let boShownName = null;  // BO currently on the overlay (from bo_data)
+let boSourceOpen = (() => {
+  try { return localStorage.getItem('boSourceOpen') === 'open'; }
+  catch (e) { return false; }
+})();
 
 // Civ names with punctuation (as exported by aoe4guides) -> our flag file names.
 const FLAG_ALIASES = { "Zhu Xi's Legacy": 'Zhu Xis Legacy', "Jeanne d'Arc": 'Jeanne Darc' };
@@ -4825,6 +4856,35 @@ function updateBoAssist(p) {
   }
 }
 
+function boSourceForcedOpen(p) {
+  const hasContent = !!$('bo-content').value.trim();
+  return !hasContent || !!p.err || !!p.repair || !p.json;
+}
+function boSourceSummary(p) {
+  const hasContent = !!$('bo-content').value.trim();
+  if (!hasContent) return 'Paste a build, use the composer, or import from web';
+  if (p.err && p.repair) return `Repairable JSON · ${p.steps} steps`;
+  if (p.err) return 'Invalid JSON needs attention';
+  if (p.repair) return `Cleanup available · ${p.steps} steps`;
+  if (p.json) return `${p.steps} ${p.steps === 1 ? 'step' : 'steps'} · clean JSON source`;
+  return `${p.steps} ${p.steps === 1 ? 'line' : 'lines'} · plain text source`;
+}
+function syncBoSourceTray(p) {
+  const card = $('bo-source-card');
+  if (!card) return;
+  const forced = boSourceForcedOpen(p);
+  const open = forced || boSourceOpen;
+  card.classList.toggle('open', open);
+  card.classList.toggle('force-open', forced);
+  $('bo-source-summary').textContent = boSourceSummary(p);
+  const toggle = $('bo-source-toggle');
+  toggle.disabled = forced;
+  toggle.textContent = open ? (forced ? 'Source required' : 'Hide source') : 'Show source';
+  toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  toggle.title = forced ? 'Source stays open while content needs direct editing' : (open ? 'Collapse the source tray' : 'Open the source tray');
+  $('bo-content').setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+
 function validateBoContent() {
   const p = parseBo($('bo-content').value);
   const badge = $('bo-format');
@@ -4837,6 +4897,7 @@ function validateBoContent() {
   else if (p.json) { badge.className = 'badge ok'; badge.textContent = `JSON · ${p.steps} steps`; badge.title = p.civ || ''; }
   else { badge.className = 'badge mode'; badge.textContent = `text · ${p.steps} steps`; badge.title = ''; }
   updateBoAssist(p);
+  syncBoSourceTray(p);
   updateBoDossier();
   return p;
 }
@@ -5592,6 +5653,23 @@ $('bo-step-move-prev').onclick = () => boStepboardMove(-1);
 $('bo-step-move-next').onclick = () => boStepboardMove(1);
 $('bo-step-duplicate').onclick = boStepboardDuplicate;
 $('bo-step-remove').onclick = boStepboardRemove;
+$('bo-source-toggle').onclick = () => {
+  const p = parseBo($('bo-content').value);
+  if (boSourceForcedOpen(p)) { syncBoSourceTray(p); return; }
+  boSourceOpen = !boSourceOpen;
+  try { localStorage.setItem('boSourceOpen', boSourceOpen ? 'open' : 'closed'); } catch (e) { /* storage unavailable */ }
+  syncBoSourceTray(p);
+};
+$('bo-source-copy').onclick = async () => {
+  const content = $('bo-content').value;
+  if (!content.trim()) { toast('No build source to copy', true); return; }
+  try {
+    await navigator.clipboard.writeText(content);
+    toast('Build source copied');
+  } catch (e) {
+    toast('Could not copy source', true);
+  }
+};
 BO_BUILDER_INPUTS.forEach(id => {
   const el = $(id);
   el.addEventListener('input', renderBoBuilderDraft);
