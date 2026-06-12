@@ -1824,6 +1824,7 @@ const PAL_COMMANDS = [
   { sect: 'Overlay', name: 'Refresh overlay data', icon: 'i-signal', run: () => $('refresh-btn').click() },
   { sect: 'Settings', name: 'Stop tracking player', icon: 'i-user', run: () => { tabButtons[0].click(); stopTrackingPlayer(); } },
   { sect: 'Settings', name: 'Review unsaved settings', icon: 'i-gear', run: () => { tabButtons[0].click(); reviewSettingsState(); } },
+  { sect: 'Settings', name: 'Revert unsaved settings', icon: 'i-gear', run: () => { tabButtons[0].click(); revertSettingsChanges(); } },
   { sect: 'Settings', name: 'Display preset: Compact', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('compact'); } },
   { sect: 'Settings', name: 'Display preset: Default', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('default'); } },
   { sect: 'Settings', name: 'Display preset: Readable', icon: 'i-monitor', run: () => { tabButtons[0].click(); applyDisplayPreset('readable'); } },
@@ -2185,6 +2186,12 @@ function reviewSettingsState() {
   const changed = changedSettings();
   if (changed.length) focusSettingControl(changed[0]);
   else toast('No unsaved settings');
+}
+async function revertSettingsChanges() {
+  if (savingSettings) return;
+  if (!changedSettings().length) { toast('No unsaved settings'); return; }
+  await loadSettings();
+  toast('Reverted to saved settings');
 }
 function setSettingsDirty(dirty) {
   const changes = dirty ? changedSettings() : [];
@@ -3655,7 +3662,7 @@ $('sum-save-box').onkeydown = e => {
     reviewSettingsState();
   }
 };
-$('revert-btn').onclick = async () => { await loadSettings(); toast('Reverted to saved settings'); };
+$('revert-btn').onclick = revertSettingsChanges;
 $('clear-player').onclick = stopTrackingPlayer;
 $('toggle-btn').onclick = () => invoke('toggle_overlay');
 $('refresh-btn').onclick = () => { invoke('force_refresh'); setStatus('Refreshing…', 'busy'); };
