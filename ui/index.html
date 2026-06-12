@@ -562,10 +562,39 @@
   .card h3 { margin: 0 0 12px; font-size: 12px; color: var(--gold); letter-spacing: .09em; text-transform: uppercase;
     display: flex; align-items: center; gap: 6px; padding-bottom: 8px;
     border-bottom: 1px solid var(--gold-faint); }
+  #tab-settings .settings-panel { --panel-accent: var(--gold); --panel-accent-rgb: 224, 186, 94;
+    border-color: rgba(var(--panel-accent-rgb), .26); border-radius: 16px; overflow: hidden;
+    background:
+      linear-gradient(135deg, rgba(var(--panel-accent-rgb), .09), transparent 38%),
+      linear-gradient(180deg, rgba(42,42,52,.98), rgba(29,29,38,.96));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 20px 34px -26px rgba(0,0,0,.96),
+      0 0 22px -19px rgba(var(--panel-accent-rgb), .95); }
+  #tab-settings .stream-panel { --panel-accent: var(--blue-bright); --panel-accent-rgb: 122, 182, 255; }
+  #tab-settings .appearance-panel { --panel-accent: var(--green-bright); --panel-accent-rgb: 111, 224, 74; }
+  #tab-settings .settings-panel::before {
+    background: linear-gradient(90deg, transparent 4%, rgba(var(--panel-accent-rgb), .72), rgba(255,255,255,.08), transparent 96%); }
+  #tab-settings .settings-panel h3 { margin: -14px -16px 14px; padding: 14px 16px 12px;
+    border-bottom-color: rgba(var(--panel-accent-rgb), .2);
+    background: linear-gradient(90deg, rgba(var(--panel-accent-rgb), .13), rgba(255,255,255,.03), transparent);
+    color: var(--panel-accent); }
+  #tab-settings .settings-panel h3 .ic { width: 15px; height: 15px; padding: 5px; border-radius: 10px;
+    background: rgba(var(--panel-accent-rgb), .11); box-shadow: inset 0 0 0 1px rgba(var(--panel-accent-rgb), .24); }
+  #tab-settings .settings-panel .btn-row { padding: 9px; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 13px; background: rgba(0,0,0,.13); box-shadow: inset 0 1px 0 rgba(255,255,255,.035); }
   .field { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; }
   .field label { min-width: 0; flex: 1; color: #ccc; }
   .field label b { color: #7ab6ff; font-weight: 600; margin-left: 4px; }
   .field input[type=range] { flex: 1; max-width: 180px; accent-color: #3d7fb0; }
+  #tab-settings .settings-panel .field { margin: 8px 0; padding: 10px 12px;
+    border: 1px solid rgba(255,255,255,.08); border-radius: 13px;
+    background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(0,0,0,.09));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.025); }
+  #tab-settings .settings-panel .field:hover { border-color: rgba(var(--panel-accent-rgb), .22); }
+  #tab-settings .settings-panel .field label { color: #d9dae0; }
+  #tab-settings .settings-panel .field label b { display: inline-flex; align-items: center; min-width: 38px;
+    justify-content: center; margin-left: 6px; padding: 2px 7px; border-radius: 999px;
+    color: #dcefff; background: rgba(122,182,255,.1); box-shadow: inset 0 0 0 1px rgba(122,182,255,.18); }
+  #tab-settings .settings-panel .field input[type=range] { max-width: 230px; }
   #tab-settings .field.setting-changed,
   #tab-buildorders .field.setting-changed { border-radius: 8px; background: rgba(255,200,69,.055);
     box-shadow: inset 0 0 0 1px rgba(255,200,69,.34); }
@@ -577,13 +606,21 @@
   .btn-row { display: flex; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
   .preset-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 9px 0 4px;
     color: var(--ink-muted); font-size: 11px; }
+  #tab-settings .settings-panel .preset-row { padding: 9px 10px; margin: 8px 0;
+    border: 1px solid rgba(255,255,255,.08); border-radius: 13px;
+    background: rgba(0,0,0,.12); }
   .preset-row > span { margin-right: 2px; text-transform: uppercase; letter-spacing: .08em; }
   .preset-row button { padding: 4px 9px; font-size: 11px; border-radius: 999px; box-shadow: none;
     background: rgba(255,255,255,.045); border-color: #353541; color: #cfd0d8; }
   .preset-row button:hover { background: rgba(122,182,255,.12); border-color: rgba(122,182,255,.35); color: #fff; }
   .preset-row button.on,
   .preset-row button[aria-pressed="true"] { color: var(--gold-bright); border-color: rgba(224,186,94,.38); background: var(--gold-faint); }
+  #tab-settings .settings-panel .preset-row button[aria-pressed="true"] {
+    border-color: rgba(var(--panel-accent-rgb), .46); color: #fff;
+    background: rgba(var(--panel-accent-rgb), .16); box-shadow: 0 0 12px -8px rgba(var(--panel-accent-rgb), .9); }
   .copy-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  #tab-settings .settings-panel .copy-row { padding: 9px 10px; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 13px; background: rgba(0,0,0,.14); }
   .copy-row code { flex: 1 1 180px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .copy-row button { flex: none; min-width: 106px; }
   .copy-row button.copied { color: #b9f5a6; border-color: rgba(111,224,74,.42);
@@ -754,10 +791,19 @@
   .appearance-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
   .appearance-actions button { padding: 6px 10px; }
   .appearance-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+  #tab-settings .appearance-panel .appearance-grid { gap: 20px; }
   .preview-wrap { align-self: center; min-width: 0; }
+  #tab-settings .appearance-panel .preview-wrap { padding: 12px; border: 1px solid rgba(255,255,255,.08);
+    border-radius: 14px; background: radial-gradient(circle at 18% 0, rgba(111,224,74,.1), transparent 36%), rgba(0,0,0,.13);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.035); }
   @media (max-width: 880px) { .appearance-grid { grid-template-columns: minmax(0, 1fr); } }
   #ov-preview { background: #000 url() center/cover; border-radius: 8px; padding: 10px 6px; overflow: hidden;
     box-shadow: inset 0 0 0 1px rgba(230,198,100,.3), 0 4px 14px -6px rgba(0,0,0,.6); }
+  #tab-settings .appearance-panel #ov-preview { min-height: 82px; display: grid; align-items: center;
+    border-radius: 12px; background:
+      radial-gradient(circle at 20% 0, rgba(122,182,255,.18), transparent 42%),
+      linear-gradient(180deg, #050507, #0b0d11);
+    box-shadow: inset 0 0 0 1px rgba(230,198,100,.34), 0 16px 30px -24px #000; }
   #ov-preview table { border-collapse: collapse; margin: 0 auto; width: auto; }
   #ov-preview td { padding: 1px 7px; white-space: nowrap; border: none; color: #fff;
     text-shadow: 0 0 3px #000; }
@@ -1091,7 +1137,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card settings-panel overlay-panel">
         <h3><svg class="ic"><use href="#i-monitor"/></svg> Overlay</h3>
         <div class="btn-row">
           <button id="toggle-btn">Show / Hide</button>
@@ -1119,7 +1165,7 @@
         <div class="muted">You can also drag the overlay's edges while repositioning.</div>
       </div>
 
-      <div class="card">
+      <div class="card settings-panel stream-panel">
         <h3><svg class="ic"><use href="#i-signal"/></svg> Polling & streaming</h3>
         <div class="preset-row" aria-label="Polling interval presets">
           <span>Polling preset</span>
@@ -1143,7 +1189,7 @@
         <div class="muted">Add that path as an OBS browser source. Restart the app after changing the port.</div>
       </div>
 
-      <div class="card" style="grid-column: span 2">
+      <div class="card settings-panel appearance-panel" style="grid-column: span 2">
         <h3><svg class="ic"><use href="#i-palette"/></svg> Appearance</h3>
         <div class="appearance-grid">
           <div>
