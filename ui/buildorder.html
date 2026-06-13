@@ -75,6 +75,9 @@
   .res.age   { box-shadow: inset 0 0 0 1px rgba(231,192,89,.5),  inset 0 1px 0 rgba(255,255,255,.1); }
   .res.villager, .res.population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.32), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.38), inset 0 1px 0 rgba(255,255,255,.08); }
+  .res.shift { color: #d8eaff; background: rgba(122,182,255,.09);
+         box-shadow: inset 0 0 0 1px rgba(122,182,255,.42), 0 0 5px rgba(122,182,255,.14),
+                     inset 0 1px 0 rgba(255,255,255,.1); }
   .res.rally { color: #dce9f8; background: rgba(122,182,255,.08);
          box-shadow: inset 0 0 0 1px rgba(122,182,255,.38), inset 0 1px 0 rgba(255,255,255,.1); }
   .res.action { color: #ffe0a8; background: rgba(208,160,96,.1);
@@ -152,6 +155,8 @@
   #next .nx-gold { box-shadow: inset 0 0 0 1px rgba(231,192,89,.3); }
   #next .nx-stone { box-shadow: inset 0 0 0 1px rgba(170,178,189,.26); }
   #next .nx-builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.26); }
+  #next .nx-shift { color: #d8eaff; background: rgba(122,182,255,.09);
+          box-shadow: inset 0 0 0 1px rgba(122,182,255,.3), 0 0 5px rgba(122,182,255,.12); }
   #next .nx-rally { color: #dce9f8; background: rgba(122,182,255,.08);
           box-shadow: inset 0 0 0 1px rgba(122,182,255,.28); }
   #next .nx-action { color: #ffe0a8; background: rgba(208,160,96,.08);
@@ -197,6 +202,7 @@ const RES_ICONS = {
   gold: 'bo_img/resource/resource_gold.webp',
   stone: 'bo_img/resource/resource_stone.webp',
   builder: 'bo_img/abilities/repair.webp',
+  shift: 'bo_img/unit_worker/villager.webp',
   rally: 'bo_img/resource/rally.webp',
   villager: 'bo_img/unit_worker/villager.webp',
   population: 'bo_img/building_economy/house.webp',
@@ -2497,6 +2503,7 @@ function resourceLabelForDisplay(key) {
     population: 'Population',
     time: 'Step time',
     action: 'Build action',
+    shift: 'Resource shift',
     rally: 'Rally point',
   }[key] || key;
 }
@@ -2531,6 +2538,23 @@ function deltaTitle(value, previous) {
   const delta = numericDelta(value, previous);
   if (!delta) return '';
   return delta > 0 ? `Increased by ${delta} from ${previous}` : `Decreased by ${Math.abs(delta)} from ${previous}`;
+}
+
+function resourceShiftSummary(resources = {}, previousResources = {}) {
+  const changes = ['food', 'wood', 'gold', 'stone']
+    .map(key => ({ key, delta: numericDelta(resources?.[key], previousResources?.[key]) }))
+    .filter(change => change.delta !== 0);
+  const hasUp = changes.some(change => change.delta > 0);
+  const hasDown = changes.some(change => change.delta < 0);
+  return hasUp && hasDown ? changes : [];
+}
+
+function resourceShiftDetail(changes) {
+  if (!changes.length) return '';
+  const text = changes
+    .map(({ key, delta }) => `${shortResourceLabel(key)} ${delta > 0 ? '+' : ''}${delta}`)
+    .join(', ');
+  return `Resource shift: ${text}`;
 }
 
 function buildActionKind(step) {
@@ -2703,6 +2727,10 @@ function stepPreviewHtml(step, previousStep = null) {
   if (age !== null) bits.push(nextAgeChipHtml(age, previousAge));
   const r = step.resources || {};
   const pr = previousStep?.resources || {};
+  const shift = resourceShiftSummary(r, pr);
+  if (shift.length) {
+    bits.push(previewChipHtml(RES_ICONS.shift, 'Shift', resourceLabelForDisplay('shift'), 'nx-shift', resourceShiftDetail(shift)));
+  }
   const rally = rallyTargetKey(step);
   if (rally) {
     bits.push(previewChipHtml(RES_ICONS.rally, shortResourceLabel(rally), resourceLabelForDisplay('rally'), `nx-rally nx-rally-${rally}`, 'Inferred from the next instruction text'));
@@ -2909,6 +2937,10 @@ function render() {
     if (age !== null) {
       const ageUp = step > 0 && prevAge !== null && age > prevAge;
       res.push(chipHtml(AGE_ICONS[age], ageUp ? 'Age up!' : ageLabelForDisplay(age), 'Age', `res age${ageUp ? ' age-up' : ''}`, ageUp ? `Advanced from ${ageLabelForDisplay(prevAge)}` : ''));
+    }
+    const shift = resourceShiftSummary(r, pr);
+    if (shift.length) {
+      res.push(chipHtml(RES_ICONS.shift, 'Shift', resourceLabelForDisplay('shift'), 'res shift', resourceShiftDetail(shift)));
     }
     const rally = rallyTargetKey(s);
     if (rally) {

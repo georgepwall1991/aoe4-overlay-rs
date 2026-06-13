@@ -5595,6 +5595,39 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_resource_shift_chips_summarize_reallocations() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("shift: 'bo_img/unit_worker/villager.webp'")
+                && buildorder.contains("shift: 'Resource shift'"),
+            "resource shift chips should use a worker icon and label"
+        );
+        assert!(
+            buildorder.contains("function resourceShiftSummary")
+                && buildorder.contains("numericDelta(resources?.[key], previousResources?.[key])")
+                && buildorder.contains("const hasUp = changes.some")
+                && buildorder.contains("const hasDown = changes.some")
+                && buildorder.contains("return hasUp && hasDown ? changes : []"),
+            "resource shift chips should only summarize mixed up/down resource reallocations"
+        );
+        assert!(
+            buildorder.contains("function resourceShiftDetail")
+                && buildorder.contains("Resource shift:")
+                && buildorder.contains("shortResourceLabel(key)"),
+            "resource shift chip tooltips should list exact resource deltas"
+        );
+        assert!(
+            buildorder.contains("resourceShiftSummary(r, pr)")
+                && buildorder.contains("nx-shift")
+                && buildorder.contains("res shift"),
+            "current and next-step rows should render resource shift chips"
+        );
+    }
+
+    #[test]
     fn txt_without_steps_errors() {
         assert!(convert_aoeivbuilds_txt("Title only\n\nno bullets here", None, "x").is_err());
     }
