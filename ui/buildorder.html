@@ -2369,6 +2369,12 @@ function stepPreviewHtml(step) {
   return bits.join('<span> · </span>');
 }
 
+function clampStepIndex(value, count) {
+  const n = Number(value);
+  const i = Number.isFinite(n) ? Math.trunc(n) : 0;
+  return Math.min(Math.max(i, 0), Math.max(count - 1, 0));
+}
+
 function render() {
   const titleEl = document.getElementById('title');
   const resEl = document.getElementById('resources');
@@ -2388,7 +2394,7 @@ function render() {
       notesEl.innerHTML = '<div class="txt-cur">No usable build steps found</div>';
       return;
     }
-    const step = Math.min(current.step ?? 0, steps.length - 1);
+    const step = clampStepIndex(current.step, steps.length);
     const s = steps[step];
     const civs = (Array.isArray(bo.civilization) ? bo.civilization : [bo.civilization]).filter(Boolean).slice(0, 3);
     titleEl.innerHTML =
@@ -2438,17 +2444,19 @@ function render() {
     }
   } else {
     // Plain TXT build order: each non-empty line is a step, tracked by current.step
-    const lines = current.content.split('\n');
+    const lines = String(current.content || '').split('\n');
     const stepIdx = lines.reduce((a, l, i) => (l.trim() ? [...a, i] : a), []);
-    const step = Math.min(Math.max(current.step ?? 0, 0), Math.max(stepIdx.length - 1, 0));
+    const step = clampStepIndex(current.step, stepIdx.length);
     const curLine = stepIdx[step];
     titleEl.innerHTML = `<span class="t">${esc(current.name)}</span>` +
       (stepIdx.length ? `<span id="step-count">${step + 1}/${stepIdx.length}</span>` : '');
-    if (stepIdx.length) {
-      progEl.style.display = '';
-      progEl.style.setProperty('--seg', stepIdx.length > 40 ? '200%' : (100 / stepIdx.length) + '%');
-      progEl.firstElementChild.style.width = ((step + 1) / stepIdx.length * 100) + '%';
+    if (!stepIdx.length) {
+      notesEl.innerHTML = '<div class="txt-cur">No usable build steps found</div>';
+      return;
     }
+    progEl.style.display = '';
+    progEl.style.setProperty('--seg', stepIdx.length > 40 ? '200%' : (100 / stepIdx.length) + '%');
+    progEl.firstElementChild.style.width = ((step + 1) / stepIdx.length * 100) + '%';
     notesEl.innerHTML = lines.map((l, i) =>
       `<div class="${i === curLine ? 'txt-cur' : 'txt-dim'}">${l.trim() ? renderLine(l) : '&nbsp;'}</div>`).join('');
     const cur = notesEl.querySelector('.txt-cur');
