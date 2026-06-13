@@ -5454,6 +5454,34 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_next_preview_shows_time_until_next_step() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("#next .nx-until") && buildorder.contains("Time until next step"),
+            "next-step previews should include a distinct time-until chip"
+        );
+        assert!(
+            buildorder.contains("function exactTimeSeconds")
+                && buildorder.contains("time.match(/^(\\d{1,3}):(\\d{2})$/)")
+                && buildorder.contains("seconds < 60"),
+            "time-until helper should only use exact normalized m:ss times"
+        );
+        assert!(
+            buildorder.contains("function durationText") && buildorder.contains("seconds <= 0"),
+            "time-until helper should suppress zero or negative durations"
+        );
+        assert!(
+            buildorder.contains("function nextTimeGapChipHtml")
+                && buildorder.contains("const gap = nextSeconds !== null && previousSeconds !== null ? nextSeconds - previousSeconds : 0")
+                && buildorder.contains("if (gap) bits.push(gap);"),
+            "next-step previews should add a countdown chip only when a positive gap exists"
+        );
+    }
+
+    #[test]
     fn txt_without_steps_errors() {
         assert!(convert_aoeivbuilds_txt("Title only\n\nno bullets here", None, "x").is_err());
     }

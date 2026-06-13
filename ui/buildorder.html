@@ -135,6 +135,8 @@
   #next .nx-chip.up::after { color: #b8ecad; }
   #next .nx-chip.down::after { color: #f0aaa0; }
   #next .nx-time { box-shadow: inset 0 0 0 1px rgba(122,182,255,.28); }
+  #next .nx-until { color: #d8eaff; background: rgba(122,182,255,.1);
+          box-shadow: inset 0 0 0 1px rgba(122,182,255,.34), 0 0 5px rgba(122,182,255,.1); }
   #next .nx-age { box-shadow: inset 0 0 0 1px rgba(231,192,89,.32); }
   #next .nx-food { box-shadow: inset 0 0 0 1px rgba(229,106,84,.26); }
   #next .nx-wood { box-shadow: inset 0 0 0 1px rgba(122,178,98,.26); }
@@ -2522,6 +2524,32 @@ function previewChipHtml(icon, value, label, className = '', detail = '', delta 
   return `<span class="${esc(['nx-chip', className].filter(Boolean).join(' '))}"${deltaAttr} title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
 }
 
+function exactTimeSeconds(value) {
+  const time = timeForDisplay(value);
+  const match = time.match(/^(\d{1,3}):(\d{2})$/);
+  if (!match) return null;
+  const seconds = Number(match[2]);
+  return seconds < 60 ? Number(match[1]) * 60 + seconds : null;
+}
+
+function durationText(seconds) {
+  if (!Number.isFinite(seconds) || seconds <= 0) return '';
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function nextTimeGapChipHtml(step, previousStep) {
+  const previousSeconds = exactTimeSeconds(previousStep?.time);
+  const nextSeconds = exactTimeSeconds(step?.time);
+  const gap = nextSeconds !== null && previousSeconds !== null ? nextSeconds - previousSeconds : 0;
+  const duration = durationText(gap);
+  if (!duration) return '';
+  const currentTime = timeForDisplay(previousStep?.time);
+  const nextTime = timeForDisplay(step?.time);
+  const text = `+${duration}`;
+  const title = `Time until next step: ${text} - From ${currentTime} to ${nextTime}`;
+  return `<span class="nx-chip nx-until" title="${esc(title)}"><img src="${esc(RES_ICONS.time)}">${esc(text)}</span>`;
+}
+
 function previewTextUnits(text) {
   let units = 0;
   for (let i = 0; i < text.length; i++) {
@@ -2570,6 +2598,8 @@ function compactPreviewText(text, max = 90) {
 function stepPreviewHtml(step, previousStep = null) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
+  const gap = nextTimeGapChipHtml(step, previousStep);
+  if (gap) bits.push(gap);
   const time = timeForDisplay(step.time);
   if (time) bits.push(previewChipHtml(RES_ICONS.time, time, resourceLabelForDisplay('time'), 'nx-time'));
   const age = ageForDisplay(step.age);
