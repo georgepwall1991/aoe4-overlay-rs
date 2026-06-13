@@ -2376,7 +2376,7 @@ function safeParseBuildJsonContent(content) {
 function hasStepSignal(step) {
   if (!step || typeof step !== 'object') return false;
   if ((step.notes || []).some(n => String(n || '').trim())) return true;
-  if (step.time || ageForDisplay(step.age) !== null || countForDisplay(step.villager_count) !== null || countForDisplay(step.population_count) !== null) return true;
+  if (timeForDisplay(step.time) || ageForDisplay(step.age) !== null || countForDisplay(step.villager_count) !== null || countForDisplay(step.population_count) !== null) return true;
   const r = step.resources || {};
   return ['food', 'wood', 'gold', 'stone'].some(k => (r[k] ?? -1) > 0) || (r.builder ?? -1) >= 0;
 }
@@ -2404,10 +2404,16 @@ function ageForDisplay(value) {
   return age >= 1 && age <= 4 ? age : null;
 }
 
+function timeForDisplay(value) {
+  const fixed = normalizeTimeValue(value);
+  return fixed && isNormalizedTimeValue(fixed) ? fixed : '';
+}
+
 function stepPreviewHtml(step) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
-  if (step.time) bits.push(`<span><img src="${RES_ICONS.time}">${esc(step.time)}</span>`);
+  const time = timeForDisplay(step.time);
+  if (time) bits.push(`<span><img src="${RES_ICONS.time}">${esc(time)}</span>`);
   const age = ageForDisplay(step.age);
   if (age !== null) bits.push(`<span><img src="${AGE_ICONS[age]}"></span>`);
   const r = step.resources || {};
@@ -2491,8 +2497,9 @@ function render() {
       const ageUp = step > 0 && prevAge !== null && age > prevAge;
       res.push(`<span class="res${ageUp ? ' age-up' : ''}"><img src="${AGE_ICONS[age]}">${ageUp ? 'Age up!' : ''}</span>`);
     }
-    if (s.time)
-      res.push(`<span class="res"><img src="${RES_ICONS.time}">${esc(s.time)}</span>`);
+    const time = timeForDisplay(s.time);
+    if (time)
+      res.push(`<span class="res"><img src="${RES_ICONS.time}">${esc(time)}</span>`);
     resEl.innerHTML = res.join('');
     const noteLines = notesForDisplay(s);
     notesEl.innerHTML = noteLines.length
