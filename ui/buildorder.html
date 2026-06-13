@@ -2346,6 +2346,29 @@ function parseBuildJsonContent(content) {
   }
 }
 
+function hasStepSignal(step) {
+  if (!step || typeof step !== 'object') return false;
+  if ((step.notes || []).some(n => String(n || '').trim())) return true;
+  if (step.time || (step.age >= 1 && step.age <= 4) || step.villager_count >= 0 || step.population_count >= 0) return true;
+  const r = step.resources || {};
+  return ['food', 'wood', 'gold', 'stone', 'builder'].some(k => (r[k] ?? -1) >= 0);
+}
+
+function stepPreviewHtml(step) {
+  if (!step || typeof step !== 'object') return '';
+  const bits = [];
+  if (step.time) bits.push(`<span><img src="${RES_ICONS.time}">${esc(step.time)}</span>`);
+  if (step.age >= 1 && step.age <= 4) bits.push(`<span><img src="${AGE_ICONS[step.age]}"></span>`);
+  const r = step.resources || {};
+  for (const k of ['food', 'wood', 'gold', 'stone']) {
+    if ((r[k] ?? -1) >= 0) bits.push(`<span><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
+  }
+  if (step.villager_count >= 0) bits.push(`<span><img src="${RES_ICONS.villager}">${esc(step.villager_count)}</span>`);
+  if (step.population_count >= 0) bits.push(`<span><img src="${RES_ICONS.population}">${esc(step.population_count)}</span>`);
+  if ((step.notes || []).length) bits.push(...step.notes.slice(0, 2).map(n => `<div>${renderLine(n)}</div>`));
+  return bits.join('<span> · </span>');
+}
+
 function render() {
   const titleEl = document.getElementById('title');
   const resEl = document.getElementById('resources');
@@ -2359,7 +2382,12 @@ function render() {
   const bo = parseBuildJsonContent(current.content);
 
   if (bo && Array.isArray(bo.build_order)) {
-    const steps = bo.build_order;
+    const steps = bo.build_order.filter(hasStepSignal);
+    if (!steps.length) {
+      titleEl.innerHTML = `<span class="t">${esc(current.name)}</span>`;
+      notesEl.innerHTML = '<div class="txt-cur">No usable build steps found</div>';
+      return;
+    }
     const step = Math.min(current.step ?? 0, steps.length - 1);
     const s = steps[step];
     const civs = (Array.isArray(bo.civilization) ? bo.civilization : [bo.civilization]).filter(Boolean).slice(0, 3);
@@ -2396,12 +2424,14 @@ function render() {
     if (s.time)
       res.push(`<span class="res"><img src="${RES_ICONS.time}">${esc(s.time)}</span>`);
     resEl.innerHTML = res.join('');
-    notesEl.innerHTML = (s.notes || []).map(n => `<div>${renderLine(n)}</div>`).join('');
+    notesEl.innerHTML = (s.notes || []).length
+      ? (s.notes || []).map(n => `<div>${renderLine(n)}</div>`).join('')
+      : '<div class="txt-cur">No note for this step</div>';
     const nx = steps[step + 1];
-    if ((settings?.bo_show_next ?? true) && nx && (nx.notes || []).length) {
+    const nxPreview = stepPreviewHtml(nx);
+    if ((settings?.bo_show_next ?? true) && nxPreview) {
       nextEl.style.display = '';
-      nextEl.innerHTML = `<span class="nx-label">Next</span>` +
-        nx.notes.slice(0, 2).map(n => `<div>${renderLine(n)}</div>`).join('<span> · </span>');
+      nextEl.innerHTML = `<span class="nx-label">Next</span>${nxPreview}`;
     }
     for (const el of [resEl, notesEl]) {
       el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
