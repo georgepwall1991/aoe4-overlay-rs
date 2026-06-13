@@ -106,7 +106,13 @@
           border-radius: 0 0 .4em .4em; }
   #next .nx-label { text-transform: uppercase; letter-spacing: .08em; font-weight: 700;
           font-size: .8em; color: #dcc77a; margin-right: 4px; }
+  #next .nx-chip { display: inline-flex; align-items: center; gap: 3px; margin-right: 3px;
+          border-radius: .35em; padding: 1px 5px 1px 3px;
+          background: rgba(255,255,255,.06);
+          box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
   #next div { display: inline; background: none; box-shadow: none; padding: 0; }
+  #next div.nx-note { color: rgba(255,255,255,.92); }
+  #next div.nx-more { color: #dcc77a; font-weight: 700; }
   #next img { height: calc(var(--imgh, 24px) * .8); vertical-align: middle; border-radius: .25em; }
   #next.done { opacity: .5; }
   body.edit #panel { outline: 3px dashed #ffb300; outline-offset: -3px; }
@@ -2454,7 +2460,7 @@ function deltaTitle(value, previous) {
 function previewChipHtml(icon, value, label) {
   const text = value === '' || value === null || value === undefined ? '' : String(value);
   const title = text ? `Next ${label}: ${text}` : `Next ${label}`;
-  return `<span title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
+  return `<span class="nx-chip" title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
 }
 
 function compactPreviewText(text, max = 90) {
@@ -2478,11 +2484,11 @@ function stepPreviewHtml(step) {
   if (villagers !== null) bits.push(previewChipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager')));
   if (population !== null) bits.push(previewChipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population')));
   const previewNotes = notesForDisplay(step);
-  bits.push(...previewNotes.slice(0, 1).map(n => `<div title="${esc(`Next instruction: ${compactPreviewText(n, 220)}`)}">${renderLine(compactPreviewText(n))}</div>`));
+  bits.push(...previewNotes.slice(0, 1).map(n => `<div class="nx-note" title="${esc(`Next instruction: ${compactPreviewText(n, 220)}`)}">${renderLine(compactPreviewText(n))}</div>`));
   const hiddenNotes = previewNotes.length - 1;
   if (hiddenNotes > 0) {
     const hiddenTitle = previewNotes.slice(1).map(n => compactPreviewText(n, 120)).join(' | ');
-    bits.push(`<div title="${esc(`Hidden next details: ${hiddenTitle}`)}">+${hiddenNotes} detail${hiddenNotes === 1 ? '' : 's'}</div>`);
+    bits.push(`<div class="nx-more" title="${esc(`Hidden next details: ${hiddenTitle}`)}">+${hiddenNotes} detail${hiddenNotes === 1 ? '' : 's'}</div>`);
   }
   return bits.join('<span> · </span>');
 }
@@ -2700,7 +2706,7 @@ function render() {
       nextEl.style.display = '';
       nextEl.classList.remove('done');
       nextEl.title = nextTitle(step, stepIdx.length);
-      nextEl.innerHTML = `<span class="nx-label">Next</span><div title="${esc(`Next instruction: ${fallbackLineTitle(nxLine)}`)}">${fallbackLineHtml(nxLine)}</div>`;
+      nextEl.innerHTML = `<span class="nx-label">Next</span><div class="nx-note" title="${esc(`Next instruction: ${fallbackLineTitle(nxLine)}`)}">${fallbackLineHtml(nxLine)}</div>`;
     } else if ((settings?.bo_show_next ?? true) && step === stepIdx.length - 1) {
       nextEl.style.display = '';
       nextEl.classList.add('done');
