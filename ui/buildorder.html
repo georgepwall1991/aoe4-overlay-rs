@@ -2376,7 +2376,7 @@ function safeParseBuildJsonContent(content) {
 function hasStepSignal(step) {
   if (!step || typeof step !== 'object') return false;
   if ((step.notes || []).some(n => String(n || '').trim())) return true;
-  if (step.time || (step.age >= 1 && step.age <= 4) || step.villager_count >= 0 || step.population_count >= 0) return true;
+  if (step.time || (step.age >= 1 && step.age <= 4) || countForDisplay(step.villager_count) !== null || countForDisplay(step.population_count) !== null) return true;
   const r = step.resources || {};
   return ['food', 'wood', 'gold', 'stone'].some(k => (r[k] ?? -1) > 0) || (r.builder ?? -1) >= 0;
 }
@@ -2393,6 +2393,12 @@ function notesForDisplay(step, limit = Infinity) {
   return (step?.notes || []).map(n => String(n || '').trim()).filter(Boolean).slice(0, limit);
 }
 
+function countForDisplay(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value >= 0 ? Math.trunc(value) : null;
+  const m = String(value ?? '').trim().match(/^\d{1,3}/);
+  return m ? Number(m[0]) : null;
+}
+
 function stepPreviewHtml(step) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
@@ -2402,8 +2408,10 @@ function stepPreviewHtml(step) {
   for (const k of resourceKeysForDisplay(r)) {
     if ((r[k] ?? -1) >= 0) bits.push(`<span><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
   }
-  if (step.villager_count >= 0) bits.push(`<span><img src="${RES_ICONS.villager}">${esc(step.villager_count)}</span>`);
-  if (step.population_count >= 0) bits.push(`<span><img src="${RES_ICONS.population}">${esc(step.population_count)}</span>`);
+  const villagers = countForDisplay(step.villager_count);
+  const population = countForDisplay(step.population_count);
+  if (villagers !== null) bits.push(`<span><img src="${RES_ICONS.villager}">${esc(villagers)}</span>`);
+  if (population !== null) bits.push(`<span><img src="${RES_ICONS.population}">${esc(population)}</span>`);
   bits.push(...notesForDisplay(step, 2).map(n => `<div>${renderLine(n)}</div>`));
   return bits.join('<span> · </span>');
 }
@@ -2463,10 +2471,14 @@ function render() {
       if ((r[k] ?? -1) >= 0)
         res.push(`<span class="res ${k}${delta(r[k], pr[k])}"><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
     }
-    if (s.villager_count >= 0)
-      res.push(`<span class="res${delta(s.villager_count, prev.villager_count)}"><img src="${RES_ICONS.villager}">${esc(s.villager_count)}</span>`);
-    if (s.population_count >= 0)
-      res.push(`<span class="res${delta(s.population_count, prev.population_count)}"><img src="${RES_ICONS.population}">${esc(s.population_count)}</span>`);
+    const villagers = countForDisplay(s.villager_count);
+    const prevVillagers = countForDisplay(prev.villager_count);
+    const population = countForDisplay(s.population_count);
+    const prevPopulation = countForDisplay(prev.population_count);
+    if (villagers !== null)
+      res.push(`<span class="res${delta(villagers, prevVillagers)}"><img src="${RES_ICONS.villager}">${esc(villagers)}</span>`);
+    if (population !== null)
+      res.push(`<span class="res${delta(population, prevPopulation)}"><img src="${RES_ICONS.population}">${esc(population)}</span>`);
     if (s.age >= 1 && s.age <= 4) {
       const ageUp = step > 0 && prev.age >= 1 && s.age > prev.age;
       res.push(`<span class="res${ageUp ? ' age-up' : ''}"><img src="${AGE_ICONS[s.age]}">${ageUp ? 'Age up!' : ''}</span>`);
