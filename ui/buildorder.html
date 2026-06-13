@@ -61,7 +61,7 @@
            animation: prog-sheen 6s ease-in-out infinite; }
   @keyframes prog-sheen { 0%, 55% { background-position: -30% 0, 0 0; } 85%, 100% { background-position: 130% 0, 0 0; } }
   #resources { display: flex; gap: 8px; align-items: center; margin-bottom: 7px; flex-wrap: wrap; }
-  .res { display: flex; align-items: center; gap: 4px; font-weight: 600;
+  .res { display: flex; align-items: center; gap: 4px; font-weight: 600; white-space: nowrap;
          font-variant-numeric: tabular-nums;
          background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
          border-radius: .45em; padding: 2px 8px 2px 5px;
@@ -124,6 +124,7 @@
           border-radius: .35em; background: rgba(231,192,89,.1);
           box-shadow: inset 0 0 0 1px rgba(231,192,89,.24); }
   #next .nx-chip { display: inline-flex; align-items: center; gap: 3px; margin-right: 3px;
+          white-space: nowrap;
           font-variant-numeric: tabular-nums;
           border-radius: .35em; padding: 1px 5px 1px 3px;
           background: rgba(255,255,255,.06);
