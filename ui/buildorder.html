@@ -75,6 +75,8 @@
   .res.age   { box-shadow: inset 0 0 0 1px rgba(231,192,89,.5),  inset 0 1px 0 rgba(255,255,255,.1); }
   .res.villager, .res.population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.32), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.38), inset 0 1px 0 rgba(255,255,255,.08); }
+  .res.rally { color: #dce9f8; background: rgba(122,182,255,.08);
+         box-shadow: inset 0 0 0 1px rgba(122,182,255,.38), inset 0 1px 0 rgba(255,255,255,.1); }
   .res.action { color: #ffe0a8; background: rgba(208,160,96,.1);
          box-shadow: inset 0 0 0 1px rgba(208,160,96,.44), inset 0 1px 0 rgba(255,255,255,.1); }
   .res.action-landmark { color: #ffe9a0;
@@ -150,6 +152,8 @@
   #next .nx-gold { box-shadow: inset 0 0 0 1px rgba(231,192,89,.3); }
   #next .nx-stone { box-shadow: inset 0 0 0 1px rgba(170,178,189,.26); }
   #next .nx-builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.26); }
+  #next .nx-rally { color: #dce9f8; background: rgba(122,182,255,.08);
+          box-shadow: inset 0 0 0 1px rgba(122,182,255,.28); }
   #next .nx-action { color: #ffe0a8; background: rgba(208,160,96,.08);
           box-shadow: inset 0 0 0 1px rgba(208,160,96,.3); }
   #next .nx-action-landmark { color: #ffe9a0; background: rgba(231,192,89,.12);
@@ -193,6 +197,7 @@ const RES_ICONS = {
   gold: 'bo_img/resource/resource_gold.webp',
   stone: 'bo_img/resource/resource_stone.webp',
   builder: 'bo_img/abilities/repair.webp',
+  rally: 'bo_img/resource/rally.webp',
   villager: 'bo_img/unit_worker/villager.webp',
   population: 'bo_img/building_economy/house.webp',
   time: 'bo_img/time/time.png',
@@ -2492,7 +2497,12 @@ function resourceLabelForDisplay(key) {
     population: 'Population',
     time: 'Step time',
     action: 'Build action',
+    rally: 'Rally point',
   }[key] || key;
+}
+
+function shortResourceLabel(key) {
+  return { food: 'Food', wood: 'Wood', gold: 'Gold', stone: 'Stone' }[key] || key;
 }
 
 function chipHtml(icon, value, label, className = 'res', detail = '', delta = '') {
@@ -2541,6 +2551,40 @@ function buildActionKind(step) {
 
 function shouldShowBuildActionChip(kind, resources) {
   return !!kind && (kind === 'Landmark' || ((resources || {}).builder ?? -1) <= 0);
+}
+
+function rallyCueIndex(note) {
+  const icon = String(note || '').search(/@resource\/rally(?:\.webp)?@/i);
+  if (icon >= 0) return icon;
+  return String(note || '').search(/\brall(?:y|ied|ying)\b/i);
+}
+
+function rallyTargetFromSegment(segment) {
+  const targets = [
+    ['food', /@resource\/(?:resource_food|sheep|deer|berrybush|farm)(?:\.webp)?@|\b(?:food|sheep|deer|berries|berry|farm|farms)\b/i],
+    ['wood', /@resource\/(?:resource_wood|gaiatreeprototypetree)(?:\.webp)?@|\b(?:wood|tree|trees|forest|lumber)\b/i],
+    ['gold', /@resource\/resource_gold(?:\.webp)?@|\bgold\b/i],
+    ['stone', /@resource\/resource_stone(?:\.webp)?@|\bstone\b/i],
+  ];
+  let best = null;
+  for (const [key, re] of targets) {
+    const match = String(segment || '').match(re);
+    if (match && (best === null || match.index < best.index)) best = { key, index: match.index };
+  }
+  if (!best) return '';
+  const beforeTarget = String(segment || '').slice(0, best.index);
+  if (/\b(build|construct|drop|place|make|add|constru\w*)\b|@abilities\/repair(?:\.webp)?@/i.test(beforeTarget)) return '';
+  return best.key;
+}
+
+function rallyTargetKey(step) {
+  for (const note of notesForDisplay(step)) {
+    const cue = rallyCueIndex(note);
+    if (cue < 0) continue;
+    const target = rallyTargetFromSegment(note.slice(cue));
+    if (target) return target;
+  }
+  return '';
 }
 
 function previewResourceKeysForDisplay(resources, previousResources = {}) {
@@ -2659,6 +2703,10 @@ function stepPreviewHtml(step, previousStep = null) {
   if (age !== null) bits.push(nextAgeChipHtml(age, previousAge));
   const r = step.resources || {};
   const pr = previousStep?.resources || {};
+  const rally = rallyTargetKey(step);
+  if (rally) {
+    bits.push(previewChipHtml(RES_ICONS.rally, shortResourceLabel(rally), resourceLabelForDisplay('rally'), `nx-rally nx-rally-${rally}`, 'Inferred from the next instruction text'));
+  }
   const action = buildActionKind(step);
   if (shouldShowBuildActionChip(action, r)) {
     bits.push(previewChipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `nx-action nx-action-${action.toLowerCase()}`, 'Inferred from the next instruction text'));
@@ -2861,6 +2909,10 @@ function render() {
     if (age !== null) {
       const ageUp = step > 0 && prevAge !== null && age > prevAge;
       res.push(chipHtml(AGE_ICONS[age], ageUp ? 'Age up!' : ageLabelForDisplay(age), 'Age', `res age${ageUp ? ' age-up' : ''}`, ageUp ? `Advanced from ${ageLabelForDisplay(prevAge)}` : ''));
+    }
+    const rally = rallyTargetKey(s);
+    if (rally) {
+      res.push(chipHtml(RES_ICONS.rally, shortResourceLabel(rally), resourceLabelForDisplay('rally'), `res rally rally-${rally}`, 'Inferred from the current instruction text'));
     }
     const action = buildActionKind(s);
     if (shouldShowBuildActionChip(action, r)) {

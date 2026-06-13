@@ -5561,6 +5561,40 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_rally_chips_surface_rally_targets() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("rally: 'bo_img/resource/rally.webp'")
+                && buildorder.contains("rally: 'Rally point'"),
+            "rally chips should use the rally icon and label"
+        );
+        assert!(
+            buildorder.contains("function rallyCueIndex")
+                && buildorder.contains("@resource\\/rally")
+                && buildorder.contains("\\brall(?:y|ied|ying)\\b"),
+            "rally target inference should be anchored to explicit rally cues"
+        );
+        assert!(
+            buildorder.contains("function rallyTargetFromSegment")
+                && buildorder.contains("beforeTarget")
+                && buildorder.contains("build|construct|drop|place|make|add")
+                && buildorder.contains("resource_food|sheep|deer|berrybush|farm")
+                && buildorder.contains("resource_wood|gaiatreeprototypetree"),
+            "rally target inference should map common targets without mistaking build actions for rally targets"
+        );
+        assert!(
+            buildorder.contains("rallyTargetKey(step)")
+                && buildorder.contains("rallyTargetKey(s)")
+                && buildorder.contains("nx-rally nx-rally-${rally}")
+                && buildorder.contains("res rally rally-${rally}"),
+            "current and next-step rows should render inferred rally target chips"
+        );
+    }
+
+    #[test]
     fn txt_without_steps_errors() {
         assert!(convert_aoeivbuilds_txt("Title only\n\nno bullets here", None, "x").is_err());
     }
