@@ -2647,6 +2647,15 @@ function render() {
       return cur > old ? ' up' : ' down';
     };
     const res = [];
+    const time = timeForDisplay(s.time);
+    if (time)
+      res.push(chipHtml(RES_ICONS.time, time, resourceLabelForDisplay('time')));
+    const age = ageForDisplay(s.age);
+    const prevAge = ageForDisplay(prev.age);
+    if (age !== null) {
+      const ageUp = step > 0 && prevAge !== null && age > prevAge;
+      res.push(chipHtml(AGE_ICONS[age], ageUp ? 'Age up!' : ageLabelForDisplay(age), 'Age', `res${ageUp ? ' age-up' : ''}`, ageUp ? `Advanced from ${ageLabelForDisplay(prevAge)}` : ''));
+    }
     for (const k of resourceKeysForDisplay(r)) {
       if ((r[k] ?? -1) >= 0)
         res.push(chipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `res ${k}${delta(r[k], pr[k])}`, deltaTitle(r[k], pr[k])));
@@ -2659,15 +2668,6 @@ function render() {
       res.push(chipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `res${delta(villagers, prevVillagers)}`, deltaTitle(villagers, prevVillagers)));
     if (population !== null)
       res.push(chipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `res${delta(population, prevPopulation)}`, deltaTitle(population, prevPopulation)));
-    const age = ageForDisplay(s.age);
-    const prevAge = ageForDisplay(prev.age);
-    if (age !== null) {
-      const ageUp = step > 0 && prevAge !== null && age > prevAge;
-      res.push(chipHtml(AGE_ICONS[age], ageUp ? 'Age up!' : ageLabelForDisplay(age), 'Age', `res${ageUp ? ' age-up' : ''}`, ageUp ? `Advanced from ${ageLabelForDisplay(prevAge)}` : ''));
-    }
-    const time = timeForDisplay(s.time);
-    if (time)
-      res.push(chipHtml(RES_ICONS.time, time, resourceLabelForDisplay('time')));
     resEl.innerHTML = res.join('');
     resEl.title = targetSummaryTitle(s);
     notesEl.title = `Current step - ${progress}`;
