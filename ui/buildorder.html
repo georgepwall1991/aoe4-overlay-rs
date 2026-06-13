@@ -150,13 +150,17 @@ function imgFallback(img, token) {
   const cur = img.src.slice(img.src.lastIndexOf('.'));
   const next = order[order.indexOf(cur) + 1];
   if (next) img.src = img.src.slice(0, img.src.lastIndexOf('.')) + next;
-  else img.outerHTML = token;
+  else img.outerHTML = `<span>${esc(token)}</span>`;
 }
 
 function rgb(c) { return `rgb(${c[0]},${c[1]},${c[2]})`; }
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function escJsAttr(s) {
+  return esc(String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n'));
 }
 
 function applyStyle() {
@@ -360,13 +364,13 @@ function renderLine(line) {
     const part = text.slice(open + 1, close);
     const src = iconSrc(part);
     if (src) {
-      html += `<img src="${esc(src)}" onerror="imgFallback(this, '${esc(part.split('/').pop().split('.')[0])}')">`;
+      html += `<img src="${esc(src)}" onerror="imgFallback(this, '${escJsAttr(part.split('/').pop().split('.')[0])}')">`;
       i = close + 1;
     } else {
       html += `<span>${esc(part)}</span>`;
       const inline = inlineIconAfterInvalidToken(text, close + 1);
       if (inline) {
-        html += `<img src="${esc(inline.src)}" onerror="imgFallback(this, '${esc(inline.alt)}')">`;
+        html += `<img src="${esc(inline.src)}" onerror="imgFallback(this, '${escJsAttr(inline.alt)}')">`;
         i = inline.next;
       } else {
         i = close + 1;
