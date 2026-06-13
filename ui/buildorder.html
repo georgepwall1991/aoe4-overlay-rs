@@ -2440,10 +2440,15 @@ function resourceLabelForDisplay(key) {
   }[key] || key;
 }
 
-function chipHtml(icon, value, label, className = 'res') {
+function chipHtml(icon, value, label, className = 'res', detail = '') {
   const text = value === '' || value === null || value === undefined ? '' : String(value);
-  const title = text ? `${label}: ${text}` : label;
+  const title = [text ? `${label}: ${text}` : label, detail].filter(Boolean).join(' - ');
   return `<span class="${esc(className)}" title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
+}
+
+function deltaTitle(value, previous) {
+  if (!(previous >= 0) || value === previous) return '';
+  return value > previous ? 'Increased from previous step' : 'Decreased from previous step';
 }
 
 function previewChipHtml(icon, value, label) {
@@ -2601,21 +2606,21 @@ function render() {
     const res = [];
     for (const k of resourceKeysForDisplay(r)) {
       if ((r[k] ?? -1) >= 0)
-        res.push(chipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `res ${k}${delta(r[k], pr[k])}`));
+        res.push(chipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `res ${k}${delta(r[k], pr[k])}`, deltaTitle(r[k], pr[k])));
     }
     const villagers = countForDisplay(s.villager_count);
     const prevVillagers = countForDisplay(prev.villager_count);
     const population = countForDisplay(s.population_count);
     const prevPopulation = countForDisplay(prev.population_count);
     if (villagers !== null)
-      res.push(chipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `res${delta(villagers, prevVillagers)}`));
+      res.push(chipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `res${delta(villagers, prevVillagers)}`, deltaTitle(villagers, prevVillagers)));
     if (population !== null)
-      res.push(chipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `res${delta(population, prevPopulation)}`));
+      res.push(chipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `res${delta(population, prevPopulation)}`, deltaTitle(population, prevPopulation)));
     const age = ageForDisplay(s.age);
     const prevAge = ageForDisplay(prev.age);
     if (age !== null) {
       const ageUp = step > 0 && prevAge !== null && age > prevAge;
-      res.push(chipHtml(AGE_ICONS[age], ageUp ? 'Age up!' : ageLabelForDisplay(age), 'Age', `res${ageUp ? ' age-up' : ''}`));
+      res.push(chipHtml(AGE_ICONS[age], ageUp ? 'Age up!' : ageLabelForDisplay(age), 'Age', `res${ageUp ? ' age-up' : ''}`, ageUp ? `Advanced from ${ageLabelForDisplay(prevAge)}` : ''));
     }
     const time = timeForDisplay(s.time);
     if (time)
