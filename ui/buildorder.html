@@ -2658,7 +2658,7 @@ function render() {
     } else if ((settings?.bo_show_next ?? true) && step === steps.length - 1) {
       nextEl.style.display = '';
       nextEl.classList.add('done');
-      nextEl.title = 'End of build order';
+      nextEl.title = `End of build order - ${progress}`;
       nextEl.innerHTML = '<span class="nx-label">Done</span><div>Final step</div>';
     }
     for (const el of [resEl, notesEl]) {
@@ -2691,7 +2691,7 @@ function render() {
     } else if ((settings?.bo_show_next ?? true) && step === stepIdx.length - 1) {
       nextEl.style.display = '';
       nextEl.classList.add('done');
-      nextEl.title = 'End of build order';
+      nextEl.title = `End of build order - ${progress}`;
       nextEl.innerHTML = '<span class="nx-label">Done</span><div>Final step</div>';
     }
   }
