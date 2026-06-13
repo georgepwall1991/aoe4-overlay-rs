@@ -2389,6 +2389,10 @@ function resourceKeysForDisplay(resources) {
   return keys;
 }
 
+function notesForDisplay(step, limit = Infinity) {
+  return (step?.notes || []).map(n => String(n || '').trim()).filter(Boolean).slice(0, limit);
+}
+
 function stepPreviewHtml(step) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
@@ -2400,7 +2404,7 @@ function stepPreviewHtml(step) {
   }
   if (step.villager_count >= 0) bits.push(`<span><img src="${RES_ICONS.villager}">${esc(step.villager_count)}</span>`);
   if (step.population_count >= 0) bits.push(`<span><img src="${RES_ICONS.population}">${esc(step.population_count)}</span>`);
-  if ((step.notes || []).length) bits.push(...step.notes.slice(0, 2).map(n => `<div>${renderLine(n)}</div>`));
+  bits.push(...notesForDisplay(step, 2).map(n => `<div>${renderLine(n)}</div>`));
   return bits.join('<span> · </span>');
 }
 
@@ -2470,8 +2474,9 @@ function render() {
     if (s.time)
       res.push(`<span class="res"><img src="${RES_ICONS.time}">${esc(s.time)}</span>`);
     resEl.innerHTML = res.join('');
-    notesEl.innerHTML = (s.notes || []).length
-      ? (s.notes || []).map(n => `<div>${renderLine(n)}</div>`).join('')
+    const noteLines = notesForDisplay(s);
+    notesEl.innerHTML = noteLines.length
+      ? noteLines.map(n => `<div>${renderLine(n)}</div>`).join('')
       : '<div class="txt-cur">No note for this step</div>';
     const nx = steps[step + 1];
     const nxPreview = stepPreviewHtml(nx);
