@@ -1304,9 +1304,77 @@ fn normalize_imported_json(bo: &mut Value) -> Vec<String> {
             if before - steps.len() == 1 { "" } else { "s" }
         ));
     }
+    repair_villager_count_regressions(steps, &mut repairs);
     repairs.sort();
     repairs.dedup();
     repairs
+}
+
+fn step_notes_text(step: &Value) -> String {
+    step["notes"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .collect::<Vec<_>>()
+        .join(" ")
+        .to_ascii_lowercase()
+}
+
+fn allows_villager_count_drop(step: &Value) -> bool {
+    let text = step_notes_text(step);
+    [
+        "villager died",
+        "villagers died",
+        "vill died",
+        "vills died",
+        "villager killed",
+        "villagers killed",
+        "vill killed",
+        "vills killed",
+        "lost villager",
+        "lost villagers",
+        "lost vill",
+        "lost vills",
+        "lose villager",
+        "lose villagers",
+        "lose vill",
+        "lose vills",
+        "delete villager",
+        "delete villagers",
+        "delete vill",
+        "delete vills",
+        "deleted villager",
+        "deleted villagers",
+        "deleted vill",
+        "deleted vills",
+        "sacrifice villager",
+        "sacrifice villagers",
+        "sacrifice vill",
+        "sacrifice vills",
+    ]
+    .iter()
+    .any(|needle| text.contains(needle))
+}
+
+fn repair_villager_count_regressions(steps: &mut [Value], repairs: &mut Vec<String>) {
+    let mut latest_total = None;
+    for (i, step) in steps.iter_mut().enumerate() {
+        let Some(count) = step["villager_count"].as_i64().filter(|count| *count >= 0) else {
+            continue;
+        };
+        if let Some(total) = latest_total {
+            if count < total && !allows_villager_count_drop(step) {
+                step["villager_count"] = Value::from(total);
+                repairs.push(format!(
+                    "Carried forward villager_count on step {} because total villagers should not drop.",
+                    i + 1
+                ));
+                continue;
+            }
+        }
+        latest_total = Some(count);
+    }
 }
 
 fn fill_time_and_age_from_notes(step: &mut Value, step_no: usize, repairs: &mut Vec<String>) {
@@ -4845,8 +4913,8 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
             "build_order": [
                 { "worker_count": "7", "supplyUsed": "8", "notes": ["worker aliases"] },
                 { "villCount": "12", "popCap": "20", "notes": ["count aliases"] },
-                { "worker": "9", "supply_count": "10", "notes": ["singular aliases"] },
-                { "villager": "5", "pop_count": "6", "notes": ["short aliases"] }
+                { "worker": "13", "supply_count": "21", "notes": ["singular aliases"] },
+                { "villager": "15", "pop_count": "24", "notes": ["short aliases"] }
             ]
         });
         let repairs = normalize_imported_json(&mut bo);
@@ -4854,10 +4922,10 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
         assert_eq!(bo["build_order"][0]["population_count"], 8);
         assert_eq!(bo["build_order"][1]["villager_count"], 12);
         assert_eq!(bo["build_order"][1]["population_count"], 20);
-        assert_eq!(bo["build_order"][2]["villager_count"], 9);
-        assert_eq!(bo["build_order"][2]["population_count"], 10);
-        assert_eq!(bo["build_order"][3]["villager_count"], 5);
-        assert_eq!(bo["build_order"][3]["population_count"], 6);
+        assert_eq!(bo["build_order"][2]["villager_count"], 13);
+        assert_eq!(bo["build_order"][2]["population_count"], 21);
+        assert_eq!(bo["build_order"][3]["villager_count"], 15);
+        assert_eq!(bo["build_order"][3]["population_count"], 24);
         for alias in [
             "worker_count",
             "supplyUsed",
@@ -4880,6 +4948,26 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
         assert!(repairs
             .iter()
             .any(|r| r.contains("supplyUsed into population_count")));
+    }
+
+    #[test]
+    fn normalizes_impossible_villager_count_drops() {
+        let mut bo = json!({
+            "build_order": [
+                { "time": "2:08", "villager_count": 12, "resources": { "food": 10, "wood": 0, "gold": 2, "stone": 0 }, "notes": ["Drop-off @resource/resource_food.webp@ and build @building_economy/house.webp@"] },
+                { "time": "2:08", "villager_count": 9, "resources": { "food": 4, "wood": 3, "gold": 2, "stone": 0 }, "notes": ["Remacro. @resource/rally.webp@@resource/resource_wood.webp@ until 150"] },
+                { "time": "3:10", "villager_count": 11, "resources": { "food": 6, "wood": 3, "gold": 2, "stone": 0 }, "notes": ["next allocation still below total"] },
+                { "time": "4:00", "villager_count": 8, "notes": ["delete villagers after enemy rush"] }
+            ]
+        });
+        let repairs = normalize_imported_json(&mut bo);
+        assert_eq!(bo["build_order"][0]["villager_count"], 12);
+        assert_eq!(bo["build_order"][1]["villager_count"], 12);
+        assert_eq!(bo["build_order"][2]["villager_count"], 12);
+        assert_eq!(bo["build_order"][3]["villager_count"], 8);
+        assert!(repairs
+            .iter()
+            .any(|r| r.contains("Carried forward villager_count on step 2")));
     }
 
     #[test]
@@ -5453,6 +5541,13 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
                 && buildorder.contains("deltaText(villagers, previousVillagers)"),
             "builder-pull context should preserve the existing signed villager delta chips"
         );
+        assert!(
+            buildorder.contains("function repairVillagerCountRegressions")
+                && buildorder.contains("allowsVillagerCountDrop(step)")
+                && buildorder.contains("step.villager_count = latestTotal")
+                && buildorder.contains("repairVillagerCountRegressions(bo.build_order)"),
+            "overlay JSON normalization should repair impossible total-villager count drops before rendering deltas"
+        );
     }
 
     #[test]
@@ -5613,10 +5708,13 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
             buildorder.contains("function compactStructureLabel")
                 && buildorder.contains("function uniqueStructureTokens")
                 && buildorder.contains("function isHouseStructureToken")
+                && buildorder.contains("function buildingTokenIsPlacementReference")
                 && buildorder.contains("'archery-range': 'Range'")
                 && buildorder.contains("'town-center': 'TC'")
                 && buildorder.contains("'military-school': 'Mil School'")
                 && buildorder.contains("const nonHouseTokens = uniqueBuildingTokens.filter")
+                && buildorder.contains("!buildingTokenIsPlacementReference(note, token)")
+                && buildorder.contains("on\\s+edge\\s+of")
                 && buildorder.contains("houseOnly: !nonHouseTokens.length")
                 && buildorder.contains("` +${displayTokens.length - 1}`")
                 && buildorder.contains("iconSrc(token) || RES_ICONS.builder")
@@ -5674,6 +5772,47 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
                 && buildorder.contains("nx-tech")
                 && buildorder.contains("res tech"),
             "current and next-step rows should render technology cue chips"
+        );
+    }
+
+    #[test]
+    fn ui_production_chips_surface_train_steps() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("production: 'Unit production'")
+                && buildorder.contains(".res.production")
+                && buildorder.contains("#next .nx-production"),
+            "production chips should have a label and distinct current/next styling"
+        );
+        assert!(
+            buildorder.contains("function unitTokensFromNote")
+                && buildorder.contains("@unit_[^@]+@")
+                && buildorder.contains("iconToken(token) && isProductionUnitToken(token)")
+                && buildorder.contains("function isProductionUnitToken")
+                && buildorder.contains("villager|worker|mounted-villager|king|khan|sheep"),
+            "production chips should be anchored to explicit non-worker unit icon tokens"
+        );
+        assert!(
+            buildorder.contains("function hasProductionCueText")
+                && buildorder.contains(
+                    "train|produc(?:e|ing|tion)|queue|make|making|pump|spam(?:ming)?|mass"
+                )
+                && buildorder.contains("@unit_[^@]+@"),
+            "production chips should require clear production wording near unit tokens"
+        );
+        assert!(
+            buildorder.contains("function productionCue")
+                && buildorder.contains("function compactUnitLabel")
+                && buildorder.contains("'spearman': 'Spear'")
+                && buildorder.contains("'longbowman': 'Longbow'")
+                && buildorder.contains("` +${tokens.length - 1}`")
+                && buildorder.contains("productionDetail(production)")
+                && buildorder.contains("nx-production")
+                && buildorder.contains("res production"),
+            "current and next-step rows should render compact unit production cue chips"
         );
     }
 

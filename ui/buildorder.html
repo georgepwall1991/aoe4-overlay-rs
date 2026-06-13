@@ -87,6 +87,9 @@
   .res.tech { color: #dff2d8; background: rgba(133,205,120,.08);
          box-shadow: inset 0 0 0 1px rgba(133,205,120,.36), 0 0 5px rgba(133,205,120,.12),
                      inset 0 1px 0 rgba(255,255,255,.1); }
+  .res.production { color: #f4e6ff; background: rgba(178,132,230,.09);
+         box-shadow: inset 0 0 0 1px rgba(178,132,230,.38), 0 0 5px rgba(178,132,230,.12),
+                     inset 0 1px 0 rgba(255,255,255,.1); }
   .res.shift { color: #d8eaff; background: rgba(122,182,255,.09);
          box-shadow: inset 0 0 0 1px rgba(122,182,255,.42), 0 0 5px rgba(122,182,255,.14),
                      inset 0 1px 0 rgba(255,255,255,.1); }
@@ -175,6 +178,8 @@
           box-shadow: inset 0 0 0 1px rgba(208,160,96,.32), 0 0 5px rgba(208,160,96,.1); }
   #next .nx-tech { color: #dff2d8; background: rgba(133,205,120,.08);
           box-shadow: inset 0 0 0 1px rgba(133,205,120,.28), 0 0 5px rgba(133,205,120,.1); }
+  #next .nx-production { color: #f4e6ff; background: rgba(178,132,230,.08);
+          box-shadow: inset 0 0 0 1px rgba(178,132,230,.28), 0 0 5px rgba(178,132,230,.1); }
   #next .nx-shift { color: #d8eaff; background: rgba(122,182,255,.09);
           box-shadow: inset 0 0 0 1px rgba(122,182,255,.3), 0 0 5px rgba(122,182,255,.12); }
   #next .nx-rally { color: #dce9f8; background: rgba(122,182,255,.08);
@@ -1834,8 +1839,64 @@ function normalizeBuildJson(bo) {
       cleanupDuplicateNotePrefixes(step);
       return step;
     }).filter(isNonBlankStep);
+    repairVillagerCountRegressions(bo.build_order);
   }
   return bo;
+}
+
+function stepNotesText(step) {
+  return (Array.isArray(step?.notes) ? step.notes : [])
+    .map(note => String(note || ''))
+    .join(' ')
+    .toLowerCase();
+}
+
+function allowsVillagerCountDrop(step) {
+  const text = stepNotesText(step);
+  return [
+    'villager died',
+    'villagers died',
+    'vill died',
+    'vills died',
+    'villager killed',
+    'villagers killed',
+    'vill killed',
+    'vills killed',
+    'lost villager',
+    'lost villagers',
+    'lost vill',
+    'lost vills',
+    'lose villager',
+    'lose villagers',
+    'lose vill',
+    'lose vills',
+    'delete villager',
+    'delete villagers',
+    'delete vill',
+    'delete vills',
+    'deleted villager',
+    'deleted villagers',
+    'deleted vill',
+    'deleted vills',
+    'sacrifice villager',
+    'sacrifice villagers',
+    'sacrifice vill',
+    'sacrifice vills',
+  ].some(needle => text.includes(needle));
+}
+
+function repairVillagerCountRegressions(steps) {
+  if (!Array.isArray(steps)) return;
+  let latestTotal = null;
+  for (const step of steps) {
+    const count = countForDisplay(step?.villager_count);
+    if (count === null) continue;
+    if (latestTotal !== null && count < latestTotal && !allowsVillagerCountDrop(step)) {
+      step.villager_count = latestTotal;
+      continue;
+    }
+    latestTotal = count;
+  }
 }
 
 function fillResourceCountsFromNotes(step) {
@@ -2531,6 +2592,7 @@ function resourceLabelForDisplay(key) {
     house: 'House',
     dropOff: 'Resource drop-off',
     technology: 'Technology',
+    production: 'Unit production',
     ageTarget: 'Age target',
     shift: 'Resource shift',
     rally: 'Rally point',
@@ -2714,6 +2776,82 @@ function technologyDetail(cue) {
   return `Research/upgrade: ${cue.names[0]}${extra}`;
 }
 
+function unitTokenDisplayKey(token) {
+  return normalizeIconToken(token).split('/').pop().replace(/\.(webp|png|jpg|jpeg)$/i, '').replace(/-\d+$/, '');
+}
+
+function isProductionUnitToken(token) {
+  return !/\b(?:villager|worker|mounted-villager|king|khan|sheep)\b/i.test(unitTokenDisplayKey(token));
+}
+
+function unitTokensFromNote(note) {
+  return [...String(note || '').matchAll(/@unit_[^@]+@/ig)]
+    .map(match => match[0].slice(1, -1))
+    .filter(token => iconToken(token) && isProductionUnitToken(token));
+}
+
+function uniqueUnitTokens(tokens) {
+  const seen = new Set();
+  const unique = [];
+  for (const token of tokens) {
+    const key = unitTokenDisplayKey(token);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(token);
+  }
+  return unique;
+}
+
+function compactUnitLabel(token) {
+  const clean = unitTokenDisplayKey(token);
+  const label = {
+    'arbaletrier': 'Arb',
+    'battering-ram': 'Ram',
+    'camel-lancer': 'Camel',
+    'crossbowman': 'Xbow',
+    'ghazi-raider': 'Ghazi',
+    'horse-archer': 'Horse Archer',
+    'javelin-thrower': 'Javelin',
+    'longbowman': 'Longbow',
+    'man-at-arms': 'MAA',
+    'mohe-tribesman': 'Mohe',
+    'palace-guard': 'Palace Guard',
+    'royal-knight': 'Royal Kt',
+    'spearman': 'Spear',
+    'varangian-guard': 'Varangian',
+    'war-elephant': 'Elephant',
+  }[clean];
+  if (label) return label;
+  return iconNameForDisplay(token);
+}
+
+function hasProductionCueText(note) {
+  return /\b(?:train|produc(?:e|ing|tion)|queue|make|making|pump|spam(?:ming)?|mass)\b[\s\S]{0,90}@unit_[^@]+@/i.test(note);
+}
+
+function productionCue(step) {
+  for (const note of notesForDisplay(step)) {
+    if (!hasProductionCueText(note)) continue;
+    const cueIndex = String(note || '').search(/\b(?:train|produc(?:e|ing|tion)|queue|make|making|pump|spam(?:ming)?|mass)\b/i);
+    const tokens = uniqueUnitTokens(unitTokensFromNote(String(note || '').slice(Math.max(0, cueIndex))));
+    if (!tokens.length) continue;
+    const names = tokens.map(iconNameForDisplay);
+    const extra = tokens.length > 1 ? ` +${tokens.length - 1}` : '';
+    return {
+      icon: iconSrc(tokens[0]) || RES_ICONS.villager,
+      label: `${compactUnitLabel(tokens[0])}${extra}`,
+      names,
+    };
+  }
+  return null;
+}
+
+function productionDetail(cue) {
+  if (!cue?.names?.length) return '';
+  const extra = cue.names.length > 1 ? ` +${cue.names.length - 1} more` : '';
+  return `Train/queue: ${cue.names[0]}${extra}`;
+}
+
 function structureTokensFromNote(note, type) {
   return [...String(note || '').matchAll(new RegExp(`@${type}_[^@]+@`, 'ig'))]
     .map(match => match[0].slice(1, -1))
@@ -2739,6 +2877,14 @@ function uniqueStructureTokens(tokens) {
     unique.push(token);
   }
   return unique;
+}
+
+function buildingTokenIsPlacementReference(note, token) {
+  const marker = `@${token}@`;
+  const index = String(note || '').toLowerCase().indexOf(marker.toLowerCase());
+  if (index <= 0) return false;
+  const before = String(note || '').slice(Math.max(0, index - 36), index);
+  return /\b(?:on\s+edge\s+of|edge\s+of|next\s+to|near|beside|around|at)\s*$/i.test(before);
 }
 
 function compactStructureLabel(token) {
@@ -2775,8 +2921,9 @@ function buildActionCue(step) {
         return { kind: 'Landmark', label: 'Landmark', icon: iconSrc(token) || RES_ICONS.builder, name: iconNameForDisplay(token) };
       }
       const uniqueBuildingTokens = uniqueStructureTokens(buildingTokens);
-      const nonHouseTokens = uniqueBuildingTokens.filter(token => !isHouseStructureToken(token));
-      const displayTokens = nonHouseTokens.length ? nonHouseTokens : uniqueBuildingTokens;
+      const houseTokens = uniqueBuildingTokens.filter(isHouseStructureToken);
+      const nonHouseTokens = uniqueBuildingTokens.filter(token => !isHouseStructureToken(token) && !buildingTokenIsPlacementReference(note, token));
+      const displayTokens = nonHouseTokens.length ? nonHouseTokens : (houseTokens.length ? houseTokens : uniqueBuildingTokens);
       const token = displayTokens[0];
       const names = displayTokens.map(iconNameForDisplay);
       const extra = displayTokens.length > 1 ? ` +${displayTokens.length - 1}` : '';
@@ -2786,7 +2933,7 @@ function buildActionCue(step) {
         icon: iconSrc(token) || RES_ICONS.builder,
         name: names[0],
         names,
-        houseOnly: !nonHouseTokens.length,
+        houseOnly: !nonHouseTokens.length && houseTokens.length > 0,
       };
     }
   }
@@ -3021,6 +3168,10 @@ function stepPreviewHtml(step, previousStep = null) {
   if (tech) {
     bits.push(previewChipHtml(tech.icon, 'Tech', resourceLabelForDisplay('technology'), 'nx-tech', technologyDetail(tech)));
   }
+  const production = productionCue(step);
+  if (production) {
+    bits.push(previewChipHtml(production.icon, production.label, resourceLabelForDisplay('production'), 'nx-production', productionDetail(production)));
+  }
   for (const k of previewResourceKeysForDisplay(r, pr)) {
     if ((r[k] ?? -1) >= 0) bits.push(previewChipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `nx-${k}${deltaClass(r[k], pr[k])}`, previewDeltaTitle(r[k], pr[k]), deltaText(r[k], pr[k])));
   }
@@ -3248,6 +3399,10 @@ function render() {
     const tech = technologyCue(s);
     if (tech) {
       res.push(chipHtml(tech.icon, 'Tech', resourceLabelForDisplay('technology'), 'res tech', technologyDetail(tech)));
+    }
+    const production = productionCue(s);
+    if (production) {
+      res.push(chipHtml(production.icon, production.label, resourceLabelForDisplay('production'), 'res production', productionDetail(production)));
     }
     for (const k of resourceKeysForDisplay(r)) {
       if ((r[k] ?? -1) >= 0)
