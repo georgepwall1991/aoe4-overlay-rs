@@ -2518,6 +2518,10 @@ function progressTitle(step, total) {
   return `Step ${step + 1} of ${total} (${pct}%)`;
 }
 
+function nextTitle(step, total) {
+  return `Next step - ${progressTitle(step + 1, total)}`;
+}
+
 function hasVisibleTargets(step) {
   if (!step || typeof step !== 'object') return false;
   if (timeForDisplay(step.time) || ageForDisplay(step.age) !== null ||
@@ -2655,6 +2659,7 @@ function render() {
     if ((settings?.bo_show_next ?? true) && nxPreview) {
       nextEl.style.display = '';
       nextEl.classList.remove('done');
+      nextEl.title = nextTitle(step, steps.length);
       nextEl.innerHTML = `<span class="nx-label">Next</span>${nxPreview}`;
     } else if ((settings?.bo_show_next ?? true) && step === steps.length - 1) {
       nextEl.style.display = '';
@@ -2688,6 +2693,7 @@ function render() {
     if ((settings?.bo_show_next ?? true) && nxLine) {
       nextEl.style.display = '';
       nextEl.classList.remove('done');
+      nextEl.title = nextTitle(step, stepIdx.length);
       nextEl.innerHTML = `<span class="nx-label">Next</span><div title="${esc(fallbackLineTitle(nxLine))}">${fallbackLineHtml(nxLine)}</div>`;
     } else if ((settings?.bo_show_next ?? true) && step === stepIdx.length - 1) {
       nextEl.style.display = '';
