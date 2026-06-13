@@ -2504,7 +2504,7 @@ function stepPreviewHtml(step) {
   const hiddenNotes = previewNotes.length - 1;
   if (hiddenNotes > 0) {
     const hiddenTitle = previewNotes.slice(1).map(n => compactPreviewText(n, 120)).join(' | ');
-    bits.push(`<div class="nx-more" title="${esc(`Hidden next details: ${hiddenTitle}`)}">+${hiddenNotes} detail${hiddenNotes === 1 ? '' : 's'}</div>`);
+    bits.push(`<div class="nx-more" title="${esc(`Hidden next details: ${hiddenTitle}`)}">+${hiddenNotes} next detail${hiddenNotes === 1 ? '' : 's'}</div>`);
   }
   return bits.join('<span> · </span>');
 }
@@ -2587,7 +2587,7 @@ function stepNotesHtml(step) {
     const label = i === 0 ? 'Current instruction' : 'Step detail';
     return `<div class="${i === 0 ? 'txt-cur' : 'txt-detail'}" title="${esc(`${label}: ${compactPreviewText(n, 220)}`)}">${renderLine(compactPreviewText(n, 140))}</div>`;
   }).join('') +
-    (more > 0 ? `<div class="txt-more" title="${esc(hiddenTitle)}">+${more} more detail${more === 1 ? '' : 's'}</div>` : '');
+    (more > 0 ? `<div class="txt-more" title="${esc(hiddenTitle)}">+${more} current detail${more === 1 ? '' : 's'}</div>` : '');
 }
 
 function plainTextWindowHtml(lines, stepIdx, step) {
