@@ -2524,7 +2524,7 @@ function render() {
     resEl.innerHTML = res.join('');
     const noteLines = notesForDisplay(s);
     notesEl.innerHTML = noteLines.length
-      ? noteLines.map(n => `<div>${renderLine(n)}</div>`).join('')
+      ? noteLines.map((n, i) => `<div class="${i === 0 ? 'txt-cur' : ''}">${renderLine(n)}</div>`).join('')
       : '<div class="txt-cur">No note for this step</div>';
     const nx = steps[step + 1];
     const nxPreview = stepPreviewHtml(nx);
