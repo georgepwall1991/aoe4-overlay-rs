@@ -85,7 +85,7 @@
          animation: age-glow 1.4s ease-in-out infinite alternate; }
   @keyframes age-glow { from { box-shadow: inset 0 0 0 1px rgba(231,192,89,.7), 0 0 4px rgba(231,192,89,.3); }
                         to   { box-shadow: inset 0 0 0 1px rgba(231,192,89,.9), 0 0 10px rgba(231,192,89,.6); } }
-  #resources, #notes { animation: step-in .22s ease-out; }
+  #resources, #notes, #next { animation: step-in .22s ease-out; }
   @keyframes step-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
   #title, #progress, #resources, #next { flex: none; }
   #notes { font-weight: 500; letter-spacing: .01em; flex: 1; min-height: 0; overflow: hidden;
@@ -2698,7 +2698,7 @@ function render() {
       nextEl.title = `Build order complete - ${progress}`;
       nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">Final step</div>';
     }
-    for (const el of [resEl, notesEl]) {
+    for (const el of [resEl, notesEl, nextEl]) {
       el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
     }
   } else {
