@@ -2496,6 +2496,10 @@ function buildNameForDisplay(build) {
   return name || 'Build order';
 }
 
+function buildTitleTextHtml(name) {
+  return `<span class="t" title="${esc(name)}">${esc(name)}</span>`;
+}
+
 function progressTitle(step, total) {
   const pct = total > 0 ? Math.round(((step + 1) / total) * 100) : 0;
   return `Step ${step + 1} of ${total} (${pct}%)`;
@@ -2558,7 +2562,7 @@ function render() {
   if (bo && Array.isArray(bo.build_order)) {
     const steps = bo.build_order.filter(hasStepSignal);
     if (!steps.length) {
-      titleEl.innerHTML = `<span class="t">${esc(buildName)}</span>`;
+      titleEl.innerHTML = buildTitleTextHtml(buildName);
       notesEl.innerHTML = '<div class="txt-cur">No usable build steps found</div>';
       return;
     }
@@ -2571,7 +2575,7 @@ function render() {
         const f = flagName(c);
         return `<img src="flags/${esc(f)}.webp" title="${esc(c)}" onerror="this.style.display='none'">`;
       }).join('') +
-      `<span class="t">${esc(buildName)}</span>` +
+      buildTitleTextHtml(buildName) +
       `<span id="step-count" title="${esc(progress)}">${step + 1}/${steps.length}</span>`;
     progEl.style.display = '';
     progEl.title = progress;
@@ -2630,7 +2634,7 @@ function render() {
     const step = clampStepIndex(current.step, stepIdx.length);
     const curLine = stepIdx[step];
     const progress = progressTitle(step, stepIdx.length);
-    titleEl.innerHTML = `<span class="t">${esc(buildName)}</span>` +
+    titleEl.innerHTML = buildTitleTextHtml(buildName) +
       (stepIdx.length ? `<span id="step-count" title="${esc(progress)}">${step + 1}/${stepIdx.length}</span>` : '');
     if (!stepIdx.length) {
       notesEl.innerHTML = '<div class="txt-cur">No usable build steps found</div>';
