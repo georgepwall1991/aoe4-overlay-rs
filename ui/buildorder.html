@@ -2548,6 +2548,19 @@ function nextTitle(step, total) {
   return `Upcoming step - ${progressTitle(step + 1, total)}`;
 }
 
+function nextLabelHtml(text, title = '') {
+  const titleAttr = title ? ` title="${esc(title)}"` : '';
+  return `<span class="nx-label"${titleAttr}>${esc(text)}</span>`;
+}
+
+function nextStepLabel(step, total) {
+  return `Next ${step + 2}/${total}`;
+}
+
+function doneStepLabel(total) {
+  return total > 0 ? `Done ${total}/${total}` : 'Done';
+}
+
 function hasVisibleTargets(step) {
   if (!step || typeof step !== 'object') return false;
   if (timeForDisplay(step.time) || ageForDisplay(step.age) !== null ||
@@ -2703,12 +2716,12 @@ function render() {
       nextEl.style.display = '';
       nextEl.classList.remove('done');
       nextEl.title = nextTitle(step, steps.length);
-      nextEl.innerHTML = `<span class="nx-label">Next</span>${nxPreview}`;
+      nextEl.innerHTML = nextLabelHtml(nextStepLabel(step, steps.length), nextTitle(step, steps.length)) + nxPreview;
     } else if ((settings?.bo_show_next ?? true) && step === steps.length - 1) {
       nextEl.style.display = '';
       nextEl.classList.add('done');
       nextEl.title = `Build order complete - ${progress}`;
-      nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">No next step</div>';
+      nextEl.innerHTML = nextLabelHtml(doneStepLabel(steps.length), `Build order complete - ${progress}`) + '<div class="nx-done">No next step</div>';
     }
     restartStepAnimation(resEl, notesEl, nextEl);
   } else {
@@ -2736,12 +2749,12 @@ function render() {
       nextEl.style.display = '';
       nextEl.classList.remove('done');
       nextEl.title = nextTitle(step, stepIdx.length);
-      nextEl.innerHTML = `<span class="nx-label">Next</span><div class="nx-note" title="${esc(`Next instruction: ${fallbackLineTitle(nxLine)}`)}">${fallbackLineHtml(nxLine)}</div>`;
+      nextEl.innerHTML = nextLabelHtml(nextStepLabel(step, stepIdx.length), nextTitle(step, stepIdx.length)) + `<div class="nx-note" title="${esc(`Next instruction: ${fallbackLineTitle(nxLine)}`)}">${fallbackLineHtml(nxLine)}</div>`;
     } else if ((settings?.bo_show_next ?? true) && step === stepIdx.length - 1) {
       nextEl.style.display = '';
       nextEl.classList.add('done');
       nextEl.title = `Build order complete - ${progress}`;
-      nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">No next step</div>';
+      nextEl.innerHTML = nextLabelHtml(doneStepLabel(stepIdx.length), `Build order complete - ${progress}`) + '<div class="nx-done">No next step</div>';
     }
     restartStepAnimation(notesEl, nextEl);
   }
