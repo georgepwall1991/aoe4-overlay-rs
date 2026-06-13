@@ -2364,6 +2364,15 @@ function parseBuildJsonContent(content) {
   }
 }
 
+function safeParseBuildJsonContent(content) {
+  try {
+    return parseBuildJsonContent(content);
+  } catch (e) {
+    console.warn('build order parse failed; falling back to plain text', e);
+    return null;
+  }
+}
+
 function hasStepSignal(step) {
   if (!step || typeof step !== 'object') return false;
   if ((step.notes || []).some(n => String(n || '').trim())) return true;
@@ -2408,7 +2417,7 @@ function render() {
   progEl.style.display = 'none'; nextEl.style.display = 'none';
   if (!current) { titleEl.innerHTML = '<span class="t">No build order selected</span>'; return; }
 
-  const bo = parseBuildJsonContent(current.content);
+  const bo = safeParseBuildJsonContent(current.content);
 
   if (bo && Array.isArray(bo.build_order)) {
     const steps = bo.build_order.filter(hasStepSignal);
