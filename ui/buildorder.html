@@ -99,6 +99,7 @@
   #notes div.txt-cur { background: linear-gradient(to right, rgba(231,192,89,.18), rgba(231,192,89,0) 85%);
            box-shadow: inset 2px 0 0 rgba(231,192,89,.85); font-weight: 600; }
   #notes div.txt-more { opacity: .58; font-size: .9em; background: none; box-shadow: none; font-weight: 600; }
+  #notes div.txt-gap { opacity: .38; background: none; box-shadow: none; font-size: .85em; font-weight: 600; }
   #next { margin-top: 7px; padding: 5px 7px 4px; opacity: .6; font-size: .85em;
           border-top: 1px solid rgba(230,198,100,.25);
           background: linear-gradient(to right, rgba(255,255,255,.04), rgba(255,255,255,0) 80%);
@@ -2500,6 +2501,23 @@ function stepNotesHtml(step) {
     (more > 0 ? `<div class="txt-more">+${more} more detail${more === 1 ? '' : 's'}</div>` : '');
 }
 
+function plainTextWindowHtml(lines, stepIdx, step) {
+  const currentLine = stepIdx[step];
+  const firstStep = Math.max(0, step - 2);
+  const lastStep = Math.min(stepIdx.length - 1, step + 3);
+  const firstLine = stepIdx[firstStep];
+  const lastLine = stepIdx[lastStep];
+  const parts = [];
+  if (firstStep > 0) parts.push(`<div class="txt-gap">+${firstStep} earlier</div>`);
+  for (let i = firstLine; i <= lastLine; i++) {
+    if (!String(lines[i] || '').trim()) continue;
+    parts.push(`<div class="${i === currentLine ? 'txt-cur' : 'txt-dim'}">${fallbackLineHtml(lines[i])}</div>`);
+  }
+  const hiddenLater = stepIdx.length - lastStep - 1;
+  if (hiddenLater > 0) parts.push(`<div class="txt-gap">+${hiddenLater} later</div>`);
+  return parts.join('');
+}
+
 function render() {
   const titleEl = document.getElementById('title');
   const resEl = document.getElementById('resources');
@@ -2593,10 +2611,7 @@ function render() {
     progEl.style.display = '';
     progEl.style.setProperty('--seg', stepIdx.length > 40 ? '200%' : (100 / stepIdx.length) + '%');
     progEl.firstElementChild.style.width = ((step + 1) / stepIdx.length * 100) + '%';
-    notesEl.innerHTML = lines.map((l, i) =>
-      `<div class="${i === curLine ? 'txt-cur' : 'txt-dim'}">${l.trim() ? fallbackLineHtml(l) : '&nbsp;'}</div>`).join('');
-    const cur = notesEl.querySelector('.txt-cur');
-    if (cur) cur.scrollIntoView({ block: 'center' });
+    notesEl.innerHTML = plainTextWindowHtml(lines, stepIdx, step);
     const nxLine = lines[stepIdx[step + 1]];
     if ((settings?.bo_show_next ?? true) && nxLine) {
       nextEl.style.display = '';
