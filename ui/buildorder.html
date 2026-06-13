@@ -98,6 +98,7 @@
   #notes div.txt-dim { opacity: .45; background: none; box-shadow: none; }
   #notes div.txt-cur { background: linear-gradient(to right, rgba(231,192,89,.18), rgba(231,192,89,0) 85%);
            box-shadow: inset 2px 0 0 rgba(231,192,89,.85); font-weight: 600; }
+  #notes div.txt-detail { opacity: .88; }
   #notes div.txt-more { opacity: .58; font-size: .9em; background: none; box-shadow: none; font-weight: 600; }
   #notes div.txt-gap { opacity: .38; background: none; box-shadow: none; font-size: .85em; font-weight: 600; }
   #next { margin-top: 7px; padding: 5px 7px 4px; opacity: .6; font-size: .85em;
@@ -113,6 +114,7 @@
   #next div { display: inline; background: none; box-shadow: none; padding: 0; }
   #next div.nx-note { color: rgba(255,255,255,.92); }
   #next div.nx-more { color: #dcc77a; font-weight: 700; }
+  #next div.nx-done { color: #d9f3d2; font-weight: 700; }
   #next img { height: calc(var(--imgh, 24px) * .8); vertical-align: middle; border-radius: .25em; }
   #next.done { opacity: .5; }
   body.edit #panel { outline: 3px dashed #ffb300; outline-offset: -3px; }
@@ -2569,7 +2571,7 @@ function stepNotesHtml(step) {
   const hiddenTitle = more > 0 ? `Hidden current details: ${noteLines.slice(4).map(n => compactPreviewText(n, 120)).join(' | ')}` : '';
   return visible.map((n, i) => {
     const label = i === 0 ? 'Current instruction' : 'Step detail';
-    return `<div class="${i === 0 ? 'txt-cur' : ''}" title="${esc(`${label}: ${compactPreviewText(n, 220)}`)}">${renderLine(compactPreviewText(n, 140))}</div>`;
+    return `<div class="${i === 0 ? 'txt-cur' : 'txt-detail'}" title="${esc(`${label}: ${compactPreviewText(n, 220)}`)}">${renderLine(compactPreviewText(n, 140))}</div>`;
   }).join('') +
     (more > 0 ? `<div class="txt-more" title="${esc(hiddenTitle)}">+${more} more detail${more === 1 ? '' : 's'}</div>` : '');
 }
@@ -2677,7 +2679,7 @@ function render() {
       nextEl.style.display = '';
       nextEl.classList.add('done');
       nextEl.title = `Build order complete - ${progress}`;
-      nextEl.innerHTML = '<span class="nx-label">Done</span><div>Final step</div>';
+      nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">Final step</div>';
     }
     for (const el of [resEl, notesEl]) {
       el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
@@ -2711,7 +2713,7 @@ function render() {
       nextEl.style.display = '';
       nextEl.classList.add('done');
       nextEl.title = `Build order complete - ${progress}`;
-      nextEl.innerHTML = '<span class="nx-label">Done</span><div>Final step</div>';
+      nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">Final step</div>';
     }
   }
 }
