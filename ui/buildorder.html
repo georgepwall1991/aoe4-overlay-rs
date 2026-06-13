@@ -2618,7 +2618,7 @@ function render() {
   const progEl = document.getElementById('progress');
   const nextEl = document.getElementById('next');
   titleEl.innerHTML = ''; resEl.innerHTML = ''; notesEl.innerHTML = '';
-  progEl.style.display = 'none'; nextEl.style.display = 'none';
+  progEl.style.display = 'none'; resEl.style.display = 'none'; nextEl.style.display = 'none';
   progEl.title = '';
   resEl.title = '';
   notesEl.title = '';
@@ -2681,6 +2681,7 @@ function render() {
     if (population !== null)
       res.push(chipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `res population${delta(population, prevPopulation)}`, deltaTitle(population, prevPopulation)));
     resEl.innerHTML = res.join('');
+    resEl.style.display = res.length ? '' : 'none';
     resEl.title = targetSummaryTitle(s);
     notesEl.title = `Current step - ${progress}`;
     notesEl.innerHTML = stepNotesHtml(s);
