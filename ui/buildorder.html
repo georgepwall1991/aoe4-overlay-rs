@@ -73,6 +73,9 @@
   .res.stone { box-shadow: inset 0 0 0 1px rgba(170,178,189,.4), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.time  { box-shadow: inset 0 0 0 1px rgba(122,182,255,.42), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.age   { box-shadow: inset 0 0 0 1px rgba(231,192,89,.5),  inset 0 1px 0 rgba(255,255,255,.1); }
+  .res.age-plan { color: #ffe9a0; background: rgba(231,192,89,.08);
+         box-shadow: inset 0 0 0 1px rgba(231,192,89,.45), 0 0 5px rgba(231,192,89,.12),
+                     inset 0 1px 0 rgba(255,255,255,.1); }
   .res.villager, .res.population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.32), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.38), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.shift { color: #d8eaff; background: rgba(122,182,255,.09);
@@ -148,6 +151,8 @@
   #next .nx-until { color: #d8eaff; background: rgba(122,182,255,.1);
           box-shadow: inset 0 0 0 1px rgba(122,182,255,.34), 0 0 5px rgba(122,182,255,.1); }
   #next .nx-age { box-shadow: inset 0 0 0 1px rgba(231,192,89,.32); }
+  #next .nx-age-plan { color: #ffe9a0; background: rgba(231,192,89,.08);
+          box-shadow: inset 0 0 0 1px rgba(231,192,89,.38), 0 0 5px rgba(231,192,89,.12); }
   #next .nx-age-up { color: #ffe9a0; background: rgba(231,192,89,.12);
           box-shadow: inset 0 0 0 1px rgba(231,192,89,.55), 0 0 6px rgba(231,192,89,.22); }
   #next .nx-food { box-shadow: inset 0 0 0 1px rgba(229,106,84,.26); }
@@ -2492,6 +2497,10 @@ function ageLabelForDisplay(age) {
   return { 1: 'Age I', 2: 'Age II', 3: 'Age III', 4: 'Age IV' }[age] || '';
 }
 
+function shortAgeLabelForDisplay(age) {
+  return { 1: 'I', 2: 'II', 3: 'III', 4: 'IV' }[age] || '';
+}
+
 function resourceLabelForDisplay(key) {
   return {
     food: 'Food villagers assigned',
@@ -2503,6 +2512,7 @@ function resourceLabelForDisplay(key) {
     population: 'Population',
     time: 'Step time',
     action: 'Build action',
+    ageTarget: 'Age target',
     shift: 'Resource shift',
     rally: 'Rally point',
   }[key] || key;
@@ -2690,6 +2700,32 @@ function nextAgeChipHtml(age, previousAge) {
   return previewChipHtml(AGE_ICONS[age], text, 'Age', `nx-age${ageUp ? ' nx-age-up' : ''}`, detail);
 }
 
+function futureAgeTargetFromNote(note, currentAge) {
+  if (currentAge === null) return null;
+  const re = /(?:->|=>|→|\bto\b|\bage\s*up\s*(?:to)?\b|\badvance\s*(?:to)?\b|\bgo\s*(?:to)?\b)[\s\S]{0,44}(@age\/age_[2-4](?:\.webp)?@|\bage\s*(?:ii|iii|iv|2|3|4)\b|\b(?:feudal|castle|imperial)(?:\s+age)?\b)/ig;
+  for (const match of String(note || '').matchAll(re)) {
+    const target = ageForDisplay(match[1]);
+    if (target !== null && target > currentAge) return target;
+  }
+  return null;
+}
+
+function futureAgeTarget(step, currentAge) {
+  for (const note of notesForDisplay(step)) {
+    const target = futureAgeTargetFromNote(note, currentAge);
+    if (target !== null) return target;
+  }
+  return null;
+}
+
+function ageTargetText(age) {
+  return `Prep ${shortAgeLabelForDisplay(age)}`;
+}
+
+function ageTargetDetail(age) {
+  return `Instruction points toward ${ageLabelForDisplay(age)} before this age is reached`;
+}
+
 function previewTextUnits(text) {
   let units = 0;
   for (let i = 0; i < text.length; i++) {
@@ -2745,6 +2781,11 @@ function stepPreviewHtml(step, previousStep = null) {
   const age = ageForDisplay(step.age);
   const previousAge = ageForDisplay(previousStep?.age);
   if (age !== null) bits.push(nextAgeChipHtml(age, previousAge));
+  const ageUp = previousAge !== null && age !== null && age > previousAge;
+  const ageTarget = futureAgeTarget(step, age);
+  if (ageTarget !== null && !ageUp) {
+    bits.push(previewChipHtml(AGE_ICONS[ageTarget], ageTargetText(ageTarget), resourceLabelForDisplay('ageTarget'), 'nx-age nx-age-plan', ageTargetDetail(ageTarget)));
+  }
   const r = step.resources || {};
   const pr = previousStep?.resources || {};
   const shift = resourceShiftSummary(r, pr);
@@ -2957,6 +2998,10 @@ function render() {
     if (age !== null) {
       const ageUp = step > 0 && prevAge !== null && age > prevAge;
       res.push(chipHtml(AGE_ICONS[age], ageUp ? 'Age up!' : ageLabelForDisplay(age), 'Age', `res age${ageUp ? ' age-up' : ''}`, ageUp ? `Advanced from ${ageLabelForDisplay(prevAge)}` : ''));
+      const ageTarget = futureAgeTarget(s, age);
+      if (ageTarget !== null && !ageUp) {
+        res.push(chipHtml(AGE_ICONS[ageTarget], ageTargetText(ageTarget), resourceLabelForDisplay('ageTarget'), 'res age age-plan', ageTargetDetail(ageTarget)));
+      }
     }
     const shift = resourceShiftSummary(r, pr);
     if (shift.length) {

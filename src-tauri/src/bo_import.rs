@@ -5540,6 +5540,38 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_age_target_chips_surface_future_age_prep() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("ageTarget: 'Age target'")
+                && buildorder.contains("function ageTargetText")
+                && buildorder.contains("`Prep ${shortAgeLabelForDisplay(age)}`"),
+            "future-age prep chips should have compact labels"
+        );
+        assert!(
+            buildorder.contains("function futureAgeTargetFromNote")
+                && buildorder.contains("@age\\/age_[2-4]")
+                && buildorder.contains("target > currentAge"),
+            "future-age prep should only infer explicit future age targets"
+        );
+        assert!(
+            buildorder.contains("function futureAgeTarget(step, currentAge)")
+                && buildorder.contains("futureAgeTargetFromNote(note, currentAge)")
+                && buildorder.contains("ageTargetDetail(ageTarget)"),
+            "future-age prep chips should explain the inferred target"
+        );
+        assert!(
+            buildorder.contains("nx-age nx-age-plan")
+                && buildorder.contains("res age age-plan")
+                && buildorder.contains("ageTarget !== null && !ageUp"),
+            "future-age prep chips should render for current and next rows without replacing actual age-ups"
+        );
+    }
+
+    #[test]
     fn ui_next_preview_hides_unchanged_zero_resources() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()
