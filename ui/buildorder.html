@@ -2645,7 +2645,7 @@ function render() {
     if ((settings?.bo_show_next ?? true) && nxLine) {
       nextEl.style.display = '';
       nextEl.classList.remove('done');
-      nextEl.innerHTML = `<span class="nx-label">Next</span><div>${fallbackLineHtml(nxLine)}</div>`;
+      nextEl.innerHTML = `<span class="nx-label">Next</span><div title="${esc(fallbackLineTitle(nxLine))}">${fallbackLineHtml(nxLine)}</div>`;
     } else if ((settings?.bo_show_next ?? true) && step === stepIdx.length - 1) {
       nextEl.style.display = '';
       nextEl.classList.add('done');
