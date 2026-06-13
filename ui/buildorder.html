@@ -75,10 +75,10 @@
   .res.age   { box-shadow: inset 0 0 0 1px rgba(231,192,89,.5),  inset 0 1px 0 rgba(255,255,255,.1); }
   .res.villager, .res.population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.32), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.38), inset 0 1px 0 rgba(255,255,255,.08); }
-  .res.up::after, .res.down::after { font-size: .7em; font-weight: 800; margin-left: 2px;
-         text-shadow: 0 1px 2px rgba(0,0,0,.8); }
-  .res.up::after   { content: '▲'; color: #9fe39b; }
-  .res.down::after { content: '▼'; color: #e89b8d; }
+  .res.up::after, .res.down::after { content: attr(data-delta); font-size: .68em; font-weight: 800; margin-left: 3px;
+         font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0,0,0,.8); }
+  .res.up::after   { color: #9fe39b; }
+  .res.down::after { color: #e89b8d; }
   .res.up, .res.down { animation: res-pulse .9s ease-out; }
   @keyframes res-pulse { 0% { filter: brightness(1.8); } 100% { filter: brightness(1); } }
   .res.age-up { color: #ffe9a0;
@@ -2477,16 +2477,32 @@ function resourceLabelForDisplay(key) {
   }[key] || key;
 }
 
-function chipHtml(icon, value, label, className = 'res', detail = '') {
+function chipHtml(icon, value, label, className = 'res', detail = '', delta = '') {
   const text = value === '' || value === null || value === undefined ? '' : String(value);
   const title = [text ? `Current ${label}: ${text}` : `Current ${label}`, detail].filter(Boolean).join(' - ');
-  return `<span class="${esc(className)}" title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
+  const deltaAttr = delta ? ` data-delta="${esc(delta)}"` : '';
+  return `<span class="${esc(className)}"${deltaAttr} title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
+}
+
+function numericDelta(value, previous) {
+  if (!Number.isFinite(value) || !Number.isFinite(previous) || value < 0 || previous < 0 || value === previous) return 0;
+  return value - previous;
+}
+
+function deltaClass(value, previous) {
+  const delta = numericDelta(value, previous);
+  return delta > 0 ? ' up' : delta < 0 ? ' down' : '';
+}
+
+function deltaText(value, previous) {
+  const delta = numericDelta(value, previous);
+  return delta ? `${delta > 0 ? '+' : ''}${delta}` : '';
 }
 
 function deltaTitle(value, previous) {
-  if (!(previous >= 0) || value === previous) return '';
-  const delta = Math.abs(value - previous);
-  return value > previous ? `Increased by ${delta} from ${previous}` : `Decreased by ${delta} from ${previous}`;
+  const delta = numericDelta(value, previous);
+  if (!delta) return '';
+  return delta > 0 ? `Increased by ${delta} from ${previous}` : `Decreased by ${Math.abs(delta)} from ${previous}`;
 }
 
 function previewChipHtml(icon, value, label, className = '') {
@@ -2735,10 +2751,6 @@ function render() {
     const r = s.resources || {};
     const pr = (steps[step - 1] || {}).resources || {};
     const prev = steps[step - 1] || {};
-    const delta = (cur, old) => {
-      if (step === 0 || !(old >= 0) || cur === old) return '';
-      return cur > old ? ' up' : ' down';
-    };
     const res = [];
     const time = timeForDisplay(s.time);
     if (time)
@@ -2751,16 +2763,16 @@ function render() {
     }
     for (const k of resourceKeysForDisplay(r)) {
       if ((r[k] ?? -1) >= 0)
-        res.push(chipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `res ${k}${delta(r[k], pr[k])}`, deltaTitle(r[k], pr[k])));
+        res.push(chipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `res ${k}${deltaClass(r[k], pr[k])}`, deltaTitle(r[k], pr[k]), deltaText(r[k], pr[k])));
     }
     const villagers = countForDisplay(s.villager_count);
     const prevVillagers = countForDisplay(prev.villager_count);
     const population = countForDisplay(s.population_count);
     const prevPopulation = countForDisplay(prev.population_count);
     if (villagers !== null)
-      res.push(chipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `res villager${delta(villagers, prevVillagers)}`, deltaTitle(villagers, prevVillagers)));
+      res.push(chipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `res villager${deltaClass(villagers, prevVillagers)}`, deltaTitle(villagers, prevVillagers), deltaText(villagers, prevVillagers)));
     if (population !== null)
-      res.push(chipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `res population${delta(population, prevPopulation)}`, deltaTitle(population, prevPopulation)));
+      res.push(chipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `res population${deltaClass(population, prevPopulation)}`, deltaTitle(population, prevPopulation), deltaText(population, prevPopulation)));
     resEl.innerHTML = res.join('');
     resEl.style.display = res.length ? '' : 'none';
     resEl.title = targetSummaryTitle(s);

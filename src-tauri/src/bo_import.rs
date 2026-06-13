@@ -5392,6 +5392,36 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_delta_chips_show_signed_amounts() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("content: attr(data-delta)"),
+            "delta chips should render signed amounts, not direction-only arrows"
+        );
+        assert!(
+            buildorder.contains("function numericDelta")
+                && buildorder.contains("Number.isFinite(value)")
+                && buildorder.contains("Number.isFinite(previous)")
+                && buildorder.contains("value < 0 || previous < 0"),
+            "delta comparisons should only use explicit nonnegative numeric values"
+        );
+        assert!(
+            buildorder.contains("function deltaText")
+                && buildorder.contains("`${delta > 0 ? '+' : ''}${delta}`"),
+            "delta text should include a leading plus for increases"
+        );
+        assert!(
+            buildorder.contains("deltaText(r[k], pr[k])")
+                && buildorder.contains("deltaText(villagers, prevVillagers)")
+                && buildorder.contains("deltaText(population, prevPopulation)"),
+            "resource, villager, and population chips should receive signed deltas"
+        );
+    }
+
+    #[test]
     fn txt_without_steps_errors() {
         assert!(convert_aoeivbuilds_txt("Title only\n\nno bullets here", None, "x").is_err());
     }
