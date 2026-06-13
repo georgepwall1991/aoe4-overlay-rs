@@ -2381,13 +2381,21 @@ function hasStepSignal(step) {
   return ['food', 'wood', 'gold', 'stone'].some(k => (r[k] ?? -1) > 0) || (r.builder ?? -1) >= 0;
 }
 
+function resourceKeysForDisplay(resources) {
+  const r = resources || {};
+  const eco = ['food', 'wood', 'gold', 'stone'];
+  const keys = eco.some(k => (r[k] ?? -1) > 0) ? eco.filter(k => (r[k] ?? -1) >= 0) : [];
+  if ((r.builder ?? -1) >= 0) keys.push('builder');
+  return keys;
+}
+
 function stepPreviewHtml(step) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
   if (step.time) bits.push(`<span><img src="${RES_ICONS.time}">${esc(step.time)}</span>`);
   if (step.age >= 1 && step.age <= 4) bits.push(`<span><img src="${AGE_ICONS[step.age]}"></span>`);
   const r = step.resources || {};
-  for (const k of ['food', 'wood', 'gold', 'stone', 'builder']) {
+  for (const k of resourceKeysForDisplay(r)) {
     if ((r[k] ?? -1) >= 0) bits.push(`<span><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
   }
   if (step.villager_count >= 0) bits.push(`<span><img src="${RES_ICONS.villager}">${esc(step.villager_count)}</span>`);
@@ -2447,7 +2455,7 @@ function render() {
       return cur > old ? ' up' : ' down';
     };
     const res = [];
-    for (const k of ['food', 'wood', 'gold', 'stone', 'builder']) {
+    for (const k of resourceKeysForDisplay(r)) {
       if ((r[k] ?? -1) >= 0)
         res.push(`<span class="res ${k}${delta(r[k], pr[k])}"><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
     }
