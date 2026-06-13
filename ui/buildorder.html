@@ -2517,7 +2517,7 @@ function stepNotesHtml(step) {
   }
   const visible = noteLines.slice(0, 4);
   const more = noteLines.length - visible.length;
-  return visible.map((n, i) => `<div class="${i === 0 ? 'txt-cur' : ''}">${renderLine(compactPreviewText(n, 140))}</div>`).join('') +
+  return visible.map((n, i) => `<div class="${i === 0 ? 'txt-cur' : ''}" title="${esc(compactPreviewText(n, 220))}">${renderLine(compactPreviewText(n, 140))}</div>`).join('') +
     (more > 0 ? `<div class="txt-more">+${more} more detail${more === 1 ? '' : 's'}</div>` : '');
 }
 
