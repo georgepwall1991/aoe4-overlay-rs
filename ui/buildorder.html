@@ -2487,6 +2487,10 @@ function fallbackLineHtml(line) {
   return renderLine(compactPreviewText(cleaned || String(line || '').trim(), 120));
 }
 
+function fallbackLineTitle(line) {
+  return compactPreviewText(normalizeNoteValue(stripNoteListMarker(line)) || String(line || '').trim(), 220);
+}
+
 function buildNameForDisplay(build) {
   const name = String(build?.name || '').trim();
   return name || 'Build order';
@@ -2527,7 +2531,7 @@ function plainTextWindowHtml(lines, stepIdx, step) {
   if (firstStep > 0) parts.push(`<div class="txt-gap">+${firstStep} earlier</div>`);
   for (let i = firstLine; i <= lastLine; i++) {
     if (!String(lines[i] || '').trim()) continue;
-    parts.push(`<div class="${i === currentLine ? 'txt-cur' : 'txt-dim'}">${fallbackLineHtml(lines[i])}</div>`);
+    parts.push(`<div class="${i === currentLine ? 'txt-cur' : 'txt-dim'}" title="${esc(fallbackLineTitle(lines[i]))}">${fallbackLineHtml(lines[i])}</div>`);
   }
   const hiddenLater = stepIdx.length - lastStep - 1;
   if (hiddenLater > 0) parts.push(`<div class="txt-gap">+${hiddenLater} later</div>`);
