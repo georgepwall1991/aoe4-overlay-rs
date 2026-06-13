@@ -175,7 +175,7 @@ const RES_ICONS = {
   wood: 'bo_img/resource/resource_wood.webp',
   gold: 'bo_img/resource/resource_gold.webp',
   stone: 'bo_img/resource/resource_stone.webp',
-  builder: 'bo_img/unit_worker/villager.webp',
+  builder: 'bo_img/abilities/repair.webp',
   villager: 'bo_img/unit_worker/villager.webp',
   population: 'bo_img/building_economy/house.webp',
   time: 'bo_img/time/time.png',
@@ -2470,7 +2470,7 @@ function resourceLabelForDisplay(key) {
     wood: 'Wood villagers assigned',
     gold: 'Gold villagers assigned',
     stone: 'Stone villagers assigned',
-    builder: 'Builders',
+    builder: 'Building villagers',
     villager: 'Assigned villagers',
     population: 'Population',
     time: 'Step time',
@@ -2485,7 +2485,8 @@ function chipHtml(icon, value, label, className = 'res', detail = '') {
 
 function deltaTitle(value, previous) {
   if (!(previous >= 0) || value === previous) return '';
-  return value > previous ? `Increased from ${previous}` : `Decreased from ${previous}`;
+  const delta = Math.abs(value - previous);
+  return value > previous ? `Increased by ${delta} from ${previous}` : `Decreased by ${delta} from ${previous}`;
 }
 
 function previewChipHtml(icon, value, label, className = '') {
