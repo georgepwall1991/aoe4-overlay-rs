@@ -2471,7 +2471,7 @@ function resourceLabelForDisplay(key) {
     gold: 'Gold villagers assigned',
     stone: 'Stone villagers assigned',
     builder: 'Builders',
-    villager: 'Villager count',
+    villager: 'Assigned villagers',
     population: 'Population',
     time: 'Step time',
   }[key] || key;
@@ -2636,7 +2636,7 @@ function targetSummaryTitle(step) {
   }
   const villagers = countForDisplay(step.villager_count);
   const population = countForDisplay(step.population_count);
-  if (villagers !== null) parts.push(`Villagers ${villagers}`);
+  if (villagers !== null) parts.push(`Assigned villagers ${villagers}`);
   if (population !== null) parts.push(`Population ${population}`);
   return parts.length ? `Current step targets: ${parts.join(' | ')}` : 'No current step targets';
 }
