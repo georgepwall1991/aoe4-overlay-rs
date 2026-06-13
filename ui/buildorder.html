@@ -2523,6 +2523,24 @@ function hasVisibleTargets(step) {
   return resourceKeysForDisplay(step.resources).length > 0;
 }
 
+function targetSummaryTitle(step) {
+  if (!step || typeof step !== 'object') return '';
+  const parts = [];
+  const time = timeForDisplay(step.time);
+  if (time) parts.push(`Time ${time}`);
+  const age = ageForDisplay(step.age);
+  if (age !== null) parts.push(ageLabelForDisplay(age));
+  const r = step.resources || {};
+  for (const k of resourceKeysForDisplay(r)) {
+    if ((r[k] ?? -1) >= 0) parts.push(`${resourceLabelForDisplay(k)} ${r[k]}`);
+  }
+  const villagers = countForDisplay(step.villager_count);
+  const population = countForDisplay(step.population_count);
+  if (villagers !== null) parts.push(`Villagers ${villagers}`);
+  if (population !== null) parts.push(`Population ${population}`);
+  return parts.join(' | ');
+}
+
 function stepNotesHtml(step) {
   const noteLines = notesForDisplay(step);
   if (!noteLines.length) {
@@ -2626,6 +2644,7 @@ function render() {
     if (time)
       res.push(chipHtml(RES_ICONS.time, time, resourceLabelForDisplay('time')));
     resEl.innerHTML = res.join('');
+    resEl.title = targetSummaryTitle(s);
     notesEl.innerHTML = stepNotesHtml(s);
     const nx = steps[step + 1];
     const nxPreview = stepPreviewHtml(nx);
