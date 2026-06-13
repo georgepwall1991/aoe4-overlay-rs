@@ -4722,9 +4722,17 @@ let boSourceOpen = (() => {
   catch (e) { return false; }
 })();
 
-// Civ names with punctuation (as exported by aoe4guides) -> our flag file names.
-const FLAG_ALIASES = { "Zhu Xi's Legacy": 'Zhu Xis Legacy', "Jeanne d'Arc": 'Jeanne Darc' };
-const flagName = civ => FLAG_ALIASES[civ] || civ;
+// Civ names with punctuation/casing variants -> local flag file names.
+const FLAG_ALIASES = {
+  "Jeanne d'Arc": 'Jeanne Darc',
+  "Order of the Dragon": 'Order Of The Dragon',
+  "House of Lancaster": 'House of Lancaster',
+  "Zhu Xi's Legacy": 'Zhu Xis Legacy'
+};
+function flagName(civ) {
+  const normalized = boNormalizeCivName(civ) || civ;
+  return FLAG_ALIASES[normalized] || FLAG_ALIASES[civ] || normalized;
+}
 
 // Parse a BO body: returns {json, steps, civ, err} — json null for plain text.
 // Memoized: the library list re-parses every BO on each render/filter keystroke.
@@ -4738,49 +4746,1403 @@ function parseBo(content) {
 }
 function normalizeBoTime(t) {
   if (typeof t !== 'string') return t;
-  const m = t.trim().match(/^(\d+)[.:](\d+)$/);
-  if (!m) return t;
-  const s = parseInt(m[2], 10);
-  return s < 60 ? `${parseInt(m[1], 10)}:${String(s).padStart(2, '0')}` : t;
+  let s = t.trim()
+    .replace(/&nbsp;/g, ' ')
+    .replace(/[‑–—]/g, '-')
+    .replace(/±/g, '+-')
+    .replace(/\s+/g, ' ');
+  if (/<[^>]+>/.test(s)) s = s.replace(/<[^>]*>/g, '').trim();
+  if (!s) return '';
+  s = s.replace(/^[%[(]+/, '').replace(/[\])]+$/, '').replace(/^=/, '').trim();
+  let approx = false;
+  if (/^(~|≈|\+\-|\/\+)/.test(s)) { approx = true; s = s.replace(/^(~|≈|\+\-|\/\+)\s*/, ''); }
+  if (/^(about|around|ca\.|c\.)\s+/i.test(s)) { approx = true; s = s.replace(/^(about|around|ca\.|c\.)\s+/i, ''); }
+  if (/(ish)$/i.test(s)) { approx = true; s = s.replace(/ish$/i, '').trim(); }
+  let stopwatch = s.match(/^(\d+)\s*m(?:in(?:ute)?s?)?\s*(\d{1,2})\s*(?:s|sec|secs|second|seconds)?$/i);
+  if (stopwatch) return `${approx ? '~' : ''}${parseInt(stopwatch[1], 10)}:${String(parseInt(stopwatch[2], 10)).padStart(2, '0')}`;
+  s = s.replace(/(min|mins|分)$/i, '').trim();
+  let seconds = s.match(/^(\d+)\s*(s|sec|secs|second|seconds)$/i);
+  if (seconds) {
+    const sec = parseInt(seconds[1], 10);
+    return `${approx ? '~' : ''}${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
+  }
+  if (/\s+(on|onward|onwards)$/i.test(s)) {
+    approx = true;
+    s = s.replace(/\s+(on|onward|onwards)$/i, '').trim();
+  }
+  if (/(\+\-|\/\+|\+\/\-|\+|~|>)$/.test(s)) { approx = true; s = s.replace(/(\+\-|\/\+|\+\/\-|\+|~|>)$/g, '').trim(); }
+  if (!s || /^[-~<>]+$/.test(s)) return '';
+  const clock = raw => {
+    raw = raw.trim();
+    if (/[.:;,]/.test(raw)) raw = raw.replace(/\s+/g, '');
+    raw = raw.replace(/[;,]/g, ':').replace(/^(\d+)m(\d+)s?$/i, '$1:$2');
+    if (/^00$/.test(raw)) return '0:00';
+    if (/^\d{3}$/.test(raw)) return `${parseInt(raw[0], 10)}:${raw.slice(1)}`;
+    let m = raw.match(/^[:.](\d+)$/);
+    if (m) {
+      const sec = parseInt(m[1], 10);
+      return sec < 60 ? `0:${String(sec).padStart(2, '0')}` : null;
+    }
+    m = raw.match(/^(\d+)[.:]$/);
+    if (m) return `${parseInt(m[1], 10)}:00`;
+    m = raw.match(/^(\d+)$/);
+    if (m) return `${parseInt(m[1], 10)}:00`;
+    m = raw.match(/^0+[.:](\d+)[.:](\d+)$/);
+    if (m) {
+      const sec = parseInt(m[2], 10);
+      return sec < 60 ? `${parseInt(m[1], 10)}:${String(sec).padStart(2, '0')}` : null;
+    }
+    m = raw.match(/^(\d+)[.:](\d+)$/);
+    if (!m) return null;
+    const sec = parseInt(m[2], 10);
+    return sec < 60 ? `${parseInt(m[1], 10)}:${String(sec).padStart(2, '0')}` : null;
+  };
+  const range = s.split(/\s+\+\s+|-/);
+  if (range.length === 2) {
+    let a = null, b = null;
+    if (/^\d+$/.test(range[0]) && range[1].includes(':')) a = `${parseInt(range[0], 10)}:00`;
+    if (range[0].includes(':') && /^\d+$/.test(range[1])) b = `${parseInt(range[0].split(/[.:]/)[0], 10)}:${String(parseInt(range[1], 10)).padStart(2, '0')}`;
+    a = a || clock(range[0]);
+    b = b || clock(range[1]);
+    if (a && b) return `${a}-${b}`;
+  }
+  const fixed = clock(s);
+  if (fixed) return `${approx ? '~' : ''}${fixed}`;
+  const noisyClocks = s.split(/[\s|\/()[\]]+/)
+    .map(part => part.replace(/^[,;]+|[,;]+$/g, ''))
+    .map(clock)
+    .filter(Boolean);
+  if (noisyClocks.length > 1) return noisyClocks[0];
+  return approx && s !== t ? `~${s}` : t;
 }
 function boParseAllocations(v) {
+  if (Array.isArray(v)) {
+    if (v.length !== 4 && v.length !== 5) return null;
+    const nums = v.map(boParseIntish);
+    if (nums.some(n => n === null)) return null;
+    return { food: nums[0], wood: nums[1], gold: nums[2], stone: nums[3], builder: nums[4] ?? -1 };
+  }
   if (typeof v !== 'string') return null;
-  const nums = v.trim().replace(/[()]/g, '').split(/[\/,]/).map(x => {
+  const labeled = boParseLabeledAllocations(v);
+  if (labeled) return labeled;
+  const clean = v.trim().replace(/[()]/g, '');
+  const delimiter = clean.includes('/') ? /[\/]/ : clean.includes(',') ? /[,]/
+    : /^\s*\d+\s*-\s*\d+\s*-\s*\d+\s*-\s*\d+(?:\s*-\s*\d+)?\s*$/.test(clean) ? /-/ : null;
+  if (!delimiter) return null;
+  const nums = clean.split(delimiter).map(x => {
     const m = x.trim().match(/^-?\d+/);
     return m ? parseInt(m[0], 10) : -1;
   });
-  if (nums.length !== 4) return null;
-  return { food: nums[0], wood: nums[1], gold: nums[2], stone: nums[3] };
+  if (nums.length !== 4 && nums.length !== 5) return null;
+  return { food: nums[0], wood: nums[1], gold: nums[2], stone: nums[3], builder: nums[4] ?? -1 };
+}
+function boResourceAllocationLabel(label) {
+  const key = String(label || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (['f', 'food', 'foods'].includes(key)) return 'food';
+  if (['w', 'wood'].includes(key)) return 'wood';
+  if (['g', 'gold'].includes(key)) return 'gold';
+  if (['s', 'stone'].includes(key)) return 'stone';
+  if (['b', 'build', 'builder', 'builders'].includes(key)) return 'builder';
+  return null;
+}
+function boResourceAllocationTokens(text) {
+  return String(text || '')
+    .replace(/&nbsp;/gi, ' ')
+    .match(/-?\d+[a-z]+|[a-z]+-?\d+|-?\d+|[a-z]+/gi)
+    ?.map(token => token.toLowerCase()) || [];
+}
+function boParseCompactAllocationToken(token) {
+  let m = String(token || '').match(/^(-?\d+)([a-z]+)$/);
+  if (m) {
+    const label = boResourceAllocationLabel(m[2]);
+    return label ? [label, parseInt(m[1], 10)] : null;
+  }
+  m = String(token || '').match(/^([a-z]+)(-?\d+)$/);
+  if (m) {
+    const label = boResourceAllocationLabel(m[1]);
+    return label ? [label, parseInt(m[2], 10)] : null;
+  }
+  return null;
+}
+function boSetAllocation(out, label, value) {
+  if (!label || !Number.isFinite(value)) return false;
+  out[label] = value;
+  return true;
+}
+function boParseLabeledAllocations(v) {
+  const tokens = boResourceAllocationTokens(v);
+  if (tokens.length < 2) return null;
+  const out = {};
+  let matched = false;
+  for (let i = 0; i < tokens.length;) {
+    const compact = boParseCompactAllocationToken(tokens[i]);
+    if (compact) {
+      matched = boSetAllocation(out, compact[0], compact[1]) || matched;
+      i += 1;
+      continue;
+    }
+    if (/^-?\d+$/.test(tokens[i])) {
+      const label = boResourceAllocationLabel(tokens[i + 1]);
+      if (label) {
+        matched = boSetAllocation(out, label, parseInt(tokens[i], 10)) || matched;
+        i += 2;
+        continue;
+      }
+    }
+    const label = boResourceAllocationLabel(tokens[i]);
+    if (label && /^-?\d+$/.test(tokens[i + 1] || '')) {
+      matched = boSetAllocation(out, label, parseInt(tokens[i + 1], 10)) || matched;
+      i += 2;
+      continue;
+    }
+    i += 1;
+  }
+  if (!matched || !['food', 'wood', 'gold', 'stone'].every(key => Object.prototype.hasOwnProperty.call(out, key))) {
+    return null;
+  }
+  return { food: out.food, wood: out.wood, gold: out.gold, stone: out.stone, builder: out.builder ?? -1 };
+}
+function boParseIntish(v) {
+  if (typeof v === 'number' && Number.isFinite(v)) return Math.trunc(v);
+  if (typeof v !== 'string') return null;
+  const m = v.trim().match(/^-?\d+/);
+  return m ? parseInt(m[0], 10) : null;
+}
+function boParseAgeish(v) {
+  const n = boParseIntish(v);
+  if (n !== null && n >= 1 && n <= 4) return n;
+  const key = String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (['i', 'agei', 'age1', 'ageone', 'one', 'dark', 'darkage'].includes(key)) return 1;
+  if (['ii', 'ageii', 'age2', 'agetwo', 'two', 'feudal', 'feudalage'].includes(key)) return 2;
+  if (['iii', 'ageiii', 'age3', 'agethree', 'three', 'castle', 'castleage'].includes(key)) return 3;
+  if (['iv', 'ageiv', 'age4', 'agefour', 'four', 'imperial', 'imperialage'].includes(key)) return 4;
+  if (['imperialage', 'ageimperial', 'agefour', 'age4', 'iv'].some(token => key.includes(token))) return 4;
+  if (['castleage', 'agecastle', 'agethree', 'age3', 'iii'].some(token => key.includes(token))) return 3;
+  if (['feudalage', 'agefeudal', 'agetwo', 'age2', 'ii'].some(token => key.includes(token))) return 2;
+  if (['darkage', 'agedark', 'ageone', 'age1', 'i'].some(token => key.includes(token))) return 1;
+  return null;
+}
+function boNoteAliasValue(v) {
+  if (typeof v === 'string') return [v];
+  if (!Array.isArray(v)) return null;
+  const notes = v
+    .filter(item => item !== null && ['string', 'number', 'boolean'].includes(typeof item))
+    .map(String);
+  return notes.length ? notes : null;
+}
+function boTimeCandidate(v) {
+  if (typeof v !== 'string') return null;
+  const fixed = normalizeBoTime(v);
+  return boIsNormalizedTimeValue(fixed) ? fixed : null;
+}
+function boIsNormalizedTimeValue(v) {
+  const clean = String(v || '').replace(/^~/, '');
+  const clock = part => {
+    const m = String(part).match(/^(\d+):(\d+)$/);
+    return !!m && parseInt(m[2], 10) < 60;
+  };
+  return !!clean && clean.split('-').every(clock);
+}
+function boTupleStep(parts) {
+  if (!Array.isArray(parts)) return null;
+  if (parts.length === 2) {
+    const time = boTimeCandidate(parts[0]);
+    const notes = boNoteAliasValue(parts[1]);
+    return time && notes ? { time, notes } : null;
+  }
+  if (parts.length === 3) {
+    const timeFirst = boTimeCandidate(parts[0]);
+    const resourcesSecond = boParseAllocations(parts[1]);
+    const notesThird = boNoteAliasValue(parts[2]);
+    if (timeFirst && resourcesSecond && notesThird) return { time: timeFirst, resources: resourcesSecond, notes: notesThird };
+    const resourcesFirst = boParseAllocations(parts[0]);
+    const timeSecond = boTimeCandidate(parts[1]);
+    if (resourcesFirst && timeSecond && notesThird) return { time: timeSecond, resources: resourcesFirst, notes: notesThird };
+    const notesSecond = boNoteAliasValue(parts[1]);
+    const resourcesThird = boParseAllocations(parts[2]);
+    if (timeFirst && notesSecond && resourcesThird) return { time: timeFirst, resources: resourcesThird, notes: notesSecond };
+  }
+  return null;
+}
+function boTableCells(line) {
+  const trimmed = String(line || '').trim().replace(/^\|+|\|+$/g, '').trim();
+  if (!trimmed || !trimmed.includes('|')) return null;
+  const cells = trimmed.split('|').map(cell => cell.trim()).filter(Boolean);
+  if (cells.length < 2 || cells.every(boIsTableSeparatorCell)) return null;
+  return cells;
+}
+function boIsTableSeparatorCell(cell) {
+  return !!String(cell || '').trim() && /^[-:=+\s]+$/.test(String(cell).trim());
+}
+function boIsTableHeaderCell(cell) {
+  return [
+    'time', 'timing', 'at', 'start', 'starttime', 'when', 'minute', 'minutes', 'timestamp', 'timecode', 'timetext',
+    'age', 'phase', 'era', 'f', 'food', 'w', 'wood', 'g', 'gold', 's', 'stone',
+    'b', 'builder', 'builders', 'vill', 'villager', 'villcount', 'villagercount', 'villagers', 'vills',
+    'worker', 'workercount', 'workers',
+    'pop', 'popcap', 'popcount', 'population', 'populationcount', 'supply', 'supplycount', 'supplyused',
+    'foodvills', 'woodvills', 'goldvills', 'stonevills', 'buildervills', 'buildersvills',
+    'res', 'resources', 'resource', 'allocation', 'allocations', 'resourceallocation', 'resourceallocations',
+    'villagerallocation', 'villagerallocations', 'villagerson', 'eco', 'econ', 'economy',
+    'action', 'actions', 'build', 'note', 'notes',
+    'description', 'instruction', 'instructions', 'plan', 'step', 'steps', 'todo', 'todos', 'task', 'tasks'
+  ].includes(String(cell || '').toLowerCase().replace(/[^a-z0-9]/g, ''));
+}
+function boTableHeaderKey(cell) {
+  const key = String(cell || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (['time', 'timing', 'at', 'start', 'starttime', 'when', 'minute', 'minutes', 'timestamp', 'timecode', 'timetext'].includes(key)) return 'time';
+  if (['age', 'phase', 'era'].includes(key)) return 'age';
+  if (['vill', 'villager', 'villcount', 'villagercount', 'villagers', 'vills', 'worker', 'workercount', 'workers'].includes(key)) return 'villager_count';
+  if (['pop', 'popcap', 'popcount', 'population', 'populationcount', 'supply', 'supplycount', 'supplyused'].includes(key)) return 'population_count';
+  if (['f', 'food'].includes(key)) return 'food';
+  if (key === 'foodvills') return 'food';
+  if (['w', 'wood'].includes(key)) return 'wood';
+  if (key === 'woodvills') return 'wood';
+  if (['g', 'gold'].includes(key)) return 'gold';
+  if (key === 'goldvills') return 'gold';
+  if (['s', 'stone'].includes(key)) return 'stone';
+  if (key === 'stonevills') return 'stone';
+  if (['b', 'builder', 'builders'].includes(key)) return 'builder';
+  if (['buildervills', 'buildersvills'].includes(key)) return 'builder';
+  if (['res', 'resources', 'resource', 'allocation', 'allocations', 'resourceallocation', 'resourceallocations', 'villagerallocation', 'villagerallocations', 'villagerson', 'eco', 'econ', 'economy'].includes(key)) return 'resources';
+  if (['action', 'actions', 'build', 'note', 'notes', 'description', 'instruction', 'instructions', 'plan', 'step', 'steps', 'todo', 'todos', 'task', 'tasks'].includes(key)) return 'notes';
+  return null;
+}
+function boHeaderedPipedStepLine(cells, headers) {
+  if (!headers || headers.length !== cells.length) return null;
+  const step = {};
+  const resourceParts = {};
+  const notes = [];
+  for (let i = 0; i < cells.length; i++) {
+    const cell = cells[i];
+    const key = boTableHeaderKey(headers[i]);
+    if (!key || boIsTableSeparatorCell(cell) || boIsTableHeaderCell(cell)) continue;
+    if (key === 'time') {
+      const time = boTimeCandidate(cell);
+      if (time) step.time = time;
+    } else if (key === 'age') {
+      const age = boParseAgeish(cell);
+      if (age !== null) step.age = age;
+    } else if (key === 'villager_count' || key === 'population_count') {
+      const n = boParseIntish(cell);
+      if (n !== null) step[key] = n;
+    } else if (['food', 'wood', 'gold', 'stone', 'builder'].includes(key)) {
+      const n = boParseIntish(cell);
+      if (n !== null) resourceParts[key] = n;
+    } else if (key === 'resources') {
+      const resources = boParseAllocations(cell);
+      if (resources) step.resources = resources;
+    } else if (key === 'notes') {
+      const normalized = boNormalizeNoteValue(cell);
+      if (normalized) notes.push(...normalized.split('\n').filter(Boolean));
+    }
+  }
+  if (Object.keys(resourceParts).length) {
+    step.resources = {
+      food: resourceParts.food ?? -1,
+      wood: resourceParts.wood ?? -1,
+      gold: resourceParts.gold ?? -1,
+      stone: resourceParts.stone ?? -1,
+      builder: resourceParts.builder ?? -1
+    };
+  }
+  if (notes.length) step.notes = notes;
+  return (step.notes && (step.time || step.resources || step.age || step.villager_count >= 0 || step.population_count >= 0)) ? step : null;
+}
+function boResourceRun(cells, used) {
+  for (const width of [5, 4]) {
+    for (let i = 0; i <= cells.length - width; i++) {
+      const idxs = Array.from({ length: width }, (_, n) => i + n);
+      if (idxs.some(idx => used.has(idx))) continue;
+      const nums = idxs.map(idx => boParseIntish(cells[idx]));
+      if (nums.every(n => n !== null)) {
+        return {
+          idxs,
+          resources: { food: nums[0], wood: nums[1], gold: nums[2], stone: nums[3], builder: nums[4] ?? -1 }
+        };
+      }
+    }
+  }
+  return null;
+}
+function boPipedStepLine(line) {
+  const cells = boTableCells(line);
+  if (!cells) return null;
+  const used = new Set();
+  const step = {};
+  const timeIdx = cells.findIndex(cell => boTimeCandidate(cell));
+  if (timeIdx !== -1) {
+    step.time = boTimeCandidate(cells[timeIdx]);
+    used.add(timeIdx);
+  }
+  const resourceIdx = cells.findIndex((cell, idx) => !used.has(idx) && boParseAllocations(cell));
+  if (resourceIdx !== -1) {
+    step.resources = boParseAllocations(cells[resourceIdx]);
+    used.add(resourceIdx);
+  } else {
+    const run = boResourceRun(cells, used);
+    if (run) {
+      step.resources = run.resources;
+      run.idxs.forEach(idx => used.add(idx));
+    }
+  }
+  const noteText = cells
+    .filter((cell, idx) => !used.has(idx) && !boIsTableHeaderCell(cell) && !boIsTableSeparatorCell(cell))
+    .join(' - ');
+  const notes = boNormalizeNoteValue(noteText).split('\n').filter(Boolean);
+  if (notes.length) step.notes = notes;
+  return (step.notes && (step.time || step.resources)) ? step : null;
+}
+function boParsePipedBuildText(text) {
+  const lines = String(text || '').split('\n').map(line => line.trim()).filter(Boolean);
+  let pipeLines = 0;
+  const steps = [];
+  let headers = null;
+  for (const line of lines) {
+    if (line.includes('|')) pipeLines += 1;
+    const cells = boTableCells(line);
+    if (cells && cells.length >= 2 && cells.filter(boIsTableHeaderCell).length >= Math.max(2, Math.ceil(cells.length * 0.6))) {
+      headers = cells;
+      continue;
+    }
+    const step = cells && headers && headers.length === cells.length
+      ? boHeaderedPipedStepLine(cells, headers)
+      : boPipedStepLine(line);
+    if (step) steps.push(step);
+  }
+  if (!steps.length || (steps.length < 2 && pipeLines !== lines.length)) return null;
+  return {
+    json: { build_order: steps },
+    repair: {
+      fixed: JSON.stringify({ build_order: steps }, null, 2),
+      json: { build_order: steps },
+      notes: ['Converted pipe-delimited table rows into build_order steps.'],
+      error: null
+    }
+  };
+}
+function boStripPlainStepPrefix(line) {
+  return String(line || '')
+    .trim()
+    .replace(/^[-*•]\s+/, '')
+    .replace(/^\d{1,3}[.)]\s+/, '')
+    .replace(/^\[(?: |x)\]\s+/i, '')
+    .trim();
+}
+function boTimedTextTimeMatch(line) {
+  const s = String(line || '');
+  const timePattern = /(?:^|[\s([|])([~≈=]?\s*(?:\d{1,3}\s*[:.;,]\s*\d{1,2}|00|\d{1,3}\s*m(?:in(?:ute)?s?)?\s*\d{1,2}\s*(?:s|sec|secs|second|seconds)?|\d{1,4}\s*(?:s|sec|secs|second|seconds)|\d{1,3}\s*(?:min|mins|分)))(?=$|[\s)\]|:;-])/i;
+  const m = s.match(timePattern);
+  if (!m) return null;
+  const time = boTimeCandidate(m[1]);
+  if (!time) return null;
+  const start = (m.index || 0) + m[0].indexOf(m[1]);
+  return { time, start, end: start + m[1].length };
+}
+function boTimedTextResourceMatch(line) {
+  const s = String(line || '');
+  const compact = s.match(/\(?\s*-?\d*\s*[\/,]\s*-?\d*\s*[\/,]\s*-?\d*\s*[\/,]\s*-?\d*(?:\s*[\/,]\s*-?\d*)?\s*\)?/);
+  if (compact) {
+    const resources = boParseAllocations(compact[0]);
+    if (resources) return { resources, start: compact.index || 0, end: (compact.index || 0) + compact[0].length };
+  }
+  const dashCompact = s.match(/\(?\s*\d+\s*-\s*\d+\s*-\s*\d+\s*-\s*\d+(?:\s*-\s*\d+)?\s*\)?/);
+  if (dashCompact) {
+    const resources = boParseAllocations(dashCompact[0]);
+    if (resources) return { resources, start: dashCompact.index || 0, end: (dashCompact.index || 0) + dashCompact[0].length };
+  }
+  const compactLabels = s.match(/(?:^|[\s([])(-?\d+\s*(?:f|food)\b.*?-?\d+\s*(?:w|wood)\b.*?-?\d+\s*(?:g|gold)\b.*?-?\d+\s*(?:s|stone)\b(?:.*?-?\d+\s*(?:b|builder|builders)\b)?)/i);
+  if (compactLabels) {
+    const resources = boParseAllocations(compactLabels[1]);
+    if (resources) {
+      const start = (compactLabels.index || 0) + compactLabels[0].indexOf(compactLabels[1]);
+      return { resources, start, end: start + compactLabels[1].length };
+    }
+  }
+  const labeled = s.match(/(?:food|f)\s*[:=]?\s*-?\d+.*(?:wood|w)\s*[:=]?\s*-?\d+.*(?:gold|g)\s*[:=]?\s*-?\d+.*(?:stone|s)\s*[:=]?\s*-?\d+/i);
+  if (labeled) {
+    const resources = boParseAllocations(labeled[0]);
+    if (resources) return { resources, start: labeled.index || 0, end: (labeled.index || 0) + labeled[0].length };
+  }
+  return null;
+}
+function boRemoveSpan(text, span) {
+  if (!span) return text;
+  return `${text.slice(0, span.start)} ${text.slice(span.end)}`;
+}
+function boTimedTextCountMatch(line) {
+  const s = String(line || '');
+  const popSlash = s.match(/\b(\d{1,3})\s*\/\s*\d{1,3}\s*(?:pop|population|supply)\b/i);
+  if (popSlash) return { key: 'population_count', value: parseInt(popSlash[1], 10), start: popSlash.index || 0, end: (popSlash.index || 0) + popSlash[0].length };
+  const barePopSlash = s.match(/\b(\d{1,3})\s*\/\s*\d{1,3}\b/);
+  if (barePopSlash) return { key: 'population_count', value: parseInt(barePopSlash[1], 10), start: barePopSlash.index || 0, end: (barePopSlash.index || 0) + barePopSlash[0].length };
+  const villLabel = s.match(/\b(?:villagers?|vills?|workers?)\s*[:=]?\s*(\d{1,3})\b/i);
+  if (villLabel) return { key: 'villager_count', value: parseInt(villLabel[1], 10), start: villLabel.index || 0, end: (villLabel.index || 0) + villLabel[0].length };
+  const popLabel = s.match(/\b(?:pop|population|supply)\s*[:=]?\s*(\d{1,3})\b/i);
+  if (popLabel) return { key: 'population_count', value: parseInt(popLabel[1], 10), start: popLabel.index || 0, end: (popLabel.index || 0) + popLabel[0].length };
+  return null;
+}
+function boApplyTimedTextCounts(step, text) {
+  let rest = text;
+  for (let guard = 0; guard < 3; guard++) {
+    const match = boTimedTextCountMatch(rest);
+    if (!match || step[match.key] !== undefined) break;
+    step[match.key] = match.value;
+    rest = boRemoveSpan(rest, match);
+  }
+  return rest;
+}
+function boTimedTextInlineAgeMatch(line) {
+  const s = String(line || '');
+  const m = s.match(/^\s*(?:age\s*)?(iv|iii|ii|i|[1-4]|dark(?:\s+age)?|feudal(?:\s+age)?|castle(?:\s+age)?|imperial(?:\s+age)?)(?=$|[\s:;.\-–—>])/i);
+  if (!m) return null;
+  const age = boParseAgeish(m[1]);
+  return age === null ? null : { age, start: m.index || 0, end: (m.index || 0) + m[0].length };
+}
+function boTimedTextStepLine(line) {
+  let rest = boStripPlainStepPrefix(line);
+  if (!rest) return null;
+  const timeMatch = boTimedTextTimeMatch(rest);
+  if (!timeMatch) return null;
+  const step = { time: timeMatch.time };
+  rest = boRemoveSpan(rest, timeMatch);
+  const resourceMatch = boTimedTextResourceMatch(rest);
+  if (resourceMatch) {
+    step.resources = resourceMatch.resources;
+    rest = boRemoveSpan(rest, resourceMatch);
+  }
+  rest = boApplyTimedTextCounts(step, rest);
+  const inlineAge = boTimedTextInlineAgeMatch(rest);
+  if (inlineAge) {
+    step.age = inlineAge.age;
+    rest = boRemoveSpan(rest, inlineAge);
+  }
+  rest = rest.replace(/^[\s:;|,.\-–—>]+/, '').replace(/[\s:;|,\-–—]+$/, '').trim();
+  const notes = boNormalizeNoteValue(rest).split('\n').filter(Boolean);
+  if (notes.length) step.notes = notes;
+  return step.notes ? step : null;
+}
+function boTimedTextAgeHeading(line) {
+  const text = boStripPlainStepPrefix(line)
+    .replace(/^#+\s*/, '')
+    .replace(/[:\-–—]+$/, '')
+    .trim();
+  if (!text || boTimedTextTimeMatch(text)) return null;
+  const m = text.match(/^(?:age\s*)?(iv|iii|ii|i|[1-4]|dark(?:\s+age)?|feudal(?:\s+age)?|castle(?:\s+age)?|imperial(?:\s+age)?)$/i);
+  return m ? boParseAgeish(m[1]) : null;
+}
+function boParseTimedBuildText(text) {
+  const lines = String(text || '').split('\n').flatMap(boTimedTextLogicalLines).map(line => line.trim()).filter(Boolean);
+  const steps = [];
+  let currentAge = null;
+  let inheritedAge = false;
+  let usedPlainRows = false;
+  for (const line of lines) {
+    const age = boTimedTextAgeHeading(line);
+    if (age !== null) {
+      currentAge = age;
+      continue;
+    }
+    if (steps.length && boPlainTextFooterHeading(line)) break;
+    let step = boTimedTextStepLine(line);
+    if (!step && boPlainTextListMarker(line)) {
+      step = boPlainStepFromText(line);
+      usedPlainRows = !!step;
+    }
+    if (step) {
+      if (currentAge !== null && step.age === undefined) {
+        step.age = currentAge;
+        inheritedAge = true;
+      }
+      steps.push(step);
+    }
+  }
+  if (!steps.length || (steps.length < 2 && steps.length !== lines.length && !usedPlainRows)) return null;
+  const notes = ['Converted timed text lines into build_order steps.'];
+  if (inheritedAge) notes.push('Applied age headings to timed text steps.');
+  if (usedPlainRows) notes.push('Included allocation-only list rows as build_order steps.');
+  return {
+    json: { build_order: steps },
+    repair: {
+      fixed: JSON.stringify({ build_order: steps }, null, 2),
+      json: { build_order: steps },
+      notes,
+      error: null
+    }
+  };
+}
+function boPlainTextListMarker(line) {
+  return /^\s*(?:[-*•]\s+|\d{1,3}[.)]\s+|\[(?: |x)\]\s+)/i.test(String(line || ''));
+}
+function boPlainTextFooterHeading(line) {
+  return /^(?:notes?|link to\b|created by\b|uploaded by\b|generated by\b)/i.test(String(line || '').trim());
+}
+function boTakeLeadingAge(rest) {
+  const text = String(rest || '').trimStart();
+  const parts = text.split(/\s+/).filter(Boolean);
+  for (const width of [2, 1]) {
+    const candidate = parts.slice(0, width).join(' ');
+    if (!candidate || /^\d+$/.test(candidate)) continue;
+    const age = boTimedTextAgeHeading(candidate);
+    if (age === null) continue;
+    return { age, rest: text.slice(candidate.length).trimStart() };
+  }
+  return { age: null, rest };
+}
+function boTrimPlainFieldPrefix(rest) {
+  return String(rest || '').replace(/^\s*(?:->|=>|[@:;|,.\-–—>])\s*/, '').trimStart();
+}
+function boPlainStepFromText(text) {
+  let rest = boStripPlainStepPrefix(text)
+    .replace(/^#+\s*/, '')
+    .replace(/^[\s:;|,.\-–—>]+/, '')
+    .replace(/[\s:;|,\-–—]+$/, '')
+    .trim();
+  if (!rest || boTimedTextAgeHeading(rest) !== null) return null;
+  const step = {};
+  let ageMatch = boTakeLeadingAge(rest);
+  if (ageMatch.age !== null) {
+    step.age = ageMatch.age;
+    rest = boTrimPlainFieldPrefix(ageMatch.rest);
+  }
+  const timeMatch = boTimedTextTimeMatch(rest);
+  if (timeMatch && timeMatch.start === 0) {
+    step.time = timeMatch.time;
+    rest = boTrimPlainFieldPrefix(boRemoveSpan(rest, timeMatch));
+  }
+  ageMatch = step.age === undefined ? boTakeLeadingAge(rest) : { age: null, rest };
+  if (ageMatch.age !== null) {
+    step.age = ageMatch.age;
+    rest = boTrimPlainFieldPrefix(ageMatch.rest);
+  }
+  const resourceMatch = boTimedTextResourceMatch(rest);
+  if (resourceMatch) {
+    step.resources = resourceMatch.resources;
+    rest = boTrimPlainFieldPrefix(boRemoveSpan(rest, resourceMatch));
+  }
+  const lateTimeMatch = step.time === undefined ? boTimedTextTimeMatch(rest) : null;
+  if (lateTimeMatch && lateTimeMatch.start === 0) {
+    step.time = lateTimeMatch.time;
+    rest = boTrimPlainFieldPrefix(boRemoveSpan(rest, lateTimeMatch));
+  }
+  ageMatch = step.age === undefined ? boTakeLeadingAge(rest) : { age: null, rest };
+  if (ageMatch.age !== null) {
+    step.age = ageMatch.age;
+    rest = boTrimPlainFieldPrefix(ageMatch.rest);
+  }
+  rest = boTrimPlainFieldPrefix(boApplyTimedTextCounts(step, rest))
+    .replace(/^[\s:;|,.\-–—>]+/, '')
+    .replace(/[\s:;|,\-–—]+$/, '')
+    .trim();
+  const notes = boNormalizeNoteValue(rest).split('\n').filter(Boolean);
+  if (!notes.length) return null;
+  step.notes = notes;
+  return step;
+}
+function boParsePlainBuildText(text) {
+  const lines = String(text || '').split('\n').map(line => line.trim()).filter(Boolean);
+  const steps = [];
+  let currentAge = null;
+  let inheritedAge = false;
+  let markedLines = 0;
+  let seenMarkedLine = false;
+  for (const line of lines) {
+    const age = boTimedTextAgeHeading(line);
+    if (age !== null) {
+      currentAge = age;
+      continue;
+    }
+    const marked = boPlainTextListMarker(line);
+    if (!seenMarkedLine && !marked) continue;
+    if (seenMarkedLine && !marked && boPlainTextFooterHeading(line)) break;
+    const step = boPlainStepFromText(line);
+    if (!step) continue;
+    if (marked) {
+      markedLines += 1;
+      seenMarkedLine = true;
+    }
+    if (currentAge !== null) {
+      step.age = currentAge;
+      inheritedAge = true;
+    }
+    steps.push(step);
+  }
+  if (steps.length < 2 || markedLines < Math.max(2, Math.ceil(steps.length * 0.5))) return null;
+  const notes = ['Converted plain list lines into build_order steps.'];
+  if (inheritedAge) notes.push('Applied age headings to plain list steps.');
+  return {
+    json: { build_order: steps },
+    repair: {
+      fixed: JSON.stringify({ build_order: steps }, null, 2),
+      json: { build_order: steps },
+      notes,
+      error: null
+    }
+  };
+}
+function boParseTsvBuildText(text) {
+  const lines = String(text || '').split('\n').map(line => line.trim()).filter(Boolean);
+  const steps = [];
+  let headers = null;
+  for (const line of lines) {
+    if (!line.includes('\t')) continue;
+    const cells = line.split('\t').map(cell => cell.trim()).filter(Boolean);
+    if (cells.length < 2) continue;
+    if (cells.filter(boIsTableHeaderCell).length >= Math.max(2, Math.ceil(cells.length * 0.6))) {
+      headers = cells;
+      continue;
+    }
+    const step = headers && headers.length === cells.length ? boHeaderedPipedStepLine(cells, headers) : null;
+    if (step) steps.push(step);
+  }
+  if (!steps.length) return null;
+  return {
+    json: { build_order: steps },
+    repair: {
+      fixed: JSON.stringify({ build_order: steps }, null, 2),
+      json: { build_order: steps },
+      notes: ['Converted tab-delimited table rows into build_order steps.'],
+      error: null
+    }
+  };
+}
+function boCsvCells(line) {
+  const cells = [];
+  let cell = '';
+  let quoted = false;
+  const s = String(line || '');
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '"' && quoted && s[i + 1] === '"') {
+      cell += '"';
+      i++;
+    } else if (ch === '"') {
+      quoted = !quoted;
+    } else if (ch === ',' && !quoted) {
+      if (cell.trim()) cells.push(cell.trim());
+      cell = '';
+    } else {
+      cell += ch;
+    }
+  }
+  if (cell.trim()) cells.push(cell.trim());
+  return cells;
+}
+function boParseCsvBuildText(text) {
+  const lines = String(text || '').split('\n').map(line => line.trim()).filter(Boolean);
+  const steps = [];
+  let headers = null;
+  for (const line of lines) {
+    if (!line.includes(',')) continue;
+    const cells = boCsvCells(line);
+    if (cells.length < 2) continue;
+    if (cells.filter(boIsTableHeaderCell).length >= Math.max(2, Math.ceil(cells.length * 0.6))) {
+      headers = cells;
+      continue;
+    }
+    const step = headers && headers.length === cells.length ? boHeaderedPipedStepLine(cells, headers) : null;
+    if (step) steps.push(step);
+  }
+  if (!steps.length) return null;
+  return {
+    json: { build_order: steps },
+    repair: {
+      fixed: JSON.stringify({ build_order: steps }, null, 2),
+      json: { build_order: steps },
+      notes: ['Converted comma-delimited table rows into build_order steps.'],
+      error: null
+    }
+  };
+}
+function boTimedTextLogicalLines(line) {
+  const parts = String(line || '').split(';').map(part => part.trim()).filter(Boolean);
+  if (parts.length >= 2 && parts.filter(part => boTimedTextStepLine(part)).length >= 2) return parts;
+  return [String(line || '')];
+}
+function boMoveLooseResources(s, stepNo, notes) {
+  const aliases = [
+    ['food', 'food'], ['food_count', 'food'], ['foodCount', 'food'], ['f', 'food'],
+    ['wood', 'wood'], ['wood_count', 'wood'], ['woodCount', 'wood'], ['w', 'wood'],
+    ['gold', 'gold'], ['gold_count', 'gold'], ['goldCount', 'gold'], ['g', 'gold'],
+    ['stone', 'stone'], ['stone_count', 'stone'], ['stoneCount', 'stone'], ['s', 'stone'],
+    ['builder', 'builder'], ['builders', 'builder'], ['build', 'builder'], ['builder_count', 'builder'], ['builderCount', 'builder']
+  ];
+  const moves = [];
+  for (const [alias, key] of aliases) {
+    if (typeof s[alias] === 'string' && !s[alias].trim()) {
+      delete s[alias];
+      notes.push(`Removed blank step ${stepNo} ${alias}.`);
+      continue;
+    }
+    const resourcesMissingKey = !s.resources || typeof s.resources !== 'object' ||
+      Array.isArray(s.resources) || s.resources[key] === undefined;
+    if (resourcesMissingKey && s[alias] !== undefined) {
+      const n = boParseIntish(s[alias]);
+      if (n !== null) moves.push([alias, key, n]);
+    } else if (!resourcesMissingKey) {
+      const aliasN = boParseIntish(s[alias]);
+      const canonicalN = boParseIntish(s.resources[key]);
+      if (aliasN !== null && canonicalN !== null && aliasN === canonicalN) {
+        delete s[alias];
+        notes.push(`Removed duplicate step ${stepNo} loose ${alias} resource.`);
+      }
+    }
+  }
+  if (!moves.length) return;
+  if (!s.resources || typeof s.resources !== 'object' || Array.isArray(s.resources)) s.resources = {};
+  for (const [alias, key, n] of moves) {
+    if (s.resources[key] !== undefined) continue;
+    s.resources[key] = n;
+    delete s[alias];
+    notes.push(`Moved step ${stepNo} loose ${alias} into resources.${key}.`);
+  }
+}
+const BO_CIV_ALIASES = [
+  ['ABB', 'Abbasid Dynasty'], ['Abbasid', 'Abbasid Dynasty'], ['Abbasid Dynasty', 'Abbasid Dynasty'],
+  ['AYY', 'Ayyubids'], ['Ayyubids', 'Ayyubids'],
+  ['BYZ', 'Byzantines'], ['Byzantines', 'Byzantines'],
+  ['CHI', 'Chinese'], ['China', 'Chinese'], ['Chinese', 'Chinese'],
+  ['DEL', 'Delhi Sultanate'], ['Delhi', 'Delhi Sultanate'], ['Delhi Sultanate', 'Delhi Sultanate'],
+  ['ENG', 'English'], ['English', 'English'],
+  ['FRE', 'French'], ['France', 'French'], ['French', 'French'],
+  ['HRE', 'Holy Roman Empire'], ['Holy Roman Empire', 'Holy Roman Empire'],
+  ['GOH', 'Golden Horde'], ['Golden Horde', 'Golden Horde'],
+  ['HOL', 'House of Lancaster'], ['House of Lancaster', 'House of Lancaster'], ['House Of Lancaster', 'House of Lancaster'],
+  ['JAP', 'Japanese'], ['Japan', 'Japanese'], ['Japanese', 'Japanese'],
+  ['JDA', "Jeanne d'Arc"], ["Jeanne d'Arc", "Jeanne d'Arc"], ['Jeanne Darc', "Jeanne d'Arc"], ['Jeanne', "Jeanne d'Arc"],
+  ['JIN', 'Jin Dynasty'], ['Jin', 'Jin Dynasty'], ['Jin Dynasty', 'Jin Dynasty'],
+  ['KTE', 'Knights Templar'], ['Knights Templar', 'Knights Templar'],
+  ['MAC', 'Macedonian Dynasty'], ['Macedonian Dynasty', 'Macedonian Dynasty'],
+  ['MAL', 'Malians'], ['Mali', 'Malians'], ['Malians', 'Malians'],
+  ['MON', 'Mongols'], ['Mongols', 'Mongols'],
+  ['DRA', 'Order of the Dragon'], ['OOTD', 'Order of the Dragon'], ['Order of the Dragon', 'Order of the Dragon'], ['Order Of The Dragon', 'Order of the Dragon'], ['Order Dragon', 'Order of the Dragon'],
+  ['OTT', 'Ottomans'], ['Ottoman', 'Ottomans'], ['Ottomans', 'Ottomans'],
+  ['RUS', 'Rus'], ['Rus', 'Rus'],
+  ['SEN', 'Sengoku Daimyo'], ['Sengoku Daimyo', 'Sengoku Daimyo'],
+  ['TUG', 'Tughlaq Dynasty'], ['Tughlaq Dynasty', 'Tughlaq Dynasty'],
+  ['ZXL', "Zhu Xi's Legacy"], ["Zhu Xi's Legacy", "Zhu Xi's Legacy"], ['Zhu Xis Legacy', "Zhu Xi's Legacy"], ['Zhu Xi', "Zhu Xi's Legacy"],
+  ['Any', 'Any']
+];
+function boCivKey(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+function boNormalizeCivName(value) {
+  const cleaned = String(value || '').replace(/&nbsp;/g, ' ').replace(/<[^>]*>/g, '').trim();
+  if (!cleaned) return '';
+  const key = boCivKey(cleaned);
+  const hit = BO_CIV_ALIASES.find(([alias]) => boCivKey(alias) === key);
+  return hit ? hit[1] : cleaned;
+}
+function boSplitCivs(value) {
+  return String(value || '').replace(/[|;/]/g, ',').replace(/\s+and\s+/gi, ',')
+    .split(',').map(boNormalizeCivName).filter(Boolean);
+}
+function boNormalizeCivilization(value) {
+  if (Array.isArray(value)) {
+    const civs = value.flatMap(boSplitCivs);
+    return civs.length ? civs : null;
+  }
+  if (typeof value === 'string') {
+    const civs = boSplitCivs(value);
+    if (!civs.length) return null;
+    return civs.length === 1 ? civs[0] : civs;
+  }
+  return null;
+}
+function boStepKeyOrder(key) {
+  const s = String(key).trim();
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+  const m = s.toLowerCase().match(/^step[\s_-]*(\d+)$/);
+  return m ? parseInt(m[1], 10) : null;
+}
+const BO_STEP_COLLECTION_KEYS = [
+  'build_order',
+  'buildOrder',
+  'build order',
+  'build-order',
+  'buildorder',
+  'build_order_steps',
+  'buildOrderSteps',
+  'build order steps',
+  'build-order-steps',
+  'buildordersteps',
+  'steps',
+  'order',
+  'sequence',
+  'timeline',
+  'plan',
+];
+const BO_STEP_LIKE_KEYS = [
+  'time', 'timestamp', 'timecode', 'timing', 'at', 'start', 'start_time', 'startTime', 'minute', 'time_text', 'timeText',
+  'age', 'phase', 'ageName', 'era',
+  'notes', 'note', 'text', 'description', 'action', 'actions', 'task', 'tasks',
+  'population_count', 'population', 'pop', 'pop_count', 'popCount', 'pop_cap', 'popCap', 'supply', 'supply_count', 'supplyCount', 'supply_used', 'supplyUsed',
+  'villager_count', 'vill', 'villager', 'villagers', 'vill_count', 'villCount', 'vills', 'worker', 'workers', 'worker_count', 'workerCount',
+  'resources', 'resource_allocation', 'villagers_on',
+];
+function boIsStepLikeObject(value) {
+  return !!(value && typeof value === 'object' && !Array.isArray(value) &&
+    BO_STEP_LIKE_KEYS.some(key => Object.prototype.hasOwnProperty.call(value, key)));
+}
+function boStepLinesFromString(value) {
+  if (typeof value !== 'string') return null;
+  const plain = boParsePlainBuildText(value);
+  if (plain) return plain.json.build_order;
+  const lines = value.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+  return lines.length ? lines : null;
+}
+function boStepCollection(value) {
+  if (Array.isArray(value)) return value;
+  const lines = boStepLinesFromString(value);
+  if (lines) return lines;
+  if (!value || typeof value !== 'object') return null;
+  for (const key of BO_STEP_COLLECTION_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(value, key)) {
+      const nested = boStepCollection(value[key]);
+      if (nested) return nested;
+    }
+  }
+  const entries = Object.entries(value);
+  if (!entries.length) return null;
+  if (boIsStepLikeObject(value)) return [value];
+  const keyed = entries.map(([key, step]) => [boStepKeyOrder(key), key, step]);
+  if (keyed.some(([order]) => order === null)) return null;
+  return keyed.sort((a, b) => a[0] - b[0] || a[1].localeCompare(b[1])).map(([, , step]) => step);
+}
+function boStepCollectionField(value) {
+  if (!value || typeof value !== 'object') return null;
+  for (const key of BO_STEP_COLLECTION_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
+    const steps = boStepCollection(value[key]);
+    if (steps) return { key, steps };
+  }
+  return null;
+}
+function boHasDirectStepCollection(value) {
+  return Array.isArray(value) || !!(value && typeof value === 'object' && boStepCollection(value));
+}
+function boApplyStepArrayAgeHeadings(steps, notes) {
+  let currentAge = null;
+  let removed = 0;
+  let applied = 0;
+  const out = [];
+  for (let step of steps) {
+    if (typeof step === 'string') {
+      const age = boTimedTextAgeHeading(step);
+      if (age !== null) {
+        currentAge = age;
+        removed += 1;
+        continue;
+      }
+    }
+    if (currentAge !== null) {
+      if (typeof step === 'string') {
+        step = boPlainStepFromText(step) || { notes: boNormalizeNoteValue(step).split('\n').filter(Boolean) };
+        step.age = currentAge;
+        applied += 1;
+      } else if (step && typeof step === 'object' && !Array.isArray(step) && step.age === undefined) {
+        step = { ...step, age: currentAge };
+        applied += 1;
+      }
+    }
+    out.push(step);
+  }
+  if (removed) notes.push(`Removed ${removed} standalone age heading step${removed === 1 ? '' : 's'}.`);
+  if (applied) notes.push(`Applied age heading to ${applied} step${applied === 1 ? '' : 's'}.`);
+  return out;
+}
+function boHasWrappedBuildPayload(value) {
+  const wrappers = ['data', 'build', 'payload', 'overlay', 'result', 'item'];
+  if (boHasDirectStepCollection(value)) return true;
+  if (!value || typeof value !== 'object') return false;
+  return wrappers.some(key => boHasWrappedBuildPayload(value[key]));
+}
+function boUnwrapBuildPayload(value, notes) {
+  let current = value;
+  const wrappers = ['data', 'build', 'payload', 'overlay', 'result', 'item'];
+  while (current && typeof current === 'object' && !boHasDirectStepCollection(current)) {
+    const key = wrappers.find(k => boHasWrappedBuildPayload(current[k]));
+    if (!key) break;
+    current = current[key];
+    notes.push(`Unwrapped ${key} build payload.`);
+  }
+  return current;
+}
+const BO_ICON_ALIASES = {
+  villagerad: 'unit_worker/villager-abbasid',
+  villagerch: 'unit_worker/villager-china',
+  villagerma: 'unit_worker/villager-malians',
+  villagermo: 'unit_worker/villager-mongols',
+  villager: 'unit_worker/villager',
+  villagera: 'unit_worker/villager',
+  villagerfr: 'unit_worker/villager',
+  villagerru: 'unit_worker/villager',
+  resourcewoodicon: 'resource/resource_wood',
+  resourcewood: 'resource/resource_wood',
+  resourcegoldicon: 'resource/resource_gold',
+  resourcegold: 'resource/resource_gold',
+  resourcestoneicon: 'resource/resource_stone',
+  resourcestone: 'resource/resource_stone',
+  resourcefoodicon: 'resource/resource_food',
+  resourcefood: 'resource/resource_food',
+  sheep: 'resource/sheep',
+  berrybush: 'resource/berrybush',
+  berry: 'resource/berrybush',
+  rally: 'resource/rally',
+  age2dark: 'age/age_2',
+  age2: 'age/age_2',
+  age3: 'age/age_3',
+  age4: 'age/age_4',
+  goldenagetier1: 'age/goldenagetier1',
+  house: 'building_economy/house',
+  town_center: 'building_economy/town-center',
+  towncenter: 'building_economy/town-center',
+  mill: 'building_economy/mill',
+  lumbercamp: 'building_economy/lumber-camp',
+  lumber_camp: 'building_economy/lumber-camp',
+  miningcamp: 'building_economy/mining-camp',
+  mining_camp: 'building_economy/mining-camp',
+  farm: 'building_economy/farm',
+  buildingovoomon: 'building_mongols/ovoo',
+  ovoo: 'building_mongols/ovoo',
+  ger: 'building_mongols/ger',
+  outpost: 'building_defensive/outpost',
+  spearman1: 'unit_infantry/spearman-1',
+  spearman: 'unit_infantry/spearman-1',
+  freshfoodstuffs: 'technology_abbasid/fresh-foodstuffs',
+  fertilecrescent: 'technology_abbasid/fertile-crescent-2',
+  'fertile-crescent-2': 'technology_abbasid/fertile-crescent-2',
+  wheelbarrow: 'technology_economy/wheelbarrow',
+  doublebroadaxe: 'technology_economy/double-broadaxe',
+  'double-broadaxe': 'technology_economy/double-broadaxe',
+  horticulture: 'technology_economy/horticulture',
+  professionalscouts: 'technology_economy/professional-scouts',
+  'professional-scouts': 'technology_economy/professional-scouts',
+  gristmill: 'building_economy/mill',
+  goldminingcamp: 'building_economy/mining-camp',
+  imperialofficial: 'unit_chinese/imperial-official',
+  stable: 'building_military/stable',
+  archer2: 'unit_infantry/archer-2',
+  buildinglandmarkage1academy: 'landmark_chinese/imperial-academy',
+  buildinglandmarkhouseofwisdom: 'landmark_abbasid/house-of-wisdom',
+  woodgather1: 'technology_economy/forestry',
+  monastery: 'building_religious/monastery',
+  supervise: 'ability_chinese/supervise',
+  blacksmith: 'building_technology/blacksmith',
+  buildinglandmarkage3zhengyangmen: 'landmark_chinese/enclave-of-the-emperor',
+  'abbey-of-kings': 'landmark_english/abbey-of-kings',
+  deer: 'resource/deer',
+  horseman1: 'unit_cavalry/horseman-1',
+  village: 'building_chinese/village',
+  barracks: 'building_military/barracks',
+  boar: 'resource/boar',
+  age3dark: 'age/age_3',
+  huntingvillager: 'unit_worker/villager',
+  buildingwonderage1deerstonesmon: 'landmark_mongols/deer-stones',
+};
+function boIsPlausibleLocalIconToken(token) {
+  return String(token || '').includes('/') &&
+    !/\s/.test(String(token || '')) &&
+    /^[a-z0-9_./-]+$/i.test(String(token || ''));
+}
+function boNormalizeIconToken(token) {
+  const clean = String(token).trim().replace(/['"<>]/g, '');
+  if (!clean) return clean;
+  const assetPath = clean.split(/[?#]/)[0].replace(/\\/g, '/');
+  const assetLower = assetPath.toLowerCase();
+  const marker = '/assets/pictures/';
+  let assetToken = '';
+  const markerAt = assetLower.indexOf(marker);
+  if (markerAt >= 0) assetToken = assetPath.slice(markerAt + marker.length);
+  else if (assetLower.startsWith('assets/pictures/')) assetToken = assetPath.slice('assets/pictures/'.length);
+  if (assetToken && boIsPlausibleLocalIconToken(assetToken)) return assetToken.replace(/\.(webp|png|jpg|jpeg)$/i, '');
+  const file = clean.split(/[?#]/)[0].split('/').pop().toLowerCase();
+  const stem = file.replace(/\.(webp|png|jpg|jpeg)$/i, '');
+  if (BO_ICON_ALIASES[stem]) return BO_ICON_ALIASES[stem];
+  if (/^https?:\/\//i.test(clean)) return clean;
+  if (!clean.includes('/')) return clean;
+  if (/^time\/time\.png$/i.test(clean)) return clean;
+  return clean.replace(/\.(webp|png|jpg|jpeg)$/i, '');
+}
+function boIconToken(token) {
+  const normalized = boNormalizeIconToken(token);
+  return normalized && (/^https?:\/\//i.test(normalized) || boIsPlausibleLocalIconToken(normalized)) ? normalized : null;
+}
+function boImageSrc(token) {
+  let clean = boIconToken(token) || boNormalizeIconToken(token);
+  if (/^https?:\/\//i.test(clean)) return clean;
+  if (!/\.\w+$/.test(clean)) clean += '.webp';
+  return `bo_img/${clean}`;
+}
+function boNormalizeNoteIcons(note) {
+  const text = String(note);
+  let out = '';
+  let i = 0;
+  while (i < text.length) {
+    const open = text.indexOf('@', i);
+    if (open < 0) {
+      out += text.slice(i);
+      break;
+    }
+    out += text.slice(i, open);
+    const close = text.indexOf('@', open + 1);
+    if (close < 0) {
+      i = open + 1;
+      continue;
+    }
+    const part = text.slice(open + 1, close);
+    const icon = boIconToken(part);
+    if (icon) {
+      out += `@${icon}@`;
+      i = close + 1;
+    } else {
+      out += part;
+      const inline = boInlineIconAfterInvalidToken(text, close + 1);
+      if (inline) {
+        out += `@${inline.icon}@`;
+        i = inline.next;
+      } else {
+        i = close + 1;
+      }
+    }
+  }
+  return out;
+}
+function boInlineIconAfterInvalidToken(text, start) {
+  let end = start;
+  while (end < text.length && !/[\s@]/.test(text[end])) end += 1;
+  if (end === start) return null;
+  const icon = boIconToken(text.slice(start, end));
+  if (!icon) return null;
+  return { icon, next: text[end] === '@' ? end + 1 : end };
+}
+function boDecodeHtmlEntities(text) {
+  return String(text || '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&apos;/gi, "'")
+    .replace(/&amp;/gi, '&');
+}
+function boStripHtmlTags(text) {
+  return String(text || '').replace(/<\/?[a-z][^>]*>|<![^>]*>|<\?[^>]*>/gi, '');
+}
+function boReplaceImgTagsWithIconTokens(text) {
+  return String(text || '').replace(/<img\b[^>]*>/gi, tag => {
+    const m = tag.match(/\bsrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+    const icon = m ? boIconToken(m[1] || m[2] || m[3] || '') : null;
+    return icon ? ` @${icon}@ ` : '';
+  });
+}
+function boStripNoteListMarker(line) {
+  const s = String(line || '').trim();
+  if (!s) return s;
+  const stripTask = value => value.replace(/^\[(?: |x)\]\s+/i, '');
+  if (/^[-*•]/.test(s) && /^[^\-–—―_=*•|]/.test(s.slice(1).trimStart())) return stripTask(s.slice(1).trimStart());
+  if (/^\d{1,3}[.)](?:\s+|(?=\S))/.test(s)) return stripTask(s.replace(/^\d{1,3}[.)]\s*/, ''));
+  return stripTask(s);
+}
+function boStripNoteLeadingArrowMarker(line) {
+  return String(line || '').replace(/^\s*(?:=>|->|<-|→|⮞|>)\s*(?=\S)/, '');
+}
+function boIsDecorativeNoteSeparator(line) {
+  const s = String(line || '').trim();
+  return s.length >= 3 && /^[\s\-–—―_=*·•|+~]+$/.test(s) && s.replace(/\s/g, '').length >= 3;
+}
+function boNormalizeNoteLineSpacing(line) {
+  const chars = Array.from(boStripNoteLeadingArrowMarker(boStripNoteListMarker(line)));
+  let out = '';
+  let pendingSpace = false;
+  const isToken = token => (token === 'time/time.png') || (/^[A-Za-z0-9_./-]+$/.test(token) && token.includes('/'));
+  const noSpaceAfter = c => /[,.;:)\]!?]/.test(c || '');
+  for (let i = 0; i < chars.length;) {
+    const c = chars[i];
+    if (/\s/.test(c)) {
+      pendingSpace = true;
+      i += 1;
+      continue;
+    }
+    if (c === '@') {
+      const close = chars.indexOf('@', i + 1);
+      if (close !== -1) {
+        const token = chars.slice(i + 1, close).join('');
+        if (isToken(token)) {
+          if (out && !out.endsWith(' ') && !out.endsWith('(') && !out.endsWith('[')) out += ' ';
+          out += `@${token}@`;
+          pendingSpace = !!chars[close + 1] && !/\s/.test(chars[close + 1]) && !noSpaceAfter(chars[close + 1]);
+          i = close + 1;
+          continue;
+        }
+      }
+    }
+    if (pendingSpace && out) out += ' ';
+    out += c;
+    pendingSpace = false;
+    i += 1;
+  }
+  return boNormalizeCommonNoteTerms(boNormalizeNotePunctuationSpacing(out));
+}
+function boNormalizeNotePunctuationSpacing(line) {
+  return boNormalizeNoteArrows(boTrimDecorativeNoteEdges(line))
+    .replace(/,([^\s,.;:)\]!?])/g, ', $1')
+    .replace(/\s+,/g, ',')
+    .replace(/\s+:/g, ':')
+    .replace(/::+/g, ':')
+    .split(/\s+/).filter(Boolean).join(' ');
+}
+function boTrimDecorativeNoteEdges(line) {
+  const s = String(line || '').trim();
+  if (boIsDecorativeNoteSeparator(s)) return s;
+  return s.replace(/^[\-–—―_=*~]{3,}\s*/, '').replace(/\s*[\-–—―_=*~]{3,}$/, '');
+}
+function boNormalizeNoteArrows(line) {
+  let s = String(line || '').replace(/-->/g, '->').replace(/>>/g, '->');
+  ['=>', '->', '⮞', '→'].forEach(arrow => {
+    s = s.split(arrow).map(part => part.trim()).join(` ${arrow} `);
+  });
+  return s;
+}
+function boNormalizeCommonNoteTerms(line) {
+  const replacements = {
+    hordinculture: 'Horticulture',
+    wheelbarror: 'Wheelbarrow',
+    wheebarrow: 'Wheelbarrow',
+    lumbercamp: 'lumber camp',
+    possibel: 'possible',
+    ennemie: 'enemy',
+    contruire: 'construire',
+    villnext: 'Vill next',
+    deers: 'deer',
+    berrys: 'berries',
+    concil: 'Council',
+    harrass: 'harass',
+    cowboom: 'Cow boom',
+  };
+  return String(line || '').split(/\s+/).map(word => {
+    const m = word.match(/^([^A-Za-z0-9]*)([A-Za-z0-9]+)([^A-Za-z0-9]*)$/);
+    if (!m) return word;
+    const fixed = replacements[m[2].toLowerCase()];
+    return fixed ? `${m[1]}${fixed}${m[3]}` : word;
+  }).join(' ');
+}
+function boNormalizeNoteValue(note) {
+  return boNormalizeNoteIcons(
+    boStripHtmlTags(boReplaceImgTagsWithIconTokens(boDecodeHtmlEntities(note).replace(/<br\s*\/?>/gi, '\n')))
+  ).split('\n')
+    .map(boNormalizeNoteLineSpacing)
+    .flatMap(boSplitNoteActionClauses)
+    .filter(line => line && !boIsDecorativeNoteSeparator(line)).join('\n');
+}
+function boSplitNoteActionClauses(line) {
+  return String(line || '').split(';').map(part => part.trim()).filter(Boolean)
+    .flatMap(part => {
+      const pieces = part.split(' | ').map(piece => piece.trim()).filter(Boolean);
+      return pieces.length >= 2 ? pieces : [part];
+    });
+}
+function boTimeAgeIconValue(value) {
+  const raw = String(value || '');
+  const lower = raw.toLowerCase();
+  if (!lower.includes('<img') && !raw.trim().startsWith('@')) return null;
+  const m = boNormalizeNoteValue(raw).toLowerCase().match(/age\/age_([1-4])/);
+  return m ? parseInt(m[1], 10) : null;
+}
+function boSectionAgeValue(section) {
+  const age = boParseAgeish(section?.age);
+  if (age === null) return null;
+  const kind = String(section?.type || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return kind === 'ageup' && age < 4 ? age + 1 : age;
+}
+function boSectionGameplanNote(section) {
+  const note = boNormalizeNoteValue(section?.gameplan || '');
+  return note.trim() ? note : null;
+}
+function boPrependSectionNote(step, note) {
+  if (!step || typeof step !== 'object' || Array.isArray(step) || !note) return step;
+  const s = { ...step };
+  const notes = [note];
+  if (Array.isArray(s.notes)) {
+    notes.push(...s.notes);
+  } else if (typeof s.notes === 'string') {
+    notes.push(s.notes);
+  } else if (s.description) {
+    notes.push(String(s.description));
+    delete s.description;
+  }
+  s.notes = notes;
+  return s;
+}
+function boRawStepValueHasContent(value) {
+  if (value == null) return false;
+  if (typeof value === 'string') return !!value.trim();
+  if (typeof value === 'number' || typeof value === 'boolean') return true;
+  if (Array.isArray(value)) return value.some(boRawStepValueHasContent);
+  if (typeof value === 'object') return Object.values(value).some(boRawStepValueHasContent);
+  return false;
+}
+function boFlattenSectionedSteps(steps, notes) {
+  if (!Array.isArray(steps)) return steps;
+  const out = [];
+  let changed = false;
+  steps.forEach((section, sectionIndex) => {
+    const children = section && typeof section === 'object' && !Array.isArray(section) && Array.isArray(section.steps)
+      && section.steps.length
+      && (typeof section.type === 'string' || section.gameplan !== undefined || section.age !== undefined)
+      ? section.steps
+      : null;
+    if (!children) {
+      out.push(section);
+      return;
+    }
+    changed = true;
+    const age = boSectionAgeValue(section);
+    const gameplan = boSectionGameplanNote(section);
+    let kept = 0;
+    children.forEach(child => {
+      if (!boRawStepValueHasContent(child)) {
+        notes.push(`Removed blank step from section ${sectionIndex + 1}.`);
+        return;
+      }
+      const firstKept = kept === 0;
+      kept += 1;
+      let step = child && typeof child === 'object' && !Array.isArray(child) ? { ...child } : child;
+      if (step && typeof step === 'object' && !Array.isArray(step) && step.age == null && age !== null) step.age = age;
+      if (firstKept && gameplan) step = boPrependSectionNote(step, gameplan);
+      out.push(step);
+    });
+    notes.push(`Flattened section ${sectionIndex + 1} into ${kept} build step${kept === 1 ? '' : 's'}.`);
+  });
+  return changed ? out : steps;
+}
+function boCanonicalBuildSource(raw) {
+  const source = String(raw || '').trim();
+  if (!source) return null;
+  const guide = source.match(/aoe4guides\.com\/builds\/([A-Za-z0-9]{20})/i);
+  if (guide) return `https://aoe4guides.com/builds/${guide[1]}`;
+  const aoeiv = source.match(/aoeivbuilds\.com\/build_orders\/(\d+)/i);
+  if (aoeiv) return `https://www.aoeivbuilds.com/build_orders/${aoeiv[1]}`;
+  if (/^[A-Za-z0-9]{20}$/.test(source)) return `https://aoe4guides.com/builds/${source}`;
+  return null;
 }
 function normalizeBoJsonShape(value, notes = []) {
-  const j = JSON.parse(JSON.stringify(value));
-  if (!j.civilization && j.civilisation) {
-    j.civilization = j.civilisation;
-    delete j.civilisation;
-    notes.push('Renamed civilisation to civilization.');
+  let j = JSON.parse(JSON.stringify(value));
+  if (Array.isArray(j)) {
+    j = { build_order: j };
+    notes.push('Wrapped top-level step array in build_order.');
   }
+  j = boUnwrapBuildPayload(j, notes);
+  if (Array.isArray(j)) {
+    j = { build_order: j };
+    notes.push('Wrapped unwrapped step array in build_order.');
+  }
+  if (!j.civilization) {
+    for (const alias of ['civilisation', 'civ', 'civilizations', 'civilisations', 'civs']) {
+      if (j[alias]) {
+        j.civilization = j[alias];
+        delete j[alias];
+        notes.push(`Renamed ${alias} to civilization.`);
+        break;
+      }
+    }
+  }
+  const fixedCivilization = boNormalizeCivilization(j.civilization);
+  if (fixedCivilization && JSON.stringify(fixedCivilization) !== JSON.stringify(j.civilization)) {
+    j.civilization = fixedCivilization;
+    notes.push('Normalized civilization value.');
+  }
+  if (!j.name) {
+    for (const alias of ['title', 'buildName', 'build_name']) {
+      if (typeof j[alias] === 'string' && j[alias].trim()) {
+        j.name = j[alias].trim();
+        delete j[alias];
+        notes.push(`Renamed ${alias} to name.`);
+        break;
+      }
+    }
+  }
+  if (!j.source && typeof j.id === 'string' && /^[A-Za-z0-9]{20}$/.test(j.id.trim())) {
+    j.source = `https://aoe4guides.com/builds/${j.id.trim()}`;
+    notes.push('Derived source from aoe4guides id.');
+  } else if (!j.source) {
+    for (const alias of ['url', 'link', 'buildUrl', 'build_url', 'sourceUrl', 'source_url']) {
+      const source = boCanonicalBuildSource(j[alias]);
+      if (source) {
+        j.source = source;
+        delete j[alias];
+        notes.push(`Renamed ${alias} to source.`);
+        break;
+      }
+    }
+  } else {
+    const source = boCanonicalBuildSource(j.source);
+    if (source && source !== j.source) {
+      j.source = source;
+      notes.push('Normalized source link.');
+    }
+  }
+  const removedMetadata = [];
+  for (const key of ['description', 'author', 'video', 'season', 'map', 'strategy']) {
+    const value = j[key];
+    const blank = value === null || value === undefined || value === '' ||
+      (Array.isArray(value) && value.length === 0) ||
+      (value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length === 0);
+    if (blank && Object.prototype.hasOwnProperty.call(j, key)) {
+      delete j[key];
+      removedMetadata.push(key);
+    }
+  }
+  if (removedMetadata.length) notes.push(`Removed blank metadata: ${removedMetadata.join(', ')}.`);
   if (!Array.isArray(j.build_order)) {
-    if (Array.isArray(j.buildOrder)) {
-      j.build_order = j.buildOrder;
-      delete j.buildOrder;
-      notes.push('Renamed buildOrder to build_order.');
-    } else if (Array.isArray(j.steps)) {
-      j.build_order = j.steps;
-      delete j.steps;
-      notes.push('Renamed steps to build_order.');
-    } else if (Array.isArray(j.build_order?.steps)) {
-      j.build_order = j.build_order.steps;
-      notes.push('Pulled steps out of the build_order object.');
+    const field = boStepCollectionField(j);
+    if (field) {
+      j.build_order = field.steps;
+      if (field.key !== 'build_order') {
+        delete j[field.key];
+        notes.push(`Renamed ${field.key} to build_order.`);
+      } else {
+        notes.push('Normalized build_order field.');
+      }
+    } else {
+      const fromRoot = boStepCollection(j);
+      if (fromRoot) {
+        j = { build_order: fromRoot };
+        notes.push('Wrapped top-level step map in build_order.');
+      }
     }
   }
   if (Array.isArray(j.build_order)) {
+    j.build_order = boFlattenSectionedSteps(j.build_order, notes);
+    j.build_order = boApplyStepArrayAgeHeadings(j.build_order, notes);
     j.build_order = j.build_order.map((step, i) => {
       if (typeof step === 'string') {
-        notes.push(`Converted step ${i + 1} text into a notes array.`);
-        return { notes: [step] };
+        notes.push(`Converted step ${i + 1} text into an object.`);
+        return boPlainStepFromText(step) || { notes: boNormalizeNoteValue(step).split('\n').filter(Boolean) };
+      }
+      if (Array.isArray(step)) {
+        const tuple = boTupleStep(step);
+        if (tuple) {
+          notes.push(`Converted step ${i + 1} tuple into an object.`);
+          step = tuple;
+        } else {
+          return step;
+        }
       }
       if (!step || typeof step !== 'object') return step;
       const s = { ...step };
+      if (s._id !== undefined) {
+        delete s._id;
+        notes.push(`Removed private _id from step ${i + 1}.`);
+      }
+      for (const key of ['timestamp', 'timecode', 'timing', 'at', 'start', 'start_time', 'startTime', 'minute', 'time_text', 'timeText']) {
+        if (s.time === undefined && typeof s[key] === 'string') {
+          s.time = s[key];
+          delete s[key];
+          notes.push(`Moved step ${i + 1} ${key} into time.`);
+          break;
+        }
+      }
       if (!Array.isArray(s.notes)) {
         if (typeof s.notes === 'string') {
           s.notes = [s.notes];
@@ -4793,42 +6155,792 @@ function normalizeBoJsonShape(value, notes = []) {
           s.notes = [String(s.description)];
           delete s.description;
           notes.push(`Moved step ${i + 1} description into notes.`);
+        } else {
+          for (const key of ['text', 'action', 'actions', 'instruction', 'instructions', 'task', 'tasks', 'todo']) {
+            const aliasNotes = boNoteAliasValue(s[key]);
+            if (aliasNotes) {
+              s.notes = aliasNotes;
+              delete s[key];
+              notes.push(`Moved step ${i + 1} ${key} into notes.`);
+              break;
+            }
+          }
         }
       }
-      const fixedTime = normalizeBoTime(s.time);
-      if (fixedTime !== s.time) {
-        s.time = fixedTime;
-        notes.push(`Normalized step ${i + 1} time.`);
+      if (Array.isArray(s.notes)) {
+        const before = s.notes.length;
+        let splitMultiline = false;
+        s.notes = s.notes.flatMap(note => {
+          const lines = boNormalizeNoteValue(note).split('\n').filter(Boolean);
+          if (lines.length > 1) splitMultiline = true;
+          return lines;
+        });
+        if (s.notes.length < before) notes.push(`Removed blank note from step ${i + 1}.`);
+        if (splitMultiline) notes.push(`Split multiline note on step ${i + 1}.`);
+      }
+      const timeAge = typeof s.time === 'string' ? boTimeAgeIconValue(s.time) : null;
+      if (timeAge !== null) {
+        s.age = timeAge;
+        delete s.time;
+        notes.push(`Moved age icon from step ${i + 1} time into age.`);
+      } else {
+        const fixedTime = normalizeBoTime(s.time);
+        if (typeof s.time === 'string' && fixedTime && !boIsNormalizedTimeValue(fixedTime)) {
+          s.notes = Array.isArray(s.notes) ? s.notes : [];
+          if (!s.notes.some(n => String(n).trim() === fixedTime.trim())) s.notes.unshift(fixedTime.trim());
+          delete s.time;
+          notes.push(`Moved non-time step ${i + 1} time into notes.`);
+        } else if (typeof s.time === 'string' && !fixedTime) {
+          delete s.time;
+          notes.push(`Removed invalid step ${i + 1} time.`);
+        } else if (fixedTime !== s.time) {
+          if (fixedTime) {
+            s.time = fixedTime;
+            notes.push(`Normalized step ${i + 1} time.`);
+          } else {
+            delete s.time;
+            notes.push(`Removed invalid step ${i + 1} time.`);
+          }
+        }
       }
       const res = boParseAllocations(s.resources);
       if (res) {
         s.resources = res;
-        notes.push(`Converted step ${i + 1} resource allocation text.`);
+        notes.push(`Converted step ${i + 1} resources.`);
+      } else if (s.resources == null) {
+        for (const key of ['resource', 'resource_allocation', 'resourceAllocation', 'resource_allocations', 'resourceAllocations', 'allocation', 'allocations', 'villager_allocation', 'villagerAllocation', 'villagers_on', 'villagersOn', 'eco', 'economy']) {
+          const aliasRes = boParseAllocations(s[key]);
+          if (aliasRes) {
+            s.resources = aliasRes;
+            delete s[key];
+            notes.push(`Moved step ${i + 1} ${key} into resources.`);
+            break;
+          }
+        }
       }
+      boMoveLooseResources(s, i + 1, notes);
+      const age = boParseAgeish(s.age);
+      if (age !== null && s.age !== age) {
+        s.age = age;
+        notes.push(`Normalized step ${i + 1} age.`);
+      }
+      if (s.age < 0) {
+        delete s.age;
+        if (!notes.includes('Removed hidden age sentinel.')) notes.push('Removed hidden age sentinel.');
+      }
+      for (const key of ['age_name', 'ageName', 'ageNumber', 'age_number', 'phase', 'era']) {
+        if (s.age === undefined) {
+          const n = boParseAgeish(s[key]);
+          if (n !== null) {
+            s.age = n;
+            delete s[key];
+            notes.push(`Moved step ${i + 1} ${key} into age.`);
+          }
+        } else {
+          const aliasAge = boParseAgeish(s[key]);
+          const canonicalAge = boParseAgeish(s.age);
+          if (aliasAge !== null && canonicalAge !== null && aliasAge === canonicalAge) {
+            delete s[key];
+            notes.push(`Removed duplicate step ${i + 1} ${key} age.`);
+          }
+        }
+      }
+      for (const key of ['population_count', 'villager_count']) {
+        const n = boParseIntish(s[key]);
+        if (n !== null && s[key] !== n) {
+          s[key] = n;
+          notes.push(`Normalized step ${i + 1} ${key}.`);
+        }
+        if (s[key] < 0) {
+          delete s[key];
+          const msg = `Removed hidden ${key} sentinel.`;
+          if (!notes.includes(msg)) notes.push(msg);
+        }
+      }
+      for (const [alias, key] of [
+        ['population', 'population_count'], ['populationCount', 'population_count'], ['pop', 'population_count'],
+        ['pop_count', 'population_count'], ['popCount', 'population_count'], ['pop_cap', 'population_count'], ['popCap', 'population_count'],
+        ['supply', 'population_count'], ['supply_count', 'population_count'], ['supplyCount', 'population_count'], ['supply_used', 'population_count'], ['supplyUsed', 'population_count'],
+        ['vill', 'villager_count'], ['villager', 'villager_count'], ['villagers', 'villager_count'], ['vill_count', 'villager_count'], ['villCount', 'villager_count'],
+        ['villagerCount', 'villager_count'], ['vills', 'villager_count'], ['worker', 'villager_count'], ['workers', 'villager_count'], ['worker_count', 'villager_count'], ['workerCount', 'villager_count'],
+      ]) {
+        if (typeof s[alias] === 'string' && !s[alias].trim()) {
+          delete s[alias];
+          notes.push(`Removed blank step ${i + 1} ${alias}.`);
+          continue;
+        }
+        if (s[key] === undefined) {
+          const n = boParseIntish(s[alias]);
+          if (n !== null) {
+            s[key] = n;
+            delete s[alias];
+            notes.push(`Moved step ${i + 1} ${alias} into ${key}.`);
+          }
+        } else {
+          const aliasN = boParseIntish(s[alias]);
+          const canonicalN = boParseIntish(s[key]);
+          if (aliasN !== null && canonicalN !== null && aliasN === canonicalN) {
+            delete s[alias];
+            notes.push(`Removed duplicate step ${i + 1} ${alias} count.`);
+          }
+        }
+      }
+      for (const key of ['population_count', 'villager_count']) {
+        if (s[key] < 0) {
+          delete s[key];
+          const msg = `Removed hidden ${key} sentinel.`;
+          if (!notes.includes(msg)) notes.push(msg);
+        }
+      }
+      if (s.resources && typeof s.resources === 'object' && !Array.isArray(s.resources)) {
+        for (const [alias, key] of [['f', 'food'], ['w', 'wood'], ['g', 'gold'], ['s', 'stone'], ['build', 'builder'], ['builders', 'builder']]) {
+          if (s.resources[key] === undefined) {
+            const n = boParseIntish(s.resources[alias]);
+            if (n !== null) {
+              s.resources[key] = n;
+              delete s.resources[alias];
+              notes.push(`Moved step ${i + 1} resource ${alias} into ${key}.`);
+            }
+          } else {
+            const aliasN = boParseIntish(s.resources[alias]);
+            const canonicalN = boParseIntish(s.resources[key]);
+            if (aliasN !== null && canonicalN !== null && aliasN === canonicalN) {
+              delete s.resources[alias];
+              notes.push(`Removed duplicate step ${i + 1} resource ${alias}.`);
+            }
+          }
+        }
+        for (const key of ['food', 'wood', 'gold', 'stone', 'builder']) {
+          if (s.resources[key] === undefined || s.resources[key] === null) {
+            s.resources[key] = -1;
+            notes.push(`Filled missing ${key} allocation on step ${i + 1}.`);
+          } else {
+            const n = boParseIntish(s.resources[key]);
+            if (n !== null && s.resources[key] !== n) {
+              s.resources[key] = n;
+              notes.push(`Normalized step ${i + 1} ${key} allocation.`);
+            }
+          }
+        }
+      }
+      boFillResourceCountsFromNotes(s, i + 1, notes);
+      boFillTimeAndAgeFromNotes(s, i + 1, notes);
+      boCleanupDuplicateNotePrefixes(s, i + 1, notes);
       return s;
+    }).filter((step, i) => {
+      const keep = !!(step?.time || step?.age > 0 || step?.villager_count >= 0 || step?.population_count >= 0 ||
+        ['food', 'wood', 'gold', 'stone'].some(key => step?.resources?.[key] > 0) || step?.resources?.builder >= 0 ||
+        (Array.isArray(step?.notes) && step.notes.some(n => String(n).trim())));
+      if (!keep) notes.push(`Removed blank step ${i + 1}.`);
+      return keep;
     });
   }
   return { json: j, notes };
+}
+
+function boFillResourceCountsFromNotes(step, stepNo, notes) {
+  const counts = boNoteResourceCounts(step);
+  if (!counts.length) return;
+  if (!step.resources || typeof step.resources !== 'object' || Array.isArray(step.resources)) {
+    step.resources = { food: -1, wood: -1, gold: -1, stone: -1, builder: -1 };
+  }
+  counts.forEach(([key, count]) => {
+    if (!Number.isFinite(Number(step.resources[key])) || Number(step.resources[key]) <= 0) {
+      step.resources[key] = count;
+      notes.push(`Filled step ${stepNo} ${key} allocation from note hint.`);
+    }
+  });
+}
+function boNoteResourceCounts(step) {
+  if (!Array.isArray(step?.notes)) return [];
+  const out = [];
+  for (const note of step.notes) {
+    for (const key of ['food', 'wood', 'gold', 'stone']) {
+      const icon = `@resource/resource_${key}@`;
+      const colon = boResourceIconColonCount(note, icon);
+      const rally = colon === null ? boRallyResourceIconCount(note, icon) : null;
+      const count = colon ?? rally;
+      if (count !== null) out.push([key, count]);
+    }
+  }
+  return out;
+}
+function boResourceIconColonCount(note, icon) {
+  const i = String(note || '').indexOf(icon);
+  if (i < 0) return null;
+  const rest = String(note || '').slice(i + icon.length).trimStart();
+  const m = rest.match(/^:\s*(\d+)/);
+  return m && Number(m[1]) > 0 ? Number(m[1]) : null;
+}
+function boRallyResourceIconCount(note, icon) {
+  const s = String(note || '').trim();
+  if (!s.startsWith('@resource/rally@')) return null;
+  const rest = s.slice('@resource/rally@'.length).trimStart();
+  if (!rest.startsWith(icon)) return null;
+  const m = rest.slice(icon.length).trimStart().match(/^(\d+)\s*$/);
+  return m && Number(m[1]) > 0 ? Number(m[1]) : null;
+}
+
+function boFillTimeAndAgeFromNotes(step, stepNo, notes) {
+  if (!Array.isArray(step?.notes)) return;
+  const currentAge = boParseAgeish(step.age);
+  let inferredTime = null;
+  let inferredAge = currentAge;
+  const before = step.notes.length;
+  const kept = [];
+  for (const note of step.notes) {
+    const raw = String(note);
+    if (step.time === undefined && inferredTime === null) {
+      const time = boPureClockNote(raw);
+      if (time) {
+        inferredTime = time;
+        continue;
+      }
+    }
+    const age = boAgeIconInNote(raw);
+    if (inferredAge === null && age !== null) {
+      inferredAge = age;
+      if (boPureAgeIconNote(raw)) continue;
+    } else if (age !== null && boPureAgeIconNote(raw)) {
+      continue;
+    }
+    kept.push(raw);
+  }
+  step.notes = kept;
+  if (inferredTime !== null) {
+    step.time = inferredTime;
+    notes.push(`Filled step ${stepNo} time from note hint.`);
+  }
+  if (currentAge === null && inferredAge !== null) {
+    step.age = inferredAge;
+    notes.push(`Filled step ${stepNo} age from note hint.`);
+  }
+  if (step.notes.length !== before) notes.push(`Removed duplicate timing note on step ${stepNo}.`);
+}
+function boPureClockNote(note) {
+  const s = String(note || '').trim();
+  if (!s || /[^0-9:.\-–—‑\s]/.test(s)) return null;
+  const fixed = normalizeBoTime(s);
+  return fixed && boIsNormalizedTimeValue(fixed) ? fixed : null;
+}
+function boAgeIconInNote(note) {
+  const m = String(note || '').toLowerCase().match(/@age\/age_([1-4])@/);
+  return m ? Number(m[1]) : null;
+}
+function boPureAgeIconNote(note) {
+  return !String(note || '')
+    .replace(/@age\/age_[1-4]@/gi, '')
+    .replace(/[\s{}[\]():\-–—]/g, '');
+}
+
+function boResourcesEqual(a, b) {
+  return !!a && !!b && ['food', 'wood', 'gold', 'stone'].every(key => a[key] === b[key]) &&
+    ((a.builder ?? -1) < 0 || a.builder === b.builder);
+}
+function boStripDuplicateAllocationNotePrefix(line, resources) {
+  const text = String(line || '').trimStart();
+  const m = text.match(/^(\(?\s*-?\d*\s*[\/,]\s*-?\d*\s*[\/,]\s*-?\d*\s*[\/,]\s*-?\d*(?:\s*[\/,]\s*-?\d*)?\s*\)?)\s+split\b/i);
+  if (!m) return null;
+  const parsed = boParseAllocations(m[1]);
+  if (!boResourcesEqual(parsed, resources)) return null;
+  const rest = text.slice(m[0].length).replace(/^[\s,;:.\-–—>]+/, '').trimStart();
+  return rest ? rest : null;
+}
+function boStripDuplicateAgeNotePrefix(line, step) {
+  const text = String(line || '').trimStart();
+  const m = text.match(/^(age\s*(?:iv|iii|ii|i|[1-4]|dark|feudal|castle|imperial)|dark(?:\s+age)?|feudal(?:\s+age)?|castle(?:\s+age)?|imperial(?:\s+age)?)(?=$|[\s:;.\-–—>])/i);
+  if (!m) return null;
+  const age = boParseAgeish(m[1]);
+  if (age === null || (step.age !== undefined && step.age !== age)) return null;
+  const rest = text.slice(m[0].length).replace(/^[\s:;.\-–—>]+/, '').trimStart();
+  return rest ? { age, rest } : null;
+}
+function boCleanupDuplicateNotePrefixes(step, stepNo, notes) {
+  if (!Array.isArray(step.notes)) return;
+  let changed = false;
+  step.notes = step.notes.flatMap(note => {
+    let fixed = String(note);
+    const alloc = boStripDuplicateAllocationNotePrefix(fixed, step.resources);
+    if (alloc) { fixed = alloc; changed = true; }
+    const age = boStripDuplicateAgeNotePrefix(fixed, step);
+    if (age) {
+      fixed = age.rest;
+      if (step.age === undefined) step.age = age.age;
+      changed = true;
+    }
+    fixed = fixed.trim();
+    return fixed ? [fixed] : [];
+  });
+  if (changed) notes.push(`Removed duplicate note metadata on step ${stepNo}.`);
 }
 function boParsedJson(j, err = null, repair = null) {
   if (!Array.isArray(j.build_order)) return { json: j, steps: 0, civ: null, err: 'missing "build_order" array', repair };
   const civ = Array.isArray(j.civilization) ? j.civilization[0] : j.civilization;
   return { json: j, steps: j.build_order.length, civ, err, repair };
 }
+function boStripJsonFence(text) {
+  const t = String(text || '').trim();
+  const m = t.match(/^```(?:jsonc|json|javascript|js)?\s*\n?([\s\S]*?)\n?```$/i);
+  return m ? { text: m[1].trim(), note: 'Removed Markdown code fence.' } : { text: t, note: null };
+}
+function boJsonQuoteCloses(open, c) {
+  return open === '‘' ? c === '’' : c === open;
+}
+function boIsWordApostrophe(s, i) {
+  return /[\p{L}\p{N}]/u.test(s[i - 1] || '') && /[\p{L}\p{N}]/u.test(s[i + 1] || '');
+}
+function boExtractJsonLike(text) {
+  const s = String(text || '').trim();
+  if (/^[{\[]/.test(s)) return { text: s, note: null };
+  const plausible = candidate => {
+    if (candidate.startsWith('{')) return true;
+    const inner = candidate.slice(1, -1).trim();
+    return !!inner && !/^[x]$/i.test(inner);
+  };
+  for (let start = 0; start < s.length; start++) {
+    const open = s[start];
+    if (open !== '{' && open !== '[') continue;
+    const stack = [open === '{' ? '}' : ']'];
+    let quote = null;
+    let escaped = false;
+    for (let i = start + 1; i < s.length; i++) {
+      const c = s[i];
+      if (quote) {
+        if (escaped) escaped = false;
+        else if (c === '\\') escaped = true;
+        else if (boJsonQuoteCloses(quote, c) && !boIsWordApostrophe(s, i)) quote = null;
+        continue;
+      }
+      if (c === '"' || c === "'" || c === '‘') {
+        quote = c;
+      } else if (c === '{') {
+        stack.push('}');
+      } else if (c === '[') {
+        stack.push(']');
+      } else if (c === '}' || c === ']') {
+        if (stack[stack.length - 1] !== c) break;
+        stack.pop();
+        if (!stack.length) {
+          const candidate = s.slice(start, i + 1).trim();
+          if (!plausible(candidate)) break;
+          return {
+            text: candidate,
+            note: `Extracted JSON ${open === '{' ? 'object' : 'array'} from surrounding text.`,
+          };
+        }
+      }
+    }
+  }
+  return { text: s, note: null };
+}
+function boStripJsonComments(text) {
+  const s = String(text || '');
+  let out = '';
+  let quote = null;
+  let escaped = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    const n = s[i + 1];
+    if (quote) {
+      out += c;
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (boJsonQuoteCloses(quote, c) && !boIsWordApostrophe(s, i)) quote = null;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '‘') {
+      quote = c;
+      out += c;
+    } else if (c === '/' && n === '/') {
+      i += 2;
+      while (i < s.length && s[i] !== '\n' && s[i] !== '\r') i++;
+      if (i < s.length) out += s[i];
+    } else if (c === '/' && n === '*') {
+      i += 2;
+      while (i + 1 < s.length && !(s[i] === '*' && s[i + 1] === '/')) i++;
+      i++;
+    } else {
+      out += c;
+    }
+  }
+  return out;
+}
+function boInsertMissingJsonCommas(text) {
+  const s = String(text || '');
+  let out = '';
+  let quote = null;
+  let escaped = false;
+  let prevSig = '';
+  let ws = '';
+  const canEnd = c => c === '}' || c === ']' || c === '"' || /\d/.test(c);
+  const canStart = c => c === '{' || c === '[' || c === '"' || c === '-' || /[A-Za-z0-9_]/.test(c);
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (quote) {
+      out += c;
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (boJsonQuoteCloses(quote, c)) { quote = null; prevSig = '"'; }
+      continue;
+    }
+    if (/\s/.test(c)) {
+      ws += c;
+      continue;
+    }
+    if (ws) {
+      if (prevSig && canEnd(prevSig) && canStart(c)) out += ',';
+      out += ws;
+      ws = '';
+    }
+    out += c;
+    if (c === '"') quote = c;
+    else prevSig = c;
+  }
+  return out + ws;
+}
+function boNormalizeJsonSemicolons(text) {
+  const s = String(text || '');
+  let out = '';
+  let quote = null;
+  let escaped = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (quote) {
+      out += c;
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (boJsonQuoteCloses(quote, c)) quote = null;
+      continue;
+    }
+    if (c === '"') {
+      quote = c;
+      out += c;
+    } else if (c === ';') {
+      let j = i + 1;
+      while (j < s.length && /\s/.test(s[j])) j++;
+      if (j >= s.length || s[j] === '}' || s[j] === ']') continue;
+      out += ',';
+    } else {
+      out += c;
+    }
+  }
+  return out;
+}
+function boNormalizeJsonKeyEquals(text) {
+  return String(text || '').replace(/([{,]\s*)("(?:[^"\\]|\\.)*")(\s*)=/g, '$1$2$3:');
+}
+function boConvertSingleQuotedJsonStrings(text) {
+  const s = String(text || '');
+  let out = '';
+  let doubleQuote = false;
+  let escaped = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (doubleQuote) {
+      out += c;
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (c === '"') doubleQuote = false;
+    } else if (c === '"') {
+      doubleQuote = true;
+      out += c;
+    } else if (c === "'" || c === '‘') {
+      const close = c === '‘' ? '’' : "'";
+      let value = '';
+      let singleEscaped = false;
+      i++;
+      for (; i < s.length; i++) {
+        const ch = s[i];
+        if (singleEscaped) {
+          value += ch === "'" ? "'" : ch;
+          singleEscaped = false;
+        } else if (ch === '\\') {
+          singleEscaped = true;
+        } else if (ch === close && !boIsWordApostrophe(s, i)) {
+          break;
+        } else {
+          value += ch;
+        }
+      }
+      out += JSON.stringify(value);
+    } else {
+      out += c;
+    }
+  }
+  return out;
+}
+const BO_BARE_STRING_VALUE_KEYS = new Set([
+  'name', 'title', 'buildName', 'build_name',
+  'civilization', 'civilisation', 'civ',
+  'source', 'url', 'link', 'buildUrl', 'build_url', 'sourceUrl', 'source_url',
+  'time', 'timestamp', 'timecode', 'timing', 'at', 'start', 'start_time', 'startTime', 'minute', 'time_text', 'timeText',
+  'note', 'notes', 'text', 'description', 'action', 'task',
+  'phase', 'ageName', 'era', 'map', 'strategy', 'author', 'video', 'season',
+]);
+const BO_BARE_STRING_ARRAY_KEYS = new Set([
+  ...BO_STEP_COLLECTION_KEYS,
+  'notes', 'actions', 'tasks',
+  'civilization', 'civilisation', 'civilizations', 'civilisations', 'civs',
+]);
+function boBareJsonLiteralStarts(s, i) {
+  return ['true', 'false', 'null', 'undefined', 'NaN', 'Infinity', '+Infinity', '-Infinity'].some(lit =>
+    s.slice(i, i + lit.length) === lit &&
+    (i + lit.length >= s.length || /[\s,}\];]/.test(s[i + lit.length])));
+}
+function boIsJsonNumberLiteral(value) {
+  try {
+    const parsed = JSON.parse(value);
+    return typeof parsed === 'number';
+  } catch (e) {
+    return false;
+  }
+}
+function boCopyQuotedJsonString(s, i) {
+  let out = s[i++];
+  let escaped = false;
+  while (i < s.length) {
+    const c = s[i++];
+    out += c;
+    if (escaped) escaped = false;
+    else if (c === '\\') escaped = true;
+    else if (c === '"') break;
+  }
+  return { text: out, index: i };
+}
+function boCopyBalancedJsonValue(s, i) {
+  const stack = [s[i] === '{' ? '}' : ']'];
+  let out = '';
+  let quote = null;
+  let escaped = false;
+  while (i < s.length) {
+    const c = s[i++];
+    out += c;
+    if (quote) {
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (c === '"') quote = null;
+      continue;
+    }
+    if (c === '"') quote = c;
+    else if (c === '{') stack.push('}');
+    else if (c === '[') stack.push(']');
+    else if ((c === '}' || c === ']') && stack[stack.length - 1] === c) {
+      stack.pop();
+      if (!stack.length) break;
+    }
+  }
+  return { text: out, index: i };
+}
+function boQuoteBareItemsInArray(s, i) {
+  let out = '';
+  while (i < s.length) {
+    const c = s[i];
+    if (c === ']') return { text: out + c, index: i + 1 };
+    if (/\s|,/.test(c)) {
+      out += c;
+      i++;
+      continue;
+    }
+    if (c === '"') {
+      const copied = boCopyQuotedJsonString(s, i);
+      out += copied.text;
+      i = copied.index;
+      continue;
+    }
+    if (c === '{' || c === '[') {
+      const copied = boCopyBalancedJsonValue(s, i);
+      out += boQuoteKnownBareStringArrayValues(copied.text);
+      i = copied.index;
+      continue;
+    }
+    const valueStart = i;
+    while (i < s.length && !/[,\]]/.test(s[i])) i++;
+    const raw = s.slice(valueStart, i);
+    const trailing = raw.match(/\s*$/)[0];
+    const value = raw.slice(0, raw.length - trailing.length).trim();
+    if (!value || boBareJsonLiteralStarts(s, valueStart) || boIsJsonNumberLiteral(value)) out += raw;
+    else out += JSON.stringify(value) + trailing;
+  }
+  return { text: out, index: i };
+}
+function boQuoteKnownBareStringValues(text) {
+  const s = String(text || '');
+  let out = '';
+  let i = 0;
+  let quote = null;
+  let escaped = false;
+  while (i < s.length) {
+    const c = s[i];
+    if (quote) {
+      out += c;
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (c === quote) quote = null;
+      i++;
+      continue;
+    }
+    if (c !== '"') {
+      out += c;
+      i++;
+      continue;
+    }
+    const beforeKey = out;
+    let keyToken = '"';
+    let key = '';
+    i++;
+    let keyEscaped = false;
+    while (i < s.length) {
+      const kc = s[i];
+      keyToken += kc;
+      i++;
+      if (keyEscaped) {
+        key += kc;
+        keyEscaped = false;
+      } else if (kc === '\\') {
+        keyEscaped = true;
+      } else if (kc === '"') {
+        break;
+      } else {
+        key += kc;
+      }
+    }
+    out += keyToken;
+    if (!BO_BARE_STRING_VALUE_KEYS.has(key) || !/[{,]\s*$/.test(beforeKey)) continue;
+    let j = i;
+    while (j < s.length && /\s/.test(s[j])) j++;
+    if (s[j] !== ':') continue;
+    while (i <= j) out += s[i++];
+    while (i < s.length && /\s/.test(s[i])) out += s[i++];
+    if (i >= s.length || /["{\[]/.test(s[i]) || boBareJsonLiteralStarts(s, i)) continue;
+    const valueStart = i;
+    while (i < s.length && !/[,}\];]/.test(s[i])) i++;
+    const raw = s.slice(valueStart, i);
+    const trailing = raw.match(/\s*$/)[0];
+    const value = raw.slice(0, raw.length - trailing.length).trim();
+    if (!value) {
+      out += raw;
+      continue;
+    }
+    out += JSON.stringify(value) + trailing;
+  }
+  return out;
+}
+function boQuoteKnownBareStringArrayValues(text) {
+  const s = String(text || '');
+  let out = '';
+  let i = 0;
+  let quote = null;
+  let escaped = false;
+  while (i < s.length) {
+    const c = s[i];
+    if (quote) {
+      out += c;
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (c === quote) quote = null;
+      i++;
+      continue;
+    }
+    if (c !== '"') {
+      out += c;
+      i++;
+      continue;
+    }
+    const beforeKey = out;
+    let keyToken = '"';
+    let key = '';
+    i++;
+    let keyEscaped = false;
+    while (i < s.length) {
+      const kc = s[i];
+      keyToken += kc;
+      i++;
+      if (keyEscaped) {
+        key += kc;
+        keyEscaped = false;
+      } else if (kc === '\\') {
+        keyEscaped = true;
+      } else if (kc === '"') {
+        break;
+      } else {
+        key += kc;
+      }
+    }
+    out += keyToken;
+    if (!BO_BARE_STRING_ARRAY_KEYS.has(key) || !/[{,]\s*$/.test(beforeKey)) continue;
+    let j = i;
+    while (j < s.length && /\s/.test(s[j])) j++;
+    if (s[j] !== ':') continue;
+    while (i <= j) out += s[i++];
+    while (i < s.length && /\s/.test(s[i])) out += s[i++];
+    if (s[i] !== '[') continue;
+    out += s[i++];
+    const quoted = boQuoteBareItemsInArray(s, i);
+    out += quoted.text;
+    i = quoted.index;
+  }
+  return out;
+}
+function boConvertNonJsonLiterals(text) {
+  const s = String(text || '');
+  let out = '';
+  let quote = null;
+  let escaped = false;
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (quote) {
+      out += c;
+      if (escaped) escaped = false;
+      else if (c === '\\') escaped = true;
+      else if (c === quote) quote = null;
+      continue;
+    }
+    if (c === '"') {
+      quote = c;
+      out += c;
+      continue;
+    }
+    if (/[A-Za-z+-]/.test(c)) {
+      const start = i;
+      if (c === '+' || c === '-') i++;
+      while (i < s.length && /[A-Za-z0-9_]/.test(s[i])) i++;
+      const word = s.slice(start, i);
+      if (word === 'True') out += 'true';
+      else if (word === 'False') out += 'false';
+      else if (word === 'None' || word === 'undefined' || word === 'NaN' ||
+        word === 'Infinity' || word === '+Infinity' || word === '-Infinity') out += 'null';
+      else out += word;
+      i--;
+      continue;
+    }
+    out += c;
+  }
+  return out;
+}
 function suggestBoRepair(t, parseError = '') {
   const syntaxNotes = [];
-  let fixed = t.replace(/^\uFEFF/, '').replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+  const fenced = boStripJsonFence(t);
+  const extracted = boExtractJsonLike(fenced.text);
+  let fixed = extracted.text.replace(/^\uFEFF/, '').replace(/[“”]/g, '"');
+  if (fenced.note) syntaxNotes.push(fenced.note);
+  if (extracted.note) syntaxNotes.push(extracted.note);
   const apply = (next, note) => {
     if (next !== fixed) {
       fixed = next;
       syntaxNotes.push(note);
     }
   };
-  apply(fixed.replace(/\/\*[\s\S]*?\*\//g, ''), 'Removed block comments.');
-  apply(fixed.replace(/(^|[^:])\/\/.*$/gm, '$1'), 'Removed line comments.');
-  apply(fixed.replace(/([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)(\s*:)/g, '$1"$2"$3'), 'Quoted bare object keys.');
-  apply(fixed.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, s) => JSON.stringify(s.replace(/\\'/g, "'"))), 'Converted single-quoted strings.');
-  apply(fixed.replace(/\bTrue\b/g, 'true').replace(/\bFalse\b/g, 'false').replace(/\bNone\b/g, 'null'), 'Converted Python-style booleans/nulls.');
+  apply(boStripJsonComments(fixed), 'Removed comments.');
+  apply(fixed.replace(/([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)(\s*[:=])/g, '$1"$2"$3'), 'Quoted bare object keys.');
+  apply(boNormalizeJsonKeyEquals(fixed), 'Converted key equals signs to colons.');
+  apply(boConvertSingleQuotedJsonStrings(fixed), 'Converted single-quoted strings.');
+  apply(boQuoteKnownBareStringValues(fixed), 'Quoted bare text values.');
+  apply(boQuoteKnownBareStringArrayValues(fixed), 'Quoted bare text array values.');
+  apply(boConvertNonJsonLiterals(fixed), 'Converted Python/JS-style literals.');
+  apply(boNormalizeJsonSemicolons(fixed), 'Normalized semicolon separators.');
+  apply(boInsertMissingJsonCommas(fixed), 'Inserted missing commas.');
+  apply(fixed.replace(/([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)(\s*[:=])/g, '$1"$2"$3'), 'Quoted bare object keys.');
+  apply(boNormalizeJsonKeyEquals(fixed), 'Converted key equals signs to colons.');
   apply(fixed.replace(/,\s*([}\]])/g, '$1'), 'Removed trailing commas.');
   try {
     const parsed = JSON.parse(fixed);
@@ -4845,20 +6957,41 @@ function suggestBoRepair(t, parseError = '') {
   }
 }
 function parseBoUncached(content) {
-  const t = (content || '').trim();
-  if (!t.startsWith('{')) {
+  const fenced = boStripJsonFence(content || '');
+  const extracted = boExtractJsonLike(fenced.text);
+  const t = extracted.text;
+  const initialNotes = [fenced.note, extracted.note].filter(Boolean);
+  const parseTextBuild = () => {
+    const table = boParsePipedBuildText(t);
+    if (table) return boParsedJson(table.json, null, table.repair);
+    const tsv = boParseTsvBuildText(t);
+    if (tsv) return boParsedJson(tsv.json, null, tsv.repair);
+    const csv = boParseCsvBuildText(t);
+    if (csv) return boParsedJson(csv.json, null, csv.repair);
+    const timed = boParseTimedBuildText(t);
+    if (timed) return boParsedJson(timed.json, null, timed.repair);
+    const plain = boParsePlainBuildText(t);
+    if (plain) return boParsedJson(plain.json, null, plain.repair);
+    return null;
+  };
+  if (!/^[{\[]/.test(t)) {
+    const textBuild = parseTextBuild();
+    if (textBuild) return textBuild;
     return { json: null, steps: t.split('\n').filter(l => l.trim()).length, civ: null, err: null };
   }
   try {
     const parsed = JSON.parse(t);
-    const normalized = normalizeBoJsonShape(parsed);
+    const normalized = normalizeBoJsonShape(parsed, initialNotes);
     const repair = normalized.notes.length
       ? { fixed: JSON.stringify(normalized.json, null, 2), json: normalized.json, notes: [...new Set(normalized.notes)], error: null }
       : null;
     return boParsedJson(normalized.json, null, repair);
   } catch (e) {
     const repair = suggestBoRepair(t, e.message);
+    if (repair && initialNotes.length) repair.notes = [...new Set([...initialNotes, ...repair.notes])];
     if (repair) return boParsedJson(repair.json, e.message, repair);
+    const textBuild = parseTextBuild();
+    if (textBuild) return textBuild;
     return { json: null, steps: 0, civ: null, err: e.message, repair: null };
   }
 }
@@ -5394,9 +7527,10 @@ $('bo-import-file').onchange = async e => {
 const GUIDES_CIVS = {
   ABB: 'Abbasid Dynasty', AYY: 'Ayyubids', BYZ: 'Byzantines', CHI: 'Chinese',
   DEL: 'Delhi Sultanate', ENG: 'English', FRE: 'French', HRE: 'Holy Roman Empire',
-  JAP: 'Japanese', JDA: "Jeanne d'Arc", JIN: 'Jin Dynasty', MAL: 'Malians',
-  MON: 'Mongols', DRA: 'Order of the Dragon', OTT: 'Ottomans', RUS: 'Rus',
-  ZXL: "Zhu Xi's Legacy",
+  GOH: 'Golden Horde', HOL: 'House of Lancaster', JAP: 'Japanese', JDA: "Jeanne d'Arc",
+  JIN: 'Jin Dynasty', KTE: 'Knights Templar', MAC: 'Macedonian Dynasty',
+  MAL: 'Malians', MON: 'Mongols', DRA: 'Order of the Dragon', OTT: 'Ottomans',
+  RUS: 'Rus', SEN: 'Sengoku Daimyo', TUG: 'Tughlaq Dynasty', ZXL: "Zhu Xi's Legacy",
 };
 $('bo-g-civ').innerHTML += Object.entries(GUIDES_CIVS)
   .sort((a, b) => a[1].localeCompare(b[1]))
@@ -5419,7 +7553,17 @@ async function saveImportedBo(bo) {
   await persistBo();
   selectBo(name);
   const p = parseBo(bo.content);
-  const detail = [bo.civilization, p.steps ? `${p.steps} steps` : ''].filter(Boolean).join(', ');
+  const summary = bo.repair_summary || {};
+  const repairs = Number(summary.total ?? (Array.isArray(bo.repairs) ? bo.repairs.length : 0));
+  const repairBits = [
+    summary.times ? `${summary.times} time` : '',
+    summary.notes ? `${summary.notes} note` : '',
+    summary.icons ? `${summary.icons} icon` : '',
+    summary.resources ? `${summary.resources} resource` : '',
+    summary.steps ? `${summary.steps} step` : '',
+  ].filter(Boolean).slice(0, 3).join('/');
+  const cleanup = repairs ? `${repairs} cleanup${repairs === 1 ? '' : 's'}${repairBits ? ` (${repairBits})` : ''}` : '';
+  const detail = [bo.civilization, p.steps ? `${p.steps} steps` : '', cleanup].filter(Boolean).join(', ');
   toast(`${updated ? 'Updated' : 'Imported'} "${name}"${detail ? ` — ${detail}` : ''}`);
 }
 
@@ -5709,15 +7853,39 @@ function boBuilderCommitStep(mode) {
   boBuilderWriteJson(base.json, index, `${prefix}${canUpdate ? 'updated' : 'appended'} step ${index + 1}`);
 }
 function boRenderLine(line) {
-  return String(line).split('@').map((part, i) => {
-    if (!part) return '';
-    if (i % 2 === 1) {
-      let clean = part.replace(/['"<>]/g, '');
-      if (!/\.\w+$/.test(clean)) clean += '.webp';
-      return `<img src="bo_img/${esc(clean)}" onerror="this.outerHTML=this.alt" alt="${esc(part.split('/').pop().split('.')[0])}">`;
+  const text = String(line);
+  let html = '';
+  let i = 0;
+  while (i < text.length) {
+    const open = text.indexOf('@', i);
+    if (open < 0) {
+      html += `<span>${esc(text.slice(i))}</span>`;
+      break;
     }
-    return `<span>${esc(part)}</span>`;
-  }).join('');
+    if (open > i) html += `<span>${esc(text.slice(i, open))}</span>`;
+    const close = text.indexOf('@', open + 1);
+    if (close < 0) {
+      i = open + 1;
+      continue;
+    }
+    const part = text.slice(open + 1, close);
+    if (boIconToken(part)) {
+      const src = boImageSrc(part);
+      html += `<img src="${esc(src)}" onerror="this.outerHTML=this.alt" alt="${esc(part.split('/').pop().split('.')[0])}">`;
+      i = close + 1;
+    } else {
+      html += `<span>${esc(part)}</span>`;
+      const inline = boInlineIconAfterInvalidToken(text, close + 1);
+      if (inline) {
+        const src = boImageSrc(inline.icon);
+        html += `<img src="${esc(src)}" onerror="this.outerHTML=this.alt" alt="${esc(inline.icon.split('/').pop().split('.')[0])}">`;
+        i = inline.next;
+      } else {
+        i = close + 1;
+      }
+    }
+  }
+  return html;
 }
 
 function boStepLead(step, i) {
