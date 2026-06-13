@@ -2356,7 +2356,7 @@ function hasStepSignal(step) {
   if ((step.notes || []).some(n => String(n || '').trim())) return true;
   if (step.time || (step.age >= 1 && step.age <= 4) || step.villager_count >= 0 || step.population_count >= 0) return true;
   const r = step.resources || {};
-  return ['food', 'wood', 'gold', 'stone', 'builder'].some(k => (r[k] ?? -1) >= 0);
+  return ['food', 'wood', 'gold', 'stone'].some(k => (r[k] ?? -1) > 0) || (r.builder ?? -1) >= 0;
 }
 
 function stepPreviewHtml(step) {
