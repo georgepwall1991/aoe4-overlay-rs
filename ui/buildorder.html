@@ -2585,6 +2585,7 @@ function render() {
   progEl.style.display = 'none'; nextEl.style.display = 'none';
   progEl.title = '';
   resEl.title = '';
+  notesEl.title = '';
   nextEl.classList.remove('done');
   nextEl.title = '';
   if (!current) { titleEl.innerHTML = '<span class="t">No build order selected</span>'; return; }
@@ -2645,6 +2646,7 @@ function render() {
       res.push(chipHtml(RES_ICONS.time, time, resourceLabelForDisplay('time')));
     resEl.innerHTML = res.join('');
     resEl.title = targetSummaryTitle(s);
+    notesEl.title = progress;
     notesEl.innerHTML = stepNotesHtml(s);
     const nx = steps[step + 1];
     const nxPreview = stepPreviewHtml(nx);
@@ -2678,6 +2680,7 @@ function render() {
     progEl.title = progress;
     progEl.style.setProperty('--seg', stepIdx.length > 40 ? '200%' : (100 / stepIdx.length) + '%');
     progEl.firstElementChild.style.width = ((step + 1) / stepIdx.length * 100) + '%';
+    notesEl.title = progress;
     notesEl.innerHTML = plainTextWindowHtml(lines, stepIdx, step);
     const nxLine = lines[stepIdx[step + 1]];
     if ((settings?.bo_show_next ?? true) && nxLine) {
