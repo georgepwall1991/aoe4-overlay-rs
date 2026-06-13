@@ -2390,7 +2390,18 @@ function resourceKeysForDisplay(resources) {
 }
 
 function notesForDisplay(step, limit = Infinity) {
-  return (step?.notes || []).map(n => String(n || '').trim()).filter(Boolean).slice(0, limit);
+  const seen = new Set();
+  const notes = [];
+  for (const raw of step?.notes || []) {
+    const note = String(raw || '').trim();
+    if (!note) continue;
+    const key = normalizeNoteValue(note).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    notes.push(note);
+    if (notes.length >= limit) break;
+  }
+  return notes;
 }
 
 function countForDisplay(value) {
