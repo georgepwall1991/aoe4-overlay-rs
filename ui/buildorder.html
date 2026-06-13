@@ -2615,7 +2615,7 @@ function render() {
     titleEl.innerHTML =
       civs.map(c => {
         const f = flagName(c);
-        return `<img src="flags/${esc(f)}.webp" title="${esc(c)}" onerror="this.style.display='none'">`;
+        return `<img src="flags/${esc(f)}.webp" title="${esc(`Civilization: ${c}`)}" onerror="this.style.display='none'">`;
       }).join('') +
       buildTitleTextHtml(buildName) +
       `<span id="step-count" title="${esc(progress)}">${step + 1}/${steps.length}</span>`;
