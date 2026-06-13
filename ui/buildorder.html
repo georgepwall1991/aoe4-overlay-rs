@@ -2518,6 +2518,10 @@ function progressTitle(step, total) {
   return `Progress: step ${step + 1} of ${total} (${pct}%)`;
 }
 
+function stepCountTitle(step, total) {
+  return `Current position - ${progressTitle(step, total)}`;
+}
+
 function nextTitle(step, total) {
   return `Next step - ${progressTitle(step + 1, total)}`;
 }
@@ -2618,7 +2622,7 @@ function render() {
         return `<img src="flags/${esc(f)}.webp" title="${esc(`Civilization: ${c}`)}" onerror="this.style.display='none'">`;
       }).join('') +
       buildTitleTextHtml(buildName) +
-      `<span id="step-count" title="${esc(progress)}">${step + 1}/${steps.length}</span>`;
+      `<span id="step-count" title="${esc(stepCountTitle(step, steps.length))}">${step + 1}/${steps.length}</span>`;
     progEl.style.display = '';
     progEl.title = `Build order progress - ${progress}`;
     progEl.style.setProperty('--seg', steps.length > 40 ? '200%' : (100 / steps.length) + '%');
@@ -2680,7 +2684,7 @@ function render() {
     const curLine = stepIdx[step];
     const progress = progressTitle(step, stepIdx.length);
     titleEl.innerHTML = buildTitleTextHtml(buildName) +
-      (stepIdx.length ? `<span id="step-count" title="${esc(progress)}">${step + 1}/${stepIdx.length}</span>` : '');
+      (stepIdx.length ? `<span id="step-count" title="${esc(stepCountTitle(step, stepIdx.length))}">${step + 1}/${stepIdx.length}</span>` : '');
     if (!stepIdx.length) {
       notesEl.innerHTML = `<div class="txt-cur" title="${esc(`${buildName} has no non-empty text lines`)}">No usable build steps found</div>`;
       return;
