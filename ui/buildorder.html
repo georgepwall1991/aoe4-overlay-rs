@@ -2611,6 +2611,12 @@ function plainTextWindowHtml(lines, stepIdx, step) {
   return parts.join('');
 }
 
+function restartStepAnimation(...els) {
+  for (const el of els) {
+    el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
+  }
+}
+
 function render() {
   const titleEl = document.getElementById('title');
   const resEl = document.getElementById('resources');
@@ -2698,9 +2704,7 @@ function render() {
       nextEl.title = `Build order complete - ${progress}`;
       nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">Final step</div>';
     }
-    for (const el of [resEl, notesEl, nextEl]) {
-      el.style.animation = 'none'; void el.offsetWidth; el.style.animation = '';
-    }
+    restartStepAnimation(resEl, notesEl, nextEl);
   } else {
     // Plain TXT build order: each non-empty line is a step, tracked by current.step
     const lines = String(current.content || '').split('\n');
@@ -2732,6 +2736,7 @@ function render() {
       nextEl.title = `Build order complete - ${progress}`;
       nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">Final step</div>';
     }
+    restartStepAnimation(notesEl, nextEl);
   }
 }
 
