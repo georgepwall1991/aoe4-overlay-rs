@@ -2453,7 +2453,7 @@ function deltaTitle(value, previous) {
 
 function previewChipHtml(icon, value, label) {
   const text = value === '' || value === null || value === undefined ? '' : String(value);
-  const title = text ? `${label}: ${text}` : label;
+  const title = text ? `Next ${label}: ${text}` : `Next ${label}`;
   return `<span title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
 }
 
