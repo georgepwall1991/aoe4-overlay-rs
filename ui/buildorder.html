@@ -138,6 +138,8 @@
   #next .nx-until { color: #d8eaff; background: rgba(122,182,255,.1);
           box-shadow: inset 0 0 0 1px rgba(122,182,255,.34), 0 0 5px rgba(122,182,255,.1); }
   #next .nx-age { box-shadow: inset 0 0 0 1px rgba(231,192,89,.32); }
+  #next .nx-age-up { color: #ffe9a0; background: rgba(231,192,89,.12);
+          box-shadow: inset 0 0 0 1px rgba(231,192,89,.55), 0 0 6px rgba(231,192,89,.22); }
   #next .nx-food { box-shadow: inset 0 0 0 1px rgba(229,106,84,.26); }
   #next .nx-wood { box-shadow: inset 0 0 0 1px rgba(122,178,98,.26); }
   #next .nx-gold { box-shadow: inset 0 0 0 1px rgba(231,192,89,.3); }
@@ -2550,6 +2552,13 @@ function nextTimeGapChipHtml(step, previousStep) {
   return `<span class="nx-chip nx-until" title="${esc(title)}"><img src="${esc(RES_ICONS.time)}">${esc(text)}</span>`;
 }
 
+function nextAgeChipHtml(age, previousAge) {
+  const ageUp = previousAge !== null && age > previousAge;
+  const text = ageUp ? 'Age up!' : ageLabelForDisplay(age);
+  const detail = ageUp ? `Will advance from ${ageLabelForDisplay(previousAge)} to ${ageLabelForDisplay(age)}` : '';
+  return previewChipHtml(AGE_ICONS[age], text, 'Age', `nx-age${ageUp ? ' nx-age-up' : ''}`, detail);
+}
+
 function previewTextUnits(text) {
   let units = 0;
   for (let i = 0; i < text.length; i++) {
@@ -2603,7 +2612,8 @@ function stepPreviewHtml(step, previousStep = null) {
   const time = timeForDisplay(step.time);
   if (time) bits.push(previewChipHtml(RES_ICONS.time, time, resourceLabelForDisplay('time'), 'nx-time'));
   const age = ageForDisplay(step.age);
-  if (age !== null) bits.push(previewChipHtml(AGE_ICONS[age], ageLabelForDisplay(age), 'Age', 'nx-age'));
+  const previousAge = ageForDisplay(previousStep?.age);
+  if (age !== null) bits.push(nextAgeChipHtml(age, previousAge));
   const r = step.resources || {};
   const pr = previousStep?.resources || {};
   for (const k of resourceKeysForDisplay(r)) {

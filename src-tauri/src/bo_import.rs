@@ -5482,6 +5482,30 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_next_preview_highlights_age_ups() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("#next .nx-age-up") && buildorder.contains("rgba(231,192,89,.55)"),
+            "next-step age-up chips should have distinct styling"
+        );
+        assert!(
+            buildorder.contains("function nextAgeChipHtml")
+                && buildorder.contains("const ageUp = previousAge !== null && age > previousAge")
+                && buildorder.contains("Age up!")
+                && buildorder.contains("Will advance from"),
+            "next-step age-up chips should be labelled from the current age comparison"
+        );
+        assert!(
+            buildorder.contains("const previousAge = ageForDisplay(previousStep?.age)")
+                && buildorder.contains("bits.push(nextAgeChipHtml(age, previousAge))"),
+            "next-step previews should compare upcoming age to the current step age"
+        );
+    }
+
+    #[test]
     fn txt_without_steps_errors() {
         assert!(convert_aoeivbuilds_txt("Title only\n\nno bullets here", None, "x").is_err());
     }
