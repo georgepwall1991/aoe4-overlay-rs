@@ -42,6 +42,7 @@
   #title img { height: 1.5em; border-radius: 3px; object-fit: cover;
            box-shadow: 0 0 0 1px rgba(230,198,100,.6), 0 2px 5px rgba(0,0,0,.7); }
   #step-count { font-weight: 600; letter-spacing: .04em; margin-left: auto; flex-shrink: 0;
+           font-variant-numeric: tabular-nums;
            background: linear-gradient(180deg, rgba(122,182,255,.2), rgba(122,182,255,.08));
            color: #dce9f8;
            border-radius: 1em; padding: 0 .55em; font-size: .85em; text-shadow: 0 1px 2px rgba(0,0,0,.6);
@@ -61,6 +62,7 @@
   @keyframes prog-sheen { 0%, 55% { background-position: -30% 0, 0 0; } 85%, 100% { background-position: 130% 0, 0 0; } }
   #resources { display: flex; gap: 8px; align-items: center; margin-bottom: 7px; flex-wrap: wrap; }
   .res { display: flex; align-items: center; gap: 4px; font-weight: 600;
+         font-variant-numeric: tabular-nums;
          background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
          border-radius: .45em; padding: 2px 8px 2px 5px;
          box-shadow: inset 0 0 0 1px rgba(255,255,255,.12), inset 0 1px 0 rgba(255,255,255,.08); }
@@ -112,11 +114,13 @@
           background: linear-gradient(to right, rgba(255,255,255,.04), rgba(255,255,255,0) 80%);
           border-radius: 0 0 .4em .4em; }
   #next .nx-label { display: inline-flex; align-items: center; white-space: nowrap;
+          font-variant-numeric: tabular-nums;
           text-transform: uppercase; letter-spacing: .08em; font-weight: 700;
           font-size: .8em; color: #f2dda0; margin-right: 6px; padding: 1px 6px;
           border-radius: .35em; background: rgba(231,192,89,.1);
           box-shadow: inset 0 0 0 1px rgba(231,192,89,.24); }
   #next .nx-chip { display: inline-flex; align-items: center; gap: 3px; margin-right: 3px;
+          font-variant-numeric: tabular-nums;
           border-radius: .35em; padding: 1px 5px 1px 3px;
           background: rgba(255,255,255,.06);
           box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
