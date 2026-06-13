@@ -2482,7 +2482,7 @@ function stepPreviewHtml(step) {
   const hiddenNotes = previewNotes.length - 1;
   if (hiddenNotes > 0) {
     const hiddenTitle = previewNotes.slice(1).map(n => compactPreviewText(n, 120)).join(' | ');
-    bits.push(`<div title="${esc(hiddenTitle)}">+${hiddenNotes}</div>`);
+    bits.push(`<div title="${esc(`Hidden next details: ${hiddenTitle}`)}">+${hiddenNotes} detail${hiddenNotes === 1 ? '' : 's'}</div>`);
   }
   return bits.join('<span> · </span>');
 }
