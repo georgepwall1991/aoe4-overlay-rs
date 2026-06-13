@@ -2702,7 +2702,7 @@ function render() {
       nextEl.style.display = '';
       nextEl.classList.add('done');
       nextEl.title = `Build order complete - ${progress}`;
-      nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">Final step</div>';
+      nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">No next step</div>';
     }
     restartStepAnimation(resEl, notesEl, nextEl);
   } else {
@@ -2734,7 +2734,7 @@ function render() {
       nextEl.style.display = '';
       nextEl.classList.add('done');
       nextEl.title = `Build order complete - ${progress}`;
-      nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">Final step</div>';
+      nextEl.innerHTML = '<span class="nx-label">Done</span><div class="nx-done">No next step</div>';
     }
     restartStepAnimation(notesEl, nextEl);
   }
