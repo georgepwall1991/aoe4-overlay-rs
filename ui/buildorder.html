@@ -2531,6 +2531,7 @@ function render() {
   const nextEl = document.getElementById('next');
   titleEl.innerHTML = ''; resEl.innerHTML = ''; notesEl.innerHTML = '';
   progEl.style.display = 'none'; nextEl.style.display = 'none';
+  nextEl.classList.remove('done');
   if (!current) { titleEl.innerHTML = '<span class="t">No build order selected</span>'; return; }
   const buildName = buildNameForDisplay(current);
 
