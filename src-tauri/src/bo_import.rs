@@ -5611,12 +5611,17 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
         );
         assert!(
             buildorder.contains("function compactStructureLabel")
+                && buildorder.contains("function uniqueStructureTokens")
+                && buildorder.contains("function isHouseStructureToken")
                 && buildorder.contains("'archery-range': 'Range'")
                 && buildorder.contains("'town-center': 'TC'")
                 && buildorder.contains("'military-school': 'Mil School'")
+                && buildorder.contains("const nonHouseTokens = uniqueBuildingTokens.filter")
+                && buildorder.contains("houseOnly: !nonHouseTokens.length")
+                && buildorder.contains("` +${displayTokens.length - 1}`")
                 && buildorder.contains("iconSrc(token) || RES_ICONS.builder")
                 && buildorder.contains("buildActionDetail(actionCue"),
-            "build action chips should use specific structure icons and compact labels when safely inferred"
+            "build action chips should use specific structure icons, compact labels, and multi-structure counts when safely inferred"
         );
         assert!(
             buildorder.contains("function shouldShowBuildActionChip")
@@ -5736,8 +5741,8 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
             "current and next-step rows should render house cue chips"
         );
         assert!(
-            buildorder.contains("!(house && action === 'Build')"),
-            "generic build chips should be suppressed when a house chip communicates the supply action more clearly"
+            buildorder.contains("!(house && action === 'Build' && actionCue?.houseOnly)"),
+            "generic build chips should be suppressed only when a house chip communicates the whole supply action"
         );
     }
 

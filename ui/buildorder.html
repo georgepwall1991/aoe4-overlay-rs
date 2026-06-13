@@ -2720,8 +2720,29 @@ function structureTokensFromNote(note, type) {
     .filter(token => iconToken(token));
 }
 
-function compactStructureLabel(token) {
+function structureTokenDisplayKey(token) {
   const clean = normalizeIconToken(token).split('/').pop().replace(/\.(webp|png|jpg|jpeg)$/i, '').replace(/-\d+$/, '');
+  return clean;
+}
+
+function isHouseStructureToken(token) {
+  return structureTokenDisplayKey(token) === 'house';
+}
+
+function uniqueStructureTokens(tokens) {
+  const seen = new Set();
+  const unique = [];
+  for (const token of tokens) {
+    const key = structureTokenDisplayKey(token);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    unique.push(token);
+  }
+  return unique;
+}
+
+function compactStructureLabel(token) {
+  const clean = structureTokenDisplayKey(token);
   const label = {
     'archery-range': 'Range',
     'cattle-ranch': 'Ranch',
@@ -2753,8 +2774,20 @@ function buildActionCue(step) {
         const token = landmarkTokens[0];
         return { kind: 'Landmark', label: 'Landmark', icon: iconSrc(token) || RES_ICONS.builder, name: iconNameForDisplay(token) };
       }
-      const token = buildingTokens[0];
-      return { kind: 'Build', label: compactStructureLabel(token), icon: iconSrc(token) || RES_ICONS.builder, name: iconNameForDisplay(token) };
+      const uniqueBuildingTokens = uniqueStructureTokens(buildingTokens);
+      const nonHouseTokens = uniqueBuildingTokens.filter(token => !isHouseStructureToken(token));
+      const displayTokens = nonHouseTokens.length ? nonHouseTokens : uniqueBuildingTokens;
+      const token = displayTokens[0];
+      const names = displayTokens.map(iconNameForDisplay);
+      const extra = displayTokens.length > 1 ? ` +${displayTokens.length - 1}` : '';
+      return {
+        kind: 'Build',
+        label: `${compactStructureLabel(token)}${extra}`,
+        icon: iconSrc(token) || RES_ICONS.builder,
+        name: names[0],
+        names,
+        houseOnly: !nonHouseTokens.length,
+      };
     }
   }
   return null;
@@ -2765,7 +2798,10 @@ function buildActionKind(step) {
 }
 
 function buildActionDetail(cue, scope) {
-  const target = cue?.name && cue.name !== cue.label ? `: ${cue.name}` : '';
+  const names = cue?.names?.length ? cue.names : (cue?.name ? [cue.name] : []);
+  const target = names.length > 1
+    ? `: ${names[0]} +${names.length - 1} more`
+    : (names[0] && names[0] !== cue?.label ? `: ${names[0]}` : '');
   return `Inferred from the ${scope} instruction text${target}`;
 }
 
@@ -2971,7 +3007,7 @@ function stepPreviewHtml(step, previousStep = null) {
   const house = houseCue(step);
   const actionCue = buildActionCue(step);
   const action = actionCue?.kind || '';
-  if (shouldShowBuildActionChip(action, r) && !(house && action === 'Build')) {
+  if (shouldShowBuildActionChip(action, r) && !(house && action === 'Build' && actionCue?.houseOnly)) {
     bits.push(previewChipHtml(actionCue.icon, actionCue.label, resourceLabelForDisplay('action'), `nx-action nx-action-${action.toLowerCase()}`, buildActionDetail(actionCue, 'next')));
   }
   if (house) {
@@ -3199,7 +3235,7 @@ function render() {
     const house = houseCue(s);
     const actionCue = buildActionCue(s);
     const action = actionCue?.kind || '';
-    if (shouldShowBuildActionChip(action, r) && !(house && action === 'Build')) {
+    if (shouldShowBuildActionChip(action, r) && !(house && action === 'Build' && actionCue?.houseOnly)) {
       res.push(chipHtml(actionCue.icon, actionCue.label, resourceLabelForDisplay('action'), `res action action-${action.toLowerCase()}`, buildActionDetail(actionCue, 'current')));
     }
     if (house) {
