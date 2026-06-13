@@ -2633,6 +2633,7 @@ function render() {
   if (!current) {
     titleEl.innerHTML = buildTitleTextHtml('No build order selected', 'Select a build order to show steps');
     notesEl.innerHTML = '<div class="txt-cur" title="Select a build order to show steps">Select a build order</div>';
+    restartStepAnimation(notesEl);
     return;
   }
   const buildName = buildNameForDisplay(current);
@@ -2644,6 +2645,7 @@ function render() {
     if (!steps.length) {
       titleEl.innerHTML = buildTitleTextHtml(buildName);
       notesEl.innerHTML = `<div class="txt-cur" title="${esc(`${buildName} has no parsed step targets or notes`)}">No parsed targets or notes</div>`;
+      restartStepAnimation(notesEl);
       return;
     }
     const step = clampStepIndex(current.step, steps.length);
@@ -2720,6 +2722,7 @@ function render() {
       (stepIdx.length ? `<span id="step-count" title="${esc(stepCountTitle(step, stepIdx.length))}">${step + 1}/${stepIdx.length}</span>` : '');
     if (!stepIdx.length) {
       notesEl.innerHTML = `<div class="txt-cur" title="${esc(`${buildName} has no non-empty text lines`)}">No text steps found</div>`;
+      restartStepAnimation(notesEl);
       return;
     }
     progEl.style.display = '';
