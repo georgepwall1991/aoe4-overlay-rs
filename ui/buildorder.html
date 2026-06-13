@@ -2478,7 +2478,7 @@ function stepPreviewHtml(step) {
   if (villagers !== null) bits.push(previewChipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager')));
   if (population !== null) bits.push(previewChipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population')));
   const previewNotes = notesForDisplay(step);
-  bits.push(...previewNotes.slice(0, 1).map(n => `<div title="${esc(compactPreviewText(n, 220))}">${renderLine(compactPreviewText(n))}</div>`));
+  bits.push(...previewNotes.slice(0, 1).map(n => `<div title="${esc(`Next instruction: ${compactPreviewText(n, 220)}`)}">${renderLine(compactPreviewText(n))}</div>`));
   const hiddenNotes = previewNotes.length - 1;
   if (hiddenNotes > 0) {
     const hiddenTitle = previewNotes.slice(1).map(n => compactPreviewText(n, 120)).join(' | ');
