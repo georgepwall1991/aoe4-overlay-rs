@@ -2439,6 +2439,11 @@ function fallbackLineHtml(line) {
   return renderLine(cleaned || String(line || '').trim());
 }
 
+function buildNameForDisplay(build) {
+  const name = String(build?.name || '').trim();
+  return name || 'Build order';
+}
+
 function render() {
   const titleEl = document.getElementById('title');
   const resEl = document.getElementById('resources');
@@ -2448,13 +2453,14 @@ function render() {
   titleEl.innerHTML = ''; resEl.innerHTML = ''; notesEl.innerHTML = '';
   progEl.style.display = 'none'; nextEl.style.display = 'none';
   if (!current) { titleEl.innerHTML = '<span class="t">No build order selected</span>'; return; }
+  const buildName = buildNameForDisplay(current);
 
   const bo = safeParseBuildJsonContent(current.content);
 
   if (bo && Array.isArray(bo.build_order)) {
     const steps = bo.build_order.filter(hasStepSignal);
     if (!steps.length) {
-      titleEl.innerHTML = `<span class="t">${esc(current.name)}</span>`;
+      titleEl.innerHTML = `<span class="t">${esc(buildName)}</span>`;
       notesEl.innerHTML = '<div class="txt-cur">No usable build steps found</div>';
       return;
     }
@@ -2466,7 +2472,7 @@ function render() {
         const f = flagName(c);
         return `<img src="flags/${esc(f)}.webp" title="${esc(c)}" onerror="this.style.display='none'">`;
       }).join('') +
-      `<span class="t">${esc(current.name)}</span>` +
+      `<span class="t">${esc(buildName)}</span>` +
       `<span id="step-count">${step + 1}/${steps.length}</span>`;
     progEl.style.display = '';
     progEl.style.setProperty('--seg', steps.length > 40 ? '200%' : (100 / steps.length) + '%');
@@ -2520,7 +2526,7 @@ function render() {
     const stepIdx = lines.reduce((a, l, i) => (l.trim() ? [...a, i] : a), []);
     const step = clampStepIndex(current.step, stepIdx.length);
     const curLine = stepIdx[step];
-    titleEl.innerHTML = `<span class="t">${esc(current.name)}</span>` +
+    titleEl.innerHTML = `<span class="t">${esc(buildName)}</span>` +
       (stepIdx.length ? `<span id="step-count">${step + 1}/${stepIdx.length}</span>` : '');
     if (!stepIdx.length) {
       notesEl.innerHTML = '<div class="txt-cur">No usable build steps found</div>';
@@ -2542,7 +2548,7 @@ function render() {
 }
 
 listen('bo_data', e => {
-  const switched = current && e.payload && current.name !== e.payload.name;
+  const switched = current && e.payload && buildNameForDisplay(current) !== buildNameForDisplay(e.payload);
   current = e.payload;
   render();
   if (switched) {
