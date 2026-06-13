@@ -2714,20 +2714,59 @@ function technologyDetail(cue) {
   return `Research/upgrade: ${cue.names[0]}${extra}`;
 }
 
-function buildActionKind(step) {
+function structureTokensFromNote(note, type) {
+  return [...String(note || '').matchAll(new RegExp(`@${type}_[^@]+@`, 'ig'))]
+    .map(match => match[0].slice(1, -1))
+    .filter(token => iconToken(token));
+}
+
+function compactStructureLabel(token) {
+  const clean = normalizeIconToken(token).split('/').pop().replace(/\.(webp|png|jpg|jpeg)$/i, '').replace(/-\d+$/, '');
+  const label = {
+    'archery-range': 'Range',
+    'cattle-ranch': 'Ranch',
+    'hunting-cabin': 'Hunt Cabin',
+    'lumber-camp': 'Lumber',
+    'mercenary-house': 'Merc House',
+    'mining-camp': 'Mining',
+    'military-school': 'Mil School',
+    'palisade-wall': 'Wall',
+    'siege-workshop': 'Siege',
+    'town-center': 'TC',
+    'wooden-fortress': 'Fortress',
+  }[clean];
+  if (label) return label;
+  return iconNameForDisplay(token);
+}
+
+function buildActionCue(step) {
   for (const note of notesForDisplay(step)) {
-    const hasLandmark = /@landmark_[^@]+@/i.test(note);
-    const hasBuilding = /@building_[^@]+@/i.test(note);
-    if (!hasLandmark && !hasBuilding) continue;
+    const landmarkTokens = structureTokensFromNote(note, 'landmark');
+    const buildingTokens = structureTokensFromNote(note, 'building');
+    if (!landmarkTokens.length && !buildingTokens.length) continue;
     const villagerToStructure = /(?:^|[^\d])\d{0,2}\s*@[^@]*(?:villager|worker|mounted-villager)[^@]*@\s*(?:[-=]*>|->|→|to\s+)?\s*@(landmark|building)_[^@]+@/i.test(note);
     const verbNearStructure = /\b(build|construct|drop|place|make|add|constru\w*)\b[\s\S]{0,90}@(landmark|building)_[^@]+@|@(landmark|building)_[^@]+@[\s\S]{0,90}\b(build|construct|drop|place|make|add|constru\w*)\b/i.test(note);
     const repairIntoStructure = /@abilities\/repair\.webp@[\s\S]{0,60}@(landmark|building)_[^@]+@/i.test(note);
     const structureOnMap = /^@(landmark|building)_[^@]+@\s*(?:on|near|at|next to)\b/i.test(note);
     if (villagerToStructure || verbNearStructure || repairIntoStructure || structureOnMap) {
-      return hasLandmark ? 'Landmark' : 'Build';
+      if (landmarkTokens.length) {
+        const token = landmarkTokens[0];
+        return { kind: 'Landmark', label: 'Landmark', icon: iconSrc(token) || RES_ICONS.builder, name: iconNameForDisplay(token) };
+      }
+      const token = buildingTokens[0];
+      return { kind: 'Build', label: compactStructureLabel(token), icon: iconSrc(token) || RES_ICONS.builder, name: iconNameForDisplay(token) };
     }
   }
-  return '';
+  return null;
+}
+
+function buildActionKind(step) {
+  return buildActionCue(step)?.kind || '';
+}
+
+function buildActionDetail(cue, scope) {
+  const target = cue?.name && cue.name !== cue.label ? `: ${cue.name}` : '';
+  return `Inferred from the ${scope} instruction text${target}`;
 }
 
 function shouldShowBuildActionChip(kind, resources) {
@@ -2930,9 +2969,10 @@ function stepPreviewHtml(step, previousStep = null) {
     bits.push(previewChipHtml(RES_ICONS.rally, shortResourceLabel(rally), resourceLabelForDisplay('rally'), `nx-rally nx-rally-${rally}`, 'Inferred from the next instruction text'));
   }
   const house = houseCue(step);
-  const action = buildActionKind(step);
+  const actionCue = buildActionCue(step);
+  const action = actionCue?.kind || '';
   if (shouldShowBuildActionChip(action, r) && !(house && action === 'Build')) {
-    bits.push(previewChipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `nx-action nx-action-${action.toLowerCase()}`, 'Inferred from the next instruction text'));
+    bits.push(previewChipHtml(actionCue.icon, actionCue.label, resourceLabelForDisplay('action'), `nx-action nx-action-${action.toLowerCase()}`, buildActionDetail(actionCue, 'next')));
   }
   if (house) {
     bits.push(previewChipHtml(RES_ICONS.population, 'House', resourceLabelForDisplay('house'), 'nx-house', houseDetail()));
@@ -3157,9 +3197,10 @@ function render() {
       res.push(chipHtml(RES_ICONS.rally, shortResourceLabel(rally), resourceLabelForDisplay('rally'), `res rally rally-${rally}`, 'Inferred from the current instruction text'));
     }
     const house = houseCue(s);
-    const action = buildActionKind(s);
+    const actionCue = buildActionCue(s);
+    const action = actionCue?.kind || '';
     if (shouldShowBuildActionChip(action, r) && !(house && action === 'Build')) {
-      res.push(chipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `res action action-${action.toLowerCase()}`, 'Inferred from the current instruction text'));
+      res.push(chipHtml(actionCue.icon, actionCue.label, resourceLabelForDisplay('action'), `res action action-${action.toLowerCase()}`, buildActionDetail(actionCue, 'current')));
     }
     if (house) {
       res.push(chipHtml(RES_ICONS.population, 'House', resourceLabelForDisplay('house'), 'res house', houseDetail()));

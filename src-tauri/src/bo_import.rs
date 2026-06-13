@@ -5601,12 +5601,22 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
             .unwrap();
         let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
         assert!(
-            buildorder.contains("function buildActionKind")
-                && buildorder.contains("@landmark_[^@]+@")
-                && buildorder.contains("@building_[^@]+@")
+            buildorder.contains("function buildActionCue")
+                && buildorder.contains("structureTokensFromNote(note, 'landmark')")
+                && buildorder.contains("structureTokensFromNote(note, 'building')")
                 && buildorder.contains("villagerToStructure")
-                && buildorder.contains("structureOnMap"),
+                && buildorder.contains("structureOnMap")
+                && buildorder.contains("function buildActionKind"),
             "overlay should infer structure-action intent from clear build-order note patterns"
+        );
+        assert!(
+            buildorder.contains("function compactStructureLabel")
+                && buildorder.contains("'archery-range': 'Range'")
+                && buildorder.contains("'town-center': 'TC'")
+                && buildorder.contains("'military-school': 'Mil School'")
+                && buildorder.contains("iconSrc(token) || RES_ICONS.builder")
+                && buildorder.contains("buildActionDetail(actionCue"),
+            "build action chips should use specific structure icons and compact labels when safely inferred"
         );
         assert!(
             buildorder.contains("function shouldShowBuildActionChip")
@@ -5616,7 +5626,9 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
         );
         assert!(
             buildorder.contains("res action action-${action.toLowerCase()}")
-                && buildorder.contains("nx-action nx-action-${action.toLowerCase()}"),
+                && buildorder.contains("nx-action nx-action-${action.toLowerCase()}")
+                && buildorder.contains("chipHtml(actionCue.icon, actionCue.label")
+                && buildorder.contains("previewChipHtml(actionCue.icon, actionCue.label"),
             "current and next-step rows should render the inferred build action chip"
         );
         assert!(
