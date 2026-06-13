@@ -2472,7 +2472,13 @@ function stepPreviewHtml(step) {
   const population = countForDisplay(step.population_count);
   if (villagers !== null) bits.push(previewChipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager')));
   if (population !== null) bits.push(previewChipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population')));
-  bits.push(...notesForDisplay(step, 1).map(n => `<div title="${esc(compactPreviewText(n, 220))}">${renderLine(compactPreviewText(n))}</div>`));
+  const previewNotes = notesForDisplay(step);
+  bits.push(...previewNotes.slice(0, 1).map(n => `<div title="${esc(compactPreviewText(n, 220))}">${renderLine(compactPreviewText(n))}</div>`));
+  const hiddenNotes = previewNotes.length - 1;
+  if (hiddenNotes > 0) {
+    const hiddenTitle = previewNotes.slice(1).map(n => compactPreviewText(n, 120)).join(' | ');
+    bits.push(`<div title="${esc(hiddenTitle)}">+${hiddenNotes}</div>`);
+  }
   return bits.join('<span> · </span>');
 }
 
