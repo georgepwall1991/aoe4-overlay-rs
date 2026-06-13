@@ -2522,7 +2522,10 @@ function stepNotesHtml(step) {
   const visible = noteLines.slice(0, 4);
   const more = noteLines.length - visible.length;
   const hiddenTitle = more > 0 ? noteLines.slice(4).map(n => compactPreviewText(n, 120)).join(' | ') : '';
-  return visible.map((n, i) => `<div class="${i === 0 ? 'txt-cur' : ''}" title="${esc(compactPreviewText(n, 220))}">${renderLine(compactPreviewText(n, 140))}</div>`).join('') +
+  return visible.map((n, i) => {
+    const label = i === 0 ? 'Current instruction' : 'Step detail';
+    return `<div class="${i === 0 ? 'txt-cur' : ''}" title="${esc(`${label}: ${compactPreviewText(n, 220)}`)}">${renderLine(compactPreviewText(n, 140))}</div>`;
+  }).join('') +
     (more > 0 ? `<div class="txt-more" title="${esc(hiddenTitle)}">+${more} more detail${more === 1 ? '' : 's'}</div>` : '');
 }
 
