@@ -2537,11 +2537,11 @@ function progressTitle(step, total) {
   if (!(total > 0)) return 'No build steps';
   const raw = total > 0 ? ((step + 1) / total) * 100 : 0;
   const pct = Number.isInteger(raw) ? String(raw) : raw.toFixed(1);
-  return `Progress: step ${step + 1} of ${total} (${pct}%)`;
+  return `Step ${step + 1} of ${total} - ${pct}% complete`;
 }
 
 function stepCountTitle(step, total) {
-  return `Current position - ${progressTitle(step, total)}`;
+  return `Current step - ${progressTitle(step, total)}`;
 }
 
 function nextTitle(step, total) {
