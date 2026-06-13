@@ -96,6 +96,8 @@
            box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 1px 2px rgba(0,0,0,.6);
            filter: drop-shadow(0 1px 1px rgba(0,0,0,.5)); }
   #notes div.txt-dim { opacity: .45; background: none; box-shadow: none; }
+  #notes div.txt-prev { opacity: .32; }
+  #notes div.txt-next { opacity: .58; }
   #notes div.txt-cur { background: linear-gradient(to right, rgba(231,192,89,.18), rgba(231,192,89,0) 85%);
            box-shadow: inset 2px 0 0 rgba(231,192,89,.85); font-weight: 600; }
   #notes div.txt-detail { opacity: .88; }
@@ -2587,8 +2589,10 @@ function plainTextWindowHtml(lines, stepIdx, step) {
   if (firstStep > 0) parts.push(`<div class="txt-gap" title="Instructions 1-${firstStep} hidden before ${esc(context)}">+${firstStep} earlier</div>`);
   for (let i = firstLine; i <= lastLine; i++) {
     if (!String(lines[i] || '').trim()) continue;
-    const label = i === currentLine ? 'Current instruction' : 'Nearby instruction';
-    parts.push(`<div class="${i === currentLine ? 'txt-cur' : 'txt-dim'}" title="${esc(`${label}: ${fallbackLineTitle(lines[i])}`)}">${fallbackLineHtml(lines[i])}</div>`);
+    const isCurrent = i === currentLine;
+    const label = isCurrent ? 'Current instruction' : i < currentLine ? 'Previous instruction' : 'Upcoming instruction';
+    const rowClass = isCurrent ? 'txt-cur' : `txt-dim ${i < currentLine ? 'txt-prev' : 'txt-next'}`;
+    parts.push(`<div class="${rowClass}" title="${esc(`${label}: ${fallbackLineTitle(lines[i])}`)}">${fallbackLineHtml(lines[i])}</div>`);
   }
   const hiddenLater = stepIdx.length - lastStep - 1;
   if (hiddenLater > 0) parts.push(`<div class="txt-gap" title="Instructions ${lastStep + 2}-${stepIdx.length} hidden after ${esc(context)}">+${hiddenLater} later</div>`);
