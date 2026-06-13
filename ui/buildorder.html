@@ -2448,7 +2448,7 @@ function chipHtml(icon, value, label, className = 'res', detail = '') {
 
 function deltaTitle(value, previous) {
   if (!(previous >= 0) || value === previous) return '';
-  return value > previous ? 'Increased from previous step' : 'Decreased from previous step';
+  return value > previous ? `Increased from ${previous}` : `Decreased from ${previous}`;
 }
 
 function previewChipHtml(icon, value, label) {
