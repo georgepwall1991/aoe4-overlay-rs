@@ -2507,8 +2507,8 @@ function buildNameForDisplay(build) {
   return name || 'Build order';
 }
 
-function buildTitleTextHtml(name) {
-  return `<span class="t" title="${esc(name)}">${esc(name)}</span>`;
+function buildTitleTextHtml(name, title = name) {
+  return `<span class="t" title="${esc(title)}">${esc(name)}</span>`;
 }
 
 function progressTitle(step, total) {
@@ -2596,7 +2596,7 @@ function render() {
   notesEl.title = '';
   nextEl.classList.remove('done');
   nextEl.title = '';
-  if (!current) { titleEl.innerHTML = buildTitleTextHtml('No build order selected'); return; }
+  if (!current) { titleEl.innerHTML = buildTitleTextHtml('No build order selected', 'Select a build order to show steps'); return; }
   const buildName = buildNameForDisplay(current);
 
   const bo = safeParseBuildJsonContent(current.content);
