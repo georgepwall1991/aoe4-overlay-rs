@@ -2513,6 +2513,19 @@ function deltaTitle(value, previous) {
   return delta > 0 ? `Increased by ${delta} from ${previous}` : `Decreased by ${Math.abs(delta)} from ${previous}`;
 }
 
+function previewResourceKeysForDisplay(resources, previousResources = {}) {
+  const r = resources || {};
+  const pr = previousResources || {};
+  const eco = ['food', 'wood', 'gold', 'stone'];
+  const keys = eco.filter(k => {
+    const value = r[k] ?? -1;
+    return value >= 0 && (value > 0 || numericDelta(value, pr[k]) !== 0);
+  });
+  const builder = r.builder ?? -1;
+  if (builder > 0 || (builder >= 0 && numericDelta(builder, pr.builder) !== 0)) keys.push('builder');
+  return keys;
+}
+
 function previewDeltaTitle(value, previous) {
   const delta = numericDelta(value, previous);
   if (!delta) return '';
@@ -2616,7 +2629,7 @@ function stepPreviewHtml(step, previousStep = null) {
   if (age !== null) bits.push(nextAgeChipHtml(age, previousAge));
   const r = step.resources || {};
   const pr = previousStep?.resources || {};
-  for (const k of resourceKeysForDisplay(r)) {
+  for (const k of previewResourceKeysForDisplay(r, pr)) {
     if ((r[k] ?? -1) >= 0) bits.push(previewChipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `nx-${k}${deltaClass(r[k], pr[k])}`, previewDeltaTitle(r[k], pr[k]), deltaText(r[k], pr[k])));
   }
   const villagers = countForDisplay(step.villager_count);

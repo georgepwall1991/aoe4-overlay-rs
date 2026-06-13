@@ -5506,6 +5506,29 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_next_preview_hides_unchanged_zero_resources() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("function previewResourceKeysForDisplay")
+                && buildorder.contains("value > 0 || numericDelta(value, pr[k]) !== 0"),
+            "next-step resource previews should keep positive or changed resources"
+        );
+        assert!(
+            buildorder.contains(
+                "builder > 0 || (builder >= 0 && numericDelta(builder, pr.builder) !== 0)"
+            ),
+            "next-step builder previews should keep positive builders or changed builder zeroes"
+        );
+        assert!(
+            buildorder.contains("for (const k of previewResourceKeysForDisplay(r, pr))"),
+            "next-step previews should use the compact preview resource filter"
+        );
+    }
+
+    #[test]
     fn txt_without_steps_errors() {
         assert!(convert_aoeivbuilds_txt("Title only\n\nno bullets here", None, "x").is_err());
     }
