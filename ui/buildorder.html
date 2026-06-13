@@ -130,6 +130,10 @@
           border-radius: .35em; padding: 1px 5px 1px 3px;
           background: rgba(255,255,255,.06);
           box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
+  #next .nx-chip.up::after, #next .nx-chip.down::after { content: attr(data-delta); font-size: .76em; font-weight: 800; margin-left: 2px;
+          font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0,0,0,.8); }
+  #next .nx-chip.up::after { color: #b8ecad; }
+  #next .nx-chip.down::after { color: #f0aaa0; }
   #next .nx-time { box-shadow: inset 0 0 0 1px rgba(122,182,255,.28); }
   #next .nx-age { box-shadow: inset 0 0 0 1px rgba(231,192,89,.32); }
   #next .nx-food { box-shadow: inset 0 0 0 1px rgba(229,106,84,.26); }
@@ -2505,10 +2509,17 @@ function deltaTitle(value, previous) {
   return delta > 0 ? `Increased by ${delta} from ${previous}` : `Decreased by ${Math.abs(delta)} from ${previous}`;
 }
 
-function previewChipHtml(icon, value, label, className = '') {
+function previewDeltaTitle(value, previous) {
+  const delta = numericDelta(value, previous);
+  if (!delta) return '';
+  return delta > 0 ? `Will increase by ${delta} from current ${previous}` : `Will decrease by ${Math.abs(delta)} from current ${previous}`;
+}
+
+function previewChipHtml(icon, value, label, className = '', detail = '', delta = '') {
   const text = value === '' || value === null || value === undefined ? '' : String(value);
-  const title = text ? `Next ${label}: ${text}` : `Next ${label}`;
-  return `<span class="${esc(['nx-chip', className].filter(Boolean).join(' '))}" title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
+  const title = [text ? `Next ${label}: ${text}` : `Next ${label}`, detail].filter(Boolean).join(' - ');
+  const deltaAttr = delta ? ` data-delta="${esc(delta)}"` : '';
+  return `<span class="${esc(['nx-chip', className].filter(Boolean).join(' '))}"${deltaAttr} title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
 }
 
 function previewTextUnits(text) {
@@ -2556,7 +2567,7 @@ function compactPreviewText(text, max = 90) {
   return slicePreviewText(oneLine, max - 1).trimEnd() + '…';
 }
 
-function stepPreviewHtml(step) {
+function stepPreviewHtml(step, previousStep = null) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
   const time = timeForDisplay(step.time);
@@ -2564,13 +2575,16 @@ function stepPreviewHtml(step) {
   const age = ageForDisplay(step.age);
   if (age !== null) bits.push(previewChipHtml(AGE_ICONS[age], ageLabelForDisplay(age), 'Age', 'nx-age'));
   const r = step.resources || {};
+  const pr = previousStep?.resources || {};
   for (const k of resourceKeysForDisplay(r)) {
-    if ((r[k] ?? -1) >= 0) bits.push(previewChipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `nx-${k}`));
+    if ((r[k] ?? -1) >= 0) bits.push(previewChipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `nx-${k}${deltaClass(r[k], pr[k])}`, previewDeltaTitle(r[k], pr[k]), deltaText(r[k], pr[k])));
   }
   const villagers = countForDisplay(step.villager_count);
   const population = countForDisplay(step.population_count);
-  if (villagers !== null) bits.push(previewChipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), 'nx-villager'));
-  if (population !== null) bits.push(previewChipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), 'nx-population'));
+  const previousVillagers = countForDisplay(previousStep?.villager_count);
+  const previousPopulation = countForDisplay(previousStep?.population_count);
+  if (villagers !== null) bits.push(previewChipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `nx-villager${deltaClass(villagers, previousVillagers)}`, previewDeltaTitle(villagers, previousVillagers), deltaText(villagers, previousVillagers)));
+  if (population !== null) bits.push(previewChipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `nx-population${deltaClass(population, previousPopulation)}`, previewDeltaTitle(population, previousPopulation), deltaText(population, previousPopulation)));
   const previewNotes = notesForDisplay(step);
   bits.push(...previewNotes.slice(0, 1).map(n => `<div class="nx-note" title="${esc(`Next instruction: ${compactPreviewText(n, 220)}`)}">${renderLine(compactPreviewText(n))}</div>`));
   const hiddenNotes = previewNotes.length - 1;
@@ -2779,7 +2793,7 @@ function render() {
     notesEl.title = `Current step - ${progress}`;
     notesEl.innerHTML = stepNotesHtml(s);
     const nx = steps[step + 1];
-    const nxPreview = stepPreviewHtml(nx);
+    const nxPreview = stepPreviewHtml(nx, s);
     if ((settings?.bo_show_next ?? true) && nxPreview) {
       nextEl.style.display = '';
       nextEl.classList.remove('done');

@@ -5422,6 +5422,38 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_next_preview_chips_show_signed_amounts() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("#next .nx-chip.up::after")
+                && buildorder.contains("#next .nx-chip.down::after")
+                && buildorder.contains("content: attr(data-delta)"),
+            "next-step chips should render signed delta amounts"
+        );
+        assert!(
+            buildorder.contains("function previewDeltaTitle")
+                && buildorder.contains("Will increase by")
+                && buildorder.contains("from current"),
+            "next-step delta titles should describe changes from the current step"
+        );
+        assert!(
+            buildorder.contains("function stepPreviewHtml(step, previousStep = null)")
+                && buildorder.contains("const pr = previousStep?.resources || {}")
+                && buildorder.contains("stepPreviewHtml(nx, s)"),
+            "next-step previews should compare the upcoming step to the current step"
+        );
+        assert!(
+            buildorder.contains("deltaText(r[k], pr[k])")
+                && buildorder.contains("deltaText(villagers, previousVillagers)")
+                && buildorder.contains("deltaText(population, previousPopulation)"),
+            "next-step resource, villager, and population chips should receive signed deltas"
+        );
+    }
+
+    #[test]
     fn txt_without_steps_errors() {
         assert!(convert_aoeivbuilds_txt("Title only\n\nno bullets here", None, "x").is_err());
     }
