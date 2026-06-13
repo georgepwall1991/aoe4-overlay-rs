@@ -2376,7 +2376,7 @@ function safeParseBuildJsonContent(content) {
 function hasStepSignal(step) {
   if (!step || typeof step !== 'object') return false;
   if ((step.notes || []).some(n => String(n || '').trim())) return true;
-  if (step.time || (step.age >= 1 && step.age <= 4) || countForDisplay(step.villager_count) !== null || countForDisplay(step.population_count) !== null) return true;
+  if (step.time || ageForDisplay(step.age) !== null || countForDisplay(step.villager_count) !== null || countForDisplay(step.population_count) !== null) return true;
   const r = step.resources || {};
   return ['food', 'wood', 'gold', 'stone'].some(k => (r[k] ?? -1) > 0) || (r.builder ?? -1) >= 0;
 }
@@ -2399,11 +2399,17 @@ function countForDisplay(value) {
   return m ? Number(m[0]) : null;
 }
 
+function ageForDisplay(value) {
+  const age = parseAgeish(value);
+  return age >= 1 && age <= 4 ? age : null;
+}
+
 function stepPreviewHtml(step) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
   if (step.time) bits.push(`<span><img src="${RES_ICONS.time}">${esc(step.time)}</span>`);
-  if (step.age >= 1 && step.age <= 4) bits.push(`<span><img src="${AGE_ICONS[step.age]}"></span>`);
+  const age = ageForDisplay(step.age);
+  if (age !== null) bits.push(`<span><img src="${AGE_ICONS[age]}"></span>`);
   const r = step.resources || {};
   for (const k of resourceKeysForDisplay(r)) {
     if ((r[k] ?? -1) >= 0) bits.push(`<span><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
@@ -2479,9 +2485,11 @@ function render() {
       res.push(`<span class="res${delta(villagers, prevVillagers)}"><img src="${RES_ICONS.villager}">${esc(villagers)}</span>`);
     if (population !== null)
       res.push(`<span class="res${delta(population, prevPopulation)}"><img src="${RES_ICONS.population}">${esc(population)}</span>`);
-    if (s.age >= 1 && s.age <= 4) {
-      const ageUp = step > 0 && prev.age >= 1 && s.age > prev.age;
-      res.push(`<span class="res${ageUp ? ' age-up' : ''}"><img src="${AGE_ICONS[s.age]}">${ageUp ? 'Age up!' : ''}</span>`);
+    const age = ageForDisplay(s.age);
+    const prevAge = ageForDisplay(prev.age);
+    if (age !== null) {
+      const ageUp = step > 0 && prevAge !== null && age > prevAge;
+      res.push(`<span class="res${ageUp ? ' age-up' : ''}"><img src="${AGE_ICONS[age]}">${ageUp ? 'Age up!' : ''}</span>`);
     }
     if (s.time)
       res.push(`<span class="res"><img src="${RES_ICONS.time}">${esc(s.time)}</span>`);
