@@ -5627,6 +5627,40 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_technology_chips_surface_research_steps() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("technology: 'bo_img/technology_economy/wheelbarrow.webp'")
+                && buildorder.contains("technology: 'Technology'")
+                && buildorder.contains(".res.tech")
+                && buildorder.contains("#next .nx-tech"),
+            "technology chips should have a generic fallback icon, label, and distinct styling"
+        );
+        assert!(
+            buildorder.contains("function technologyTokensFromNote")
+                && buildorder.contains("@technology_[^@]+@")
+                && buildorder.contains("iconToken(token)"),
+            "technology chips should be anchored to explicit technology icon tokens"
+        );
+        assert!(
+            buildorder.contains("function hasTechnologyCueText")
+                && buildorder.contains("research|upgrade|upgrades|queue|get|grab|take|remember|start|asap")
+                && buildorder.contains("noteIsTechnologyOnly(note)"),
+            "technology chips should only surface clear research/upgrade wording or tech-only notes"
+        );
+        assert!(
+            buildorder.contains("function technologyCue")
+                && buildorder.contains("technologyDetail(tech)")
+                && buildorder.contains("nx-tech")
+                && buildorder.contains("res tech"),
+            "current and next-step rows should render technology cue chips"
+        );
+    }
+
+    #[test]
     fn ui_rally_chips_surface_rally_targets() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()

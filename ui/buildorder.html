@@ -78,6 +78,9 @@
                      inset 0 1px 0 rgba(255,255,255,.1); }
   .res.villager, .res.population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.32), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.38), inset 0 1px 0 rgba(255,255,255,.08); }
+  .res.tech { color: #dff2d8; background: rgba(133,205,120,.08);
+         box-shadow: inset 0 0 0 1px rgba(133,205,120,.36), 0 0 5px rgba(133,205,120,.12),
+                     inset 0 1px 0 rgba(255,255,255,.1); }
   .res.shift { color: #d8eaff; background: rgba(122,182,255,.09);
          box-shadow: inset 0 0 0 1px rgba(122,182,255,.42), 0 0 5px rgba(122,182,255,.14),
                      inset 0 1px 0 rgba(255,255,255,.1); }
@@ -160,6 +163,8 @@
   #next .nx-gold { box-shadow: inset 0 0 0 1px rgba(231,192,89,.3); }
   #next .nx-stone { box-shadow: inset 0 0 0 1px rgba(170,178,189,.26); }
   #next .nx-builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.26); }
+  #next .nx-tech { color: #dff2d8; background: rgba(133,205,120,.08);
+          box-shadow: inset 0 0 0 1px rgba(133,205,120,.28), 0 0 5px rgba(133,205,120,.1); }
   #next .nx-shift { color: #d8eaff; background: rgba(122,182,255,.09);
           box-shadow: inset 0 0 0 1px rgba(122,182,255,.3), 0 0 5px rgba(122,182,255,.12); }
   #next .nx-rally { color: #dce9f8; background: rgba(122,182,255,.08);
@@ -207,6 +212,7 @@ const RES_ICONS = {
   gold: 'bo_img/resource/resource_gold.webp',
   stone: 'bo_img/resource/resource_stone.webp',
   builder: 'bo_img/abilities/repair.webp',
+  technology: 'bo_img/technology_economy/wheelbarrow.webp',
   shift: 'bo_img/unit_worker/villager.webp',
   rally: 'bo_img/resource/rally.webp',
   villager: 'bo_img/unit_worker/villager.webp',
@@ -2512,6 +2518,7 @@ function resourceLabelForDisplay(key) {
     population: 'Population',
     time: 'Step time',
     action: 'Build action',
+    technology: 'Technology',
     ageTarget: 'Age target',
     shift: 'Resource shift',
     rally: 'Rally point',
@@ -2579,6 +2586,55 @@ function resourceShiftDetail(changes) {
     .map(({ key, delta }) => `${shortResourceLabel(key)} ${delta > 0 ? '+' : ''}${delta}`)
     .join(', ');
   return `Resource shift: ${text}`;
+}
+
+function iconNameForDisplay(token) {
+  const clean = normalizeIconToken(token).split('/').pop().replace(/\.(webp|png|jpg|jpeg)$/i, '').replace(/-\d+$/, '');
+  const words = clean.replace(/[_-]+/g, ' ').trim();
+  return words ? words.replace(/\b[a-z]/g, c => c.toUpperCase()) : 'Technology';
+}
+
+function technologyTokensFromNote(note) {
+  return [...String(note || '').matchAll(/@technology_[^@]+@/ig)]
+    .map(match => match[0].slice(1, -1))
+    .filter(token => iconToken(token));
+}
+
+function noteIsTechnologyOnly(note) {
+  const withoutTech = String(note || '')
+    .replace(/@technology_[^@]+@/ig, ' ')
+    .replace(/[\/&,;+|().:\-\s]/g, '');
+  return withoutTech.length === 0;
+}
+
+function hasTechnologyCueText(note) {
+  return /\b(research|upgrade|upgrades|queue|get|grab|take|remember|start|asap)\b/i.test(note) || noteIsTechnologyOnly(note);
+}
+
+function technologyCue(step) {
+  const seen = new Set();
+  const tokens = [];
+  for (const note of notesForDisplay(step)) {
+    const noteTokens = technologyTokensFromNote(note);
+    if (!noteTokens.length || !hasTechnologyCueText(note)) continue;
+    for (const token of noteTokens) {
+      const key = normalizeIconToken(token).toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      tokens.push(token);
+    }
+  }
+  if (!tokens.length) return null;
+  return {
+    icon: iconSrc(tokens[0]) || RES_ICONS.technology,
+    names: tokens.map(iconNameForDisplay),
+  };
+}
+
+function technologyDetail(cue) {
+  if (!cue?.names?.length) return '';
+  const extra = cue.names.length > 1 ? ` +${cue.names.length - 1} more` : '';
+  return `Research/upgrade: ${cue.names[0]}${extra}`;
 }
 
 function buildActionKind(step) {
@@ -2800,6 +2856,10 @@ function stepPreviewHtml(step, previousStep = null) {
   if (shouldShowBuildActionChip(action, r)) {
     bits.push(previewChipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `nx-action nx-action-${action.toLowerCase()}`, 'Inferred from the next instruction text'));
   }
+  const tech = technologyCue(step);
+  if (tech) {
+    bits.push(previewChipHtml(tech.icon, 'Tech', resourceLabelForDisplay('technology'), 'nx-tech', technologyDetail(tech)));
+  }
   for (const k of previewResourceKeysForDisplay(r, pr)) {
     if ((r[k] ?? -1) >= 0) bits.push(previewChipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `nx-${k}${deltaClass(r[k], pr[k])}`, previewDeltaTitle(r[k], pr[k]), deltaText(r[k], pr[k])));
   }
@@ -3014,6 +3074,10 @@ function render() {
     const action = buildActionKind(s);
     if (shouldShowBuildActionChip(action, r)) {
       res.push(chipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `res action action-${action.toLowerCase()}`, 'Inferred from the current instruction text'));
+    }
+    const tech = technologyCue(s);
+    if (tech) {
+      res.push(chipHtml(tech.icon, 'Tech', resourceLabelForDisplay('technology'), 'res tech', technologyDetail(tech)));
     }
     for (const k of resourceKeysForDisplay(r)) {
       if ((r[k] ?? -1) >= 0)
