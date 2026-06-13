@@ -5661,6 +5661,42 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_dropoff_chips_surface_force_drop_steps() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("dropOff: 'Resource drop-off'")
+                && buildorder.contains(".res.dropoff")
+                && buildorder.contains("#next .nx-dropoff"),
+            "drop-off chips should have a label and distinct current/next styling"
+        );
+        assert!(
+            buildorder.contains("function dropOffCueIndex")
+                && buildorder.contains("(?:force\\s+)?drop\\s*off")
+                && buildorder.contains("\\bdropoff\\b"),
+            "drop-off inference should be anchored to explicit drop-off wording"
+        );
+        assert!(
+            buildorder.contains("const RESOURCE_MATCHERS")
+                && buildorder.contains("function resourceKeyFromSegment")
+                && buildorder.contains("function dropOffResourceKey")
+                && buildorder.contains("const rallyAfter = rallyCueIndex(after)")
+                && buildorder.contains("resourceKeyFromSegment(beforeRally)")
+                && buildorder.contains("preferLast"),
+            "drop-off chips should identify an explicit nearby resource without mistaking a later rally target for the dropped resource"
+        );
+        assert!(
+            buildorder.contains("function dropOffCue")
+                && buildorder.contains("dropOffDetail(drop)")
+                && buildorder.contains("nx-dropoff")
+                && buildorder.contains("res dropoff"),
+            "current and next-step rows should render drop-off cue chips"
+        );
+    }
+
+    #[test]
     fn ui_rally_chips_surface_rally_targets() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()

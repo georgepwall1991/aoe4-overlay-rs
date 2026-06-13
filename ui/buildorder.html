@@ -78,6 +78,9 @@
                      inset 0 1px 0 rgba(255,255,255,.1); }
   .res.villager, .res.population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.32), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.38), inset 0 1px 0 rgba(255,255,255,.08); }
+  .res.dropoff { color: #ffe0a8; background: rgba(208,160,96,.1);
+         box-shadow: inset 0 0 0 1px rgba(208,160,96,.46), 0 0 5px rgba(208,160,96,.14),
+                     inset 0 1px 0 rgba(255,255,255,.1); }
   .res.tech { color: #dff2d8; background: rgba(133,205,120,.08);
          box-shadow: inset 0 0 0 1px rgba(133,205,120,.36), 0 0 5px rgba(133,205,120,.12),
                      inset 0 1px 0 rgba(255,255,255,.1); }
@@ -163,6 +166,8 @@
   #next .nx-gold { box-shadow: inset 0 0 0 1px rgba(231,192,89,.3); }
   #next .nx-stone { box-shadow: inset 0 0 0 1px rgba(170,178,189,.26); }
   #next .nx-builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.26); }
+  #next .nx-dropoff { color: #ffe0a8; background: rgba(208,160,96,.08);
+          box-shadow: inset 0 0 0 1px rgba(208,160,96,.32), 0 0 5px rgba(208,160,96,.1); }
   #next .nx-tech { color: #dff2d8; background: rgba(133,205,120,.08);
           box-shadow: inset 0 0 0 1px rgba(133,205,120,.28), 0 0 5px rgba(133,205,120,.1); }
   #next .nx-shift { color: #d8eaff; background: rgba(122,182,255,.09);
@@ -2518,6 +2523,7 @@ function resourceLabelForDisplay(key) {
     population: 'Population',
     time: 'Step time',
     action: 'Build action',
+    dropOff: 'Resource drop-off',
     technology: 'Technology',
     ageTarget: 'Age target',
     shift: 'Resource shift',
@@ -2586,6 +2592,53 @@ function resourceShiftDetail(changes) {
     .map(({ key, delta }) => `${shortResourceLabel(key)} ${delta > 0 ? '+' : ''}${delta}`)
     .join(', ');
   return `Resource shift: ${text}`;
+}
+
+const RESOURCE_MATCHERS = [
+  ['food', /@resource\/(?:resource_food|sheep|deer|berrybush|farm)(?:\.(?:webp|png))?@|\b(?:food|sheep|deer|berries|berry|farm|farms)\b/ig],
+  ['wood', /@resource\/(?:resource_wood|gaiatreeprototypetree)(?:\.(?:webp|png))?@|\b(?:wood|tree|trees|forest|lumber)\b/ig],
+  ['gold', /@resource\/resource_gold(?:\.(?:webp|png))?@|\bgold\b/ig],
+  ['stone', /@resource\/resource_stone(?:\.(?:webp|png))?@|\bstone\b/ig],
+];
+
+function resourceKeyFromSegment(text, preferLast = false) {
+  const value = String(text || '');
+  let best = null;
+  for (const [key, re] of RESOURCE_MATCHERS) {
+    re.lastIndex = 0;
+    for (const match of value.matchAll(re)) {
+      const pos = match.index ?? 0;
+      const score = preferLast ? -pos : pos;
+      if (!best || score < best.score) best = { key, score };
+    }
+  }
+  return best?.key || '';
+}
+
+function dropOffResourceKey(note, cue) {
+  const after = String(note || '').slice(cue, cue + 120);
+  const rallyAfter = rallyCueIndex(after);
+  const beforeRally = rallyAfter >= 0 ? after.slice(0, rallyAfter) : after;
+  return resourceKeyFromSegment(beforeRally) ||
+    resourceKeyFromSegment(String(note || '').slice(Math.max(0, cue - 120), cue), true);
+}
+
+function dropOffCueIndex(note) {
+  return String(note || '').search(/\b(?:force\s+)?drop\s*off\b|\bdropoff\b/i);
+}
+
+function dropOffCue(step) {
+  for (const note of notesForDisplay(step)) {
+    const cue = dropOffCueIndex(note);
+    if (cue < 0) continue;
+    return { key: dropOffResourceKey(note, cue) };
+  }
+  return null;
+}
+
+function dropOffDetail(cue) {
+  const resource = cue?.key ? `${shortResourceLabel(cue.key)} resources` : 'held resources';
+  return `Force villagers to drop off ${resource} before continuing`;
 }
 
 function iconNameForDisplay(token) {
@@ -2856,6 +2909,10 @@ function stepPreviewHtml(step, previousStep = null) {
   if (shouldShowBuildActionChip(action, r)) {
     bits.push(previewChipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `nx-action nx-action-${action.toLowerCase()}`, 'Inferred from the next instruction text'));
   }
+  const drop = dropOffCue(step);
+  if (drop) {
+    bits.push(previewChipHtml(RES_ICONS[drop.key] || RES_ICONS.villager, 'Drop', resourceLabelForDisplay('dropOff'), 'nx-dropoff', dropOffDetail(drop)));
+  }
   const tech = technologyCue(step);
   if (tech) {
     bits.push(previewChipHtml(tech.icon, 'Tech', resourceLabelForDisplay('technology'), 'nx-tech', technologyDetail(tech)));
@@ -3074,6 +3131,10 @@ function render() {
     const action = buildActionKind(s);
     if (shouldShowBuildActionChip(action, r)) {
       res.push(chipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `res action action-${action.toLowerCase()}`, 'Inferred from the current instruction text'));
+    }
+    const drop = dropOffCue(s);
+    if (drop) {
+      res.push(chipHtml(RES_ICONS[drop.key] || RES_ICONS.villager, 'Drop', resourceLabelForDisplay('dropOff'), 'res dropoff', dropOffDetail(drop)));
     }
     const tech = technologyCue(s);
     if (tech) {
