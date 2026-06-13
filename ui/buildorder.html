@@ -2512,7 +2512,8 @@ function buildTitleTextHtml(name) {
 }
 
 function progressTitle(step, total) {
-  const pct = total > 0 ? Math.round(((step + 1) / total) * 100) : 0;
+  const raw = total > 0 ? ((step + 1) / total) * 100 : 0;
+  const pct = Number.isInteger(raw) ? String(raw) : raw.toFixed(1);
   return `Step ${step + 1} of ${total} (${pct}%)`;
 }
 
