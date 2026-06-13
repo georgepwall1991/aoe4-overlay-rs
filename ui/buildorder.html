@@ -2572,14 +2572,14 @@ function plainTextWindowHtml(lines, stepIdx, step) {
   const lastLine = stepIdx[lastStep];
   const parts = [];
   const context = progressTitle(step, stepIdx.length);
-  if (firstStep > 0) parts.push(`<div class="txt-gap" title="Steps 1-${firstStep} hidden before ${esc(context)}">+${firstStep} earlier</div>`);
+  if (firstStep > 0) parts.push(`<div class="txt-gap" title="Instructions 1-${firstStep} hidden before ${esc(context)}">+${firstStep} earlier</div>`);
   for (let i = firstLine; i <= lastLine; i++) {
     if (!String(lines[i] || '').trim()) continue;
     const label = i === currentLine ? 'Current instruction' : 'Nearby instruction';
     parts.push(`<div class="${i === currentLine ? 'txt-cur' : 'txt-dim'}" title="${esc(`${label}: ${fallbackLineTitle(lines[i])}`)}">${fallbackLineHtml(lines[i])}</div>`);
   }
   const hiddenLater = stepIdx.length - lastStep - 1;
-  if (hiddenLater > 0) parts.push(`<div class="txt-gap" title="Steps ${lastStep + 2}-${stepIdx.length} hidden after ${esc(context)}">+${hiddenLater} later</div>`);
+  if (hiddenLater > 0) parts.push(`<div class="txt-gap" title="Instructions ${lastStep + 2}-${stepIdx.length} hidden after ${esc(context)}">+${hiddenLater} later</div>`);
   return parts.join('');
 }
 
