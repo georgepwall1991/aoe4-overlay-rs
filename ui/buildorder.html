@@ -71,6 +71,7 @@
   .res.stone { box-shadow: inset 0 0 0 1px rgba(170,178,189,.4), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.time  { box-shadow: inset 0 0 0 1px rgba(122,182,255,.42), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.age   { box-shadow: inset 0 0 0 1px rgba(231,192,89,.5),  inset 0 1px 0 rgba(255,255,255,.1); }
+  .res.villager, .res.population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.32), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.up::after, .res.down::after { font-size: .7em; font-weight: 800; margin-left: 2px;
          text-shadow: 0 1px 2px rgba(0,0,0,.8); }
   .res.up::after   { content: '▲'; color: #9fe39b; }
@@ -2674,9 +2675,9 @@ function render() {
     const population = countForDisplay(s.population_count);
     const prevPopulation = countForDisplay(prev.population_count);
     if (villagers !== null)
-      res.push(chipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `res${delta(villagers, prevVillagers)}`, deltaTitle(villagers, prevVillagers)));
+      res.push(chipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `res villager${delta(villagers, prevVillagers)}`, deltaTitle(villagers, prevVillagers)));
     if (population !== null)
-      res.push(chipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `res${delta(population, prevPopulation)}`, deltaTitle(population, prevPopulation)));
+      res.push(chipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `res population${delta(population, prevPopulation)}`, deltaTitle(population, prevPopulation)));
     resEl.innerHTML = res.join('');
     resEl.title = targetSummaryTitle(s);
     notesEl.title = `Current step - ${progress}`;
