@@ -5422,6 +5422,40 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_villager_drop_tooltips_explain_builder_pulls() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("function builderPullDetail")
+                && buildorder.contains("delta >= 0 || !action")
+                && buildorder.contains("Likely ${count} villager")
+                && buildorder.contains("pulled from gathering for ${target}"),
+            "builder-pull hints should only appear on villager drops with a structure action"
+        );
+        assert!(
+            buildorder.contains("function villagerDeltaTitle")
+                && buildorder.contains("deltaTitle(value, previous)")
+                && buildorder.contains("builderPullDetail(value, previous, action)"),
+            "current villager chip tooltips should combine exact deltas with builder-pull context"
+        );
+        assert!(
+            buildorder.contains("function previewVillagerDeltaTitle")
+                && buildorder.contains("previewDeltaTitle(value, previous)")
+                && buildorder
+                    .contains("previewVillagerDeltaTitle(villagers, previousVillagers, action)"),
+            "next-step villager chip tooltips should describe upcoming builder pulls"
+        );
+        assert!(
+            buildorder.contains("villagerDeltaTitle(villagers, prevVillagers, action)")
+                && buildorder.contains("deltaText(villagers, prevVillagers)")
+                && buildorder.contains("deltaText(villagers, previousVillagers)"),
+            "builder-pull context should preserve the existing signed villager delta chips"
+        );
+    }
+
+    #[test]
     fn ui_next_preview_chips_show_signed_amounts() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()

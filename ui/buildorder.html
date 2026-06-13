@@ -2540,6 +2540,20 @@ function deltaTitle(value, previous) {
   return delta > 0 ? `Increased by ${delta} from ${previous}` : `Decreased by ${Math.abs(delta)} from ${previous}`;
 }
 
+function builderPullDetail(value, previous, action) {
+  const delta = numericDelta(value, previous);
+  if (delta >= 0 || !action) return '';
+  const count = Math.abs(delta);
+  const target = action === 'Landmark' ? 'landmark construction' : 'building construction';
+  return `Likely ${count} villager${count === 1 ? '' : 's'} pulled from gathering for ${target}`;
+}
+
+function villagerDeltaTitle(value, previous, action) {
+  return [deltaTitle(value, previous), builderPullDetail(value, previous, action)]
+    .filter(Boolean)
+    .join(' - ');
+}
+
 function resourceShiftSummary(resources = {}, previousResources = {}) {
   const changes = ['food', 'wood', 'gold', 'stone']
     .map(key => ({ key, delta: numericDelta(resources?.[key], previousResources?.[key]) }))
@@ -2628,6 +2642,12 @@ function previewDeltaTitle(value, previous) {
   const delta = numericDelta(value, previous);
   if (!delta) return '';
   return delta > 0 ? `Will increase by ${delta} from current ${previous}` : `Will decrease by ${Math.abs(delta)} from current ${previous}`;
+}
+
+function previewVillagerDeltaTitle(value, previous, action) {
+  return [previewDeltaTitle(value, previous), builderPullDetail(value, previous, action)]
+    .filter(Boolean)
+    .join(' - ');
 }
 
 function previewChipHtml(icon, value, label, className = '', detail = '', delta = '') {
@@ -2746,7 +2766,7 @@ function stepPreviewHtml(step, previousStep = null) {
   const population = countForDisplay(step.population_count);
   const previousVillagers = countForDisplay(previousStep?.villager_count);
   const previousPopulation = countForDisplay(previousStep?.population_count);
-  if (villagers !== null) bits.push(previewChipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `nx-villager${deltaClass(villagers, previousVillagers)}`, previewDeltaTitle(villagers, previousVillagers), deltaText(villagers, previousVillagers)));
+  if (villagers !== null) bits.push(previewChipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `nx-villager${deltaClass(villagers, previousVillagers)}`, previewVillagerDeltaTitle(villagers, previousVillagers, action), deltaText(villagers, previousVillagers)));
   if (population !== null) bits.push(previewChipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `nx-population${deltaClass(population, previousPopulation)}`, previewDeltaTitle(population, previousPopulation), deltaText(population, previousPopulation)));
   const previewNotes = notesForDisplay(step);
   bits.push(...previewNotes.slice(0, 1).map(n => `<div class="nx-note" title="${esc(`Next instruction: ${compactPreviewText(n, 220)}`)}">${renderLine(compactPreviewText(n))}</div>`));
@@ -2959,7 +2979,7 @@ function render() {
     const population = countForDisplay(s.population_count);
     const prevPopulation = countForDisplay(prev.population_count);
     if (villagers !== null)
-      res.push(chipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `res villager${deltaClass(villagers, prevVillagers)}`, deltaTitle(villagers, prevVillagers), deltaText(villagers, prevVillagers)));
+      res.push(chipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `res villager${deltaClass(villagers, prevVillagers)}`, villagerDeltaTitle(villagers, prevVillagers, action), deltaText(villagers, prevVillagers)));
     if (population !== null)
       res.push(chipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `res population${deltaClass(population, prevPopulation)}`, deltaTitle(population, prevPopulation), deltaText(population, prevPopulation)));
     resEl.innerHTML = res.join('');
