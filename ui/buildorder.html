@@ -2630,7 +2630,11 @@ function render() {
   notesEl.title = '';
   nextEl.classList.remove('done');
   nextEl.title = '';
-  if (!current) { titleEl.innerHTML = buildTitleTextHtml('No build order selected', 'Select a build order to show steps'); return; }
+  if (!current) {
+    titleEl.innerHTML = buildTitleTextHtml('No build order selected', 'Select a build order to show steps');
+    notesEl.innerHTML = '<div class="txt-cur" title="Select a build order to show steps">Select a build order</div>';
+    return;
+  }
   const buildName = buildNameForDisplay(current);
 
   const bo = safeParseBuildJsonContent(current.content);
