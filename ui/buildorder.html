@@ -2620,7 +2620,7 @@ function render() {
       buildTitleTextHtml(buildName) +
       `<span id="step-count" title="${esc(progress)}">${step + 1}/${steps.length}</span>`;
     progEl.style.display = '';
-    progEl.title = progress;
+    progEl.title = `Build order progress - ${progress}`;
     progEl.style.setProperty('--seg', steps.length > 40 ? '200%' : (100 / steps.length) + '%');
     progEl.firstElementChild.style.width = ((step + 1) / steps.length * 100) + '%';
     const r = s.resources || {};
@@ -2686,7 +2686,7 @@ function render() {
       return;
     }
     progEl.style.display = '';
-    progEl.title = progress;
+    progEl.title = `Build order progress - ${progress}`;
     progEl.style.setProperty('--seg', stepIdx.length > 40 ? '200%' : (100 / stepIdx.length) + '%');
     progEl.firstElementChild.style.width = ((step + 1) / stepIdx.length * 100) + '%';
     notesEl.title = `Current step - ${progress}`;
