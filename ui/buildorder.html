@@ -2556,7 +2556,7 @@ function stepNotesHtml(step) {
   if (!noteLines.length) {
     return hasVisibleTargets(step)
       ? `<div class="txt-cur" title="${esc(targetSummaryTitle(step))}">Follow the shown targets</div>`
-      : '<div class="txt-cur" title="This step has no note text or target values">No note for this step</div>';
+      : `<div class="txt-cur" title="${esc(targetSummaryTitle(step))}">No note for this step</div>`;
   }
   const visible = noteLines.slice(0, 4);
   const more = noteLines.length - visible.length;
