@@ -5697,6 +5697,39 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_house_chips_surface_supply_builds() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("house: 'House'")
+                && buildorder.contains(".res.house")
+                && buildorder.contains("#next .nx-house"),
+            "house chips should have a compact label and distinct current/next styling"
+        );
+        assert!(
+            buildorder.contains("function plainNoteText")
+                && buildorder.contains("function houseCueFromNote")
+                && buildorder.contains("@building_economy\\/house")
+                && buildorder.contains("house\\s+of\\s+wisdom")
+                && buildorder.contains("build|make|add|drop|place|construct"),
+            "house cues should prefer explicit economy-house icons and avoid House of Wisdom text"
+        );
+        assert!(
+            buildorder.contains("function houseCue(step)")
+                && buildorder.contains("houseDetail()")
+                && buildorder.contains("nx-house")
+                && buildorder.contains("res house"),
+            "current and next-step rows should render house cue chips"
+        );
+        assert!(
+            buildorder.contains("!(house && action === 'Build')"),
+            "generic build chips should be suppressed when a house chip communicates the supply action more clearly"
+        );
+    }
+
+    #[test]
     fn ui_rally_chips_surface_rally_targets() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .parent()

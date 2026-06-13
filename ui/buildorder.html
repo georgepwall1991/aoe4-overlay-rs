@@ -78,6 +78,9 @@
                      inset 0 1px 0 rgba(255,255,255,.1); }
   .res.villager, .res.population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.32), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.38), inset 0 1px 0 rgba(255,255,255,.08); }
+  .res.house { color: #dce9f8; background: rgba(122,182,255,.08);
+         box-shadow: inset 0 0 0 1px rgba(122,182,255,.4), 0 0 5px rgba(122,182,255,.12),
+                     inset 0 1px 0 rgba(255,255,255,.1); }
   .res.dropoff { color: #ffe0a8; background: rgba(208,160,96,.1);
          box-shadow: inset 0 0 0 1px rgba(208,160,96,.46), 0 0 5px rgba(208,160,96,.14),
                      inset 0 1px 0 rgba(255,255,255,.1); }
@@ -166,6 +169,8 @@
   #next .nx-gold { box-shadow: inset 0 0 0 1px rgba(231,192,89,.3); }
   #next .nx-stone { box-shadow: inset 0 0 0 1px rgba(170,178,189,.26); }
   #next .nx-builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.26); }
+  #next .nx-house { color: #dce9f8; background: rgba(122,182,255,.08);
+          box-shadow: inset 0 0 0 1px rgba(122,182,255,.3), 0 0 5px rgba(122,182,255,.1); }
   #next .nx-dropoff { color: #ffe0a8; background: rgba(208,160,96,.08);
           box-shadow: inset 0 0 0 1px rgba(208,160,96,.32), 0 0 5px rgba(208,160,96,.1); }
   #next .nx-tech { color: #dff2d8; background: rgba(133,205,120,.08);
@@ -2523,6 +2528,7 @@ function resourceLabelForDisplay(key) {
     population: 'Population',
     time: 'Step time',
     action: 'Build action',
+    house: 'House',
     dropOff: 'Resource drop-off',
     technology: 'Technology',
     ageTarget: 'Age target',
@@ -2639,6 +2645,24 @@ function dropOffCue(step) {
 function dropOffDetail(cue) {
   const resource = cue?.key ? `${shortResourceLabel(cue.key)} resources` : 'held resources';
   return `Force villagers to drop off ${resource} before continuing`;
+}
+
+function plainNoteText(note) {
+  return String(note || '').replace(/@[^@]+@/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function houseCueFromNote(note) {
+  if (/@building_economy\/house(?:\.(?:webp|png))?@/i.test(note)) return true;
+  const plain = plainNoteText(note).replace(/\bhouse\s+of\s+wisdom\b/ig, ' ');
+  return /\b(?:build|make|add|drop|place|construct)\s+(?:a\s+|an\s+|\d+\s+)?houses?\b/i.test(plain);
+}
+
+function houseCue(step) {
+  return notesForDisplay(step).some(houseCueFromNote);
+}
+
+function houseDetail() {
+  return 'Build house for supply';
 }
 
 function iconNameForDisplay(token) {
@@ -2905,9 +2929,13 @@ function stepPreviewHtml(step, previousStep = null) {
   if (rally) {
     bits.push(previewChipHtml(RES_ICONS.rally, shortResourceLabel(rally), resourceLabelForDisplay('rally'), `nx-rally nx-rally-${rally}`, 'Inferred from the next instruction text'));
   }
+  const house = houseCue(step);
   const action = buildActionKind(step);
-  if (shouldShowBuildActionChip(action, r)) {
+  if (shouldShowBuildActionChip(action, r) && !(house && action === 'Build')) {
     bits.push(previewChipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `nx-action nx-action-${action.toLowerCase()}`, 'Inferred from the next instruction text'));
+  }
+  if (house) {
+    bits.push(previewChipHtml(RES_ICONS.population, 'House', resourceLabelForDisplay('house'), 'nx-house', houseDetail()));
   }
   const drop = dropOffCue(step);
   if (drop) {
@@ -3128,9 +3156,13 @@ function render() {
     if (rally) {
       res.push(chipHtml(RES_ICONS.rally, shortResourceLabel(rally), resourceLabelForDisplay('rally'), `res rally rally-${rally}`, 'Inferred from the current instruction text'));
     }
+    const house = houseCue(s);
     const action = buildActionKind(s);
-    if (shouldShowBuildActionChip(action, r)) {
+    if (shouldShowBuildActionChip(action, r) && !(house && action === 'Build')) {
       res.push(chipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `res action action-${action.toLowerCase()}`, 'Inferred from the current instruction text'));
+    }
+    if (house) {
+      res.push(chipHtml(RES_ICONS.population, 'House', resourceLabelForDisplay('house'), 'res house', houseDetail()));
     }
     const drop = dropOffCue(s);
     if (drop) {
