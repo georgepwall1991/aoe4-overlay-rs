@@ -2425,7 +2425,7 @@ function resourceKeysForDisplay(resources) {
   const r = resources || {};
   const eco = ['food', 'wood', 'gold', 'stone'];
   const keys = eco.some(k => (r[k] ?? -1) > 0) ? eco.filter(k => (r[k] ?? -1) >= 0) : [];
-  if ((r.builder ?? -1) >= 0) keys.push('builder');
+  if ((r.builder ?? -1) > 0) keys.push('builder');
   return keys;
 }
 

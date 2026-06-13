@@ -5368,6 +5368,30 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_builder_allocation_chips_are_explicit_and_positive() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            root.join("ui/bo_img/abilities/repair.webp").exists(),
+            "builder allocation icon asset missing"
+        );
+        assert!(
+            buildorder.contains("builder: 'bo_img/abilities/repair.webp'"),
+            "builder allocations should use the repair/building icon"
+        );
+        assert!(
+            buildorder.contains("builder: 'Building villagers'"),
+            "builder allocations should be labelled as building villagers"
+        );
+        assert!(
+            buildorder.contains("if ((r.builder ?? -1) > 0) keys.push('builder');"),
+            "builder allocation chips should only render for positive builder counts"
+        );
+    }
+
+    #[test]
     fn txt_without_steps_errors() {
         assert!(convert_aoeivbuilds_txt("Title only\n\nno bullets here", None, "x").is_err());
     }
