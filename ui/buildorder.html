@@ -2446,6 +2446,12 @@ function chipHtml(icon, value, label, className = 'res') {
   return `<span class="${esc(className)}" title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
 }
 
+function previewChipHtml(icon, value, label) {
+  const text = value === '' || value === null || value === undefined ? '' : String(value);
+  const title = text ? `${label}: ${text}` : label;
+  return `<span title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
+}
+
 function compactPreviewText(text, max = 90) {
   const oneLine = String(text || '').replace(/\s+/g, ' ').trim();
   return oneLine.length > max ? oneLine.slice(0, max - 1).trimEnd() + '…' : oneLine;
@@ -2455,17 +2461,17 @@ function stepPreviewHtml(step) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
   const time = timeForDisplay(step.time);
-  if (time) bits.push(`<span><img src="${RES_ICONS.time}">${esc(time)}</span>`);
+  if (time) bits.push(previewChipHtml(RES_ICONS.time, time, resourceLabelForDisplay('time')));
   const age = ageForDisplay(step.age);
-  if (age !== null) bits.push(`<span><img src="${AGE_ICONS[age]}">${esc(ageLabelForDisplay(age))}</span>`);
+  if (age !== null) bits.push(previewChipHtml(AGE_ICONS[age], ageLabelForDisplay(age), 'Age'));
   const r = step.resources || {};
   for (const k of resourceKeysForDisplay(r)) {
-    if ((r[k] ?? -1) >= 0) bits.push(`<span><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
+    if ((r[k] ?? -1) >= 0) bits.push(previewChipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k)));
   }
   const villagers = countForDisplay(step.villager_count);
   const population = countForDisplay(step.population_count);
-  if (villagers !== null) bits.push(`<span><img src="${RES_ICONS.villager}">${esc(villagers)}</span>`);
-  if (population !== null) bits.push(`<span><img src="${RES_ICONS.population}">${esc(population)}</span>`);
+  if (villagers !== null) bits.push(previewChipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager')));
+  if (population !== null) bits.push(previewChipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population')));
   bits.push(...notesForDisplay(step, 1).map(n => `<div>${renderLine(compactPreviewText(n))}</div>`));
   return bits.join('<span> · </span>');
 }
