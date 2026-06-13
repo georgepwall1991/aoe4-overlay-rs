@@ -2486,6 +2486,11 @@ function buildNameForDisplay(build) {
   return name || 'Build order';
 }
 
+function progressTitle(step, total) {
+  const pct = total > 0 ? Math.round(((step + 1) / total) * 100) : 0;
+  return `Step ${step + 1} of ${total} (${pct}%)`;
+}
+
 function hasVisibleTargets(step) {
   if (!step || typeof step !== 'object') return false;
   if (timeForDisplay(step.time) || ageForDisplay(step.age) !== null ||
@@ -2545,6 +2550,7 @@ function render() {
       return;
     }
     const step = clampStepIndex(current.step, steps.length);
+    const progress = progressTitle(step, steps.length);
     const s = steps[step];
     const civs = (Array.isArray(bo.civilization) ? bo.civilization : [bo.civilization]).filter(Boolean).slice(0, 3);
     titleEl.innerHTML =
@@ -2553,8 +2559,9 @@ function render() {
         return `<img src="flags/${esc(f)}.webp" title="${esc(c)}" onerror="this.style.display='none'">`;
       }).join('') +
       `<span class="t">${esc(buildName)}</span>` +
-      `<span id="step-count">${step + 1}/${steps.length}</span>`;
+      `<span id="step-count" title="${esc(progress)}">${step + 1}/${steps.length}</span>`;
     progEl.style.display = '';
+    progEl.title = progress;
     progEl.style.setProperty('--seg', steps.length > 40 ? '200%' : (100 / steps.length) + '%');
     progEl.firstElementChild.style.width = ((step + 1) / steps.length * 100) + '%';
     const r = s.resources || {};
@@ -2608,13 +2615,15 @@ function render() {
     const stepIdx = lines.reduce((a, l, i) => (l.trim() ? [...a, i] : a), []);
     const step = clampStepIndex(current.step, stepIdx.length);
     const curLine = stepIdx[step];
+    const progress = progressTitle(step, stepIdx.length);
     titleEl.innerHTML = `<span class="t">${esc(buildName)}</span>` +
-      (stepIdx.length ? `<span id="step-count">${step + 1}/${stepIdx.length}</span>` : '');
+      (stepIdx.length ? `<span id="step-count" title="${esc(progress)}">${step + 1}/${stepIdx.length}</span>` : '');
     if (!stepIdx.length) {
       notesEl.innerHTML = '<div class="txt-cur">No usable build steps found</div>';
       return;
     }
     progEl.style.display = '';
+    progEl.title = progress;
     progEl.style.setProperty('--seg', stepIdx.length > 40 ? '200%' : (100 / stepIdx.length) + '%');
     progEl.firstElementChild.style.width = ((step + 1) / stepIdx.length * 100) + '%';
     notesEl.innerHTML = plainTextWindowHtml(lines, stepIdx, step);
