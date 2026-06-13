@@ -2446,6 +2446,11 @@ function chipHtml(icon, value, label, className = 'res') {
   return `<span class="${esc(className)}" title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
 }
 
+function compactPreviewText(text, max = 90) {
+  const oneLine = String(text || '').replace(/\s+/g, ' ').trim();
+  return oneLine.length > max ? oneLine.slice(0, max - 1).trimEnd() + '…' : oneLine;
+}
+
 function stepPreviewHtml(step) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
@@ -2461,7 +2466,7 @@ function stepPreviewHtml(step) {
   const population = countForDisplay(step.population_count);
   if (villagers !== null) bits.push(`<span><img src="${RES_ICONS.villager}">${esc(villagers)}</span>`);
   if (population !== null) bits.push(`<span><img src="${RES_ICONS.population}">${esc(population)}</span>`);
-  bits.push(...notesForDisplay(step, 2).map(n => `<div>${renderLine(n)}</div>`));
+  bits.push(...notesForDisplay(step, 1).map(n => `<div>${renderLine(compactPreviewText(n))}</div>`));
   return bits.join('<span> · </span>');
 }
 
@@ -2473,7 +2478,7 @@ function clampStepIndex(value, count) {
 
 function fallbackLineHtml(line) {
   const cleaned = normalizeNoteValue(stripNoteListMarker(line)).split('\n').filter(Boolean)[0];
-  return renderLine(cleaned || String(line || '').trim());
+  return renderLine(compactPreviewText(cleaned || String(line || '').trim(), 120));
 }
 
 function buildNameForDisplay(build) {
