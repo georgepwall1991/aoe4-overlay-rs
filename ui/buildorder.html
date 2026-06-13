@@ -135,6 +135,7 @@ const RES_ICONS = {
   wood: 'bo_img/resource/resource_wood.webp',
   gold: 'bo_img/resource/resource_gold.webp',
   stone: 'bo_img/resource/resource_stone.webp',
+  builder: 'bo_img/unit_worker/villager.webp',
   villager: 'bo_img/unit_worker/villager.webp',
   population: 'bo_img/building_economy/house.webp',
   time: 'bo_img/time/time.png',
@@ -2364,7 +2365,7 @@ function stepPreviewHtml(step) {
   if (step.time) bits.push(`<span><img src="${RES_ICONS.time}">${esc(step.time)}</span>`);
   if (step.age >= 1 && step.age <= 4) bits.push(`<span><img src="${AGE_ICONS[step.age]}"></span>`);
   const r = step.resources || {};
-  for (const k of ['food', 'wood', 'gold', 'stone']) {
+  for (const k of ['food', 'wood', 'gold', 'stone', 'builder']) {
     if ((r[k] ?? -1) >= 0) bits.push(`<span><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
   }
   if (step.villager_count >= 0) bits.push(`<span><img src="${RES_ICONS.villager}">${esc(step.villager_count)}</span>`);
@@ -2419,7 +2420,7 @@ function render() {
       return cur > old ? ' up' : ' down';
     };
     const res = [];
-    for (const k of ['food', 'wood', 'gold', 'stone']) {
+    for (const k of ['food', 'wood', 'gold', 'stone', 'builder']) {
       if ((r[k] ?? -1) >= 0)
         res.push(`<span class="res ${k}${delta(r[k], pr[k])}"><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
     }
