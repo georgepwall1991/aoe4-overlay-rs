@@ -186,7 +186,7 @@ function applyStyle() {
   p.style.fontSize = fontSize + 'pt';
   document.body.style.setProperty('--imgh', Math.round(fontSize * 2) + 'px');
   document.getElementById('title').style.color = rgb(colorSetting(settings.bo_title_color, [255, 255, 255]));
-  document.getElementById('title').style.display = settings.bo_show_title ? '' : 'none';
+  document.getElementById('title').style.display = settings.bo_show_title === false ? 'none' : '';
 }
 
 // Original @image@ token syntax: image path relative to img/build_order/
