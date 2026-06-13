@@ -2528,13 +2528,13 @@ function plainTextWindowHtml(lines, stepIdx, step) {
   const firstLine = stepIdx[firstStep];
   const lastLine = stepIdx[lastStep];
   const parts = [];
-  if (firstStep > 0) parts.push(`<div class="txt-gap">+${firstStep} earlier</div>`);
+  if (firstStep > 0) parts.push(`<div class="txt-gap" title="Steps 1-${firstStep} hidden">+${firstStep} earlier</div>`);
   for (let i = firstLine; i <= lastLine; i++) {
     if (!String(lines[i] || '').trim()) continue;
     parts.push(`<div class="${i === currentLine ? 'txt-cur' : 'txt-dim'}" title="${esc(fallbackLineTitle(lines[i]))}">${fallbackLineHtml(lines[i])}</div>`);
   }
   const hiddenLater = stepIdx.length - lastStep - 1;
-  if (hiddenLater > 0) parts.push(`<div class="txt-gap">+${hiddenLater} later</div>`);
+  if (hiddenLater > 0) parts.push(`<div class="txt-gap" title="Steps ${lastStep + 2}-${stepIdx.length} hidden">+${hiddenLater} later</div>`);
   return parts.join('');
 }
 
