@@ -2596,7 +2596,7 @@ function render() {
   notesEl.title = '';
   nextEl.classList.remove('done');
   nextEl.title = '';
-  if (!current) { titleEl.innerHTML = '<span class="t">No build order selected</span>'; return; }
+  if (!current) { titleEl.innerHTML = buildTitleTextHtml('No build order selected'); return; }
   const buildName = buildNameForDisplay(current);
 
   const bo = safeParseBuildJsonContent(current.content);
