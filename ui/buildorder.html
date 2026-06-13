@@ -2696,7 +2696,7 @@ function render() {
       nextEl.style.display = '';
       nextEl.classList.remove('done');
       nextEl.title = nextTitle(step, stepIdx.length);
-      nextEl.innerHTML = `<span class="nx-label">Next</span><div title="${esc(fallbackLineTitle(nxLine))}">${fallbackLineHtml(nxLine)}</div>`;
+      nextEl.innerHTML = `<span class="nx-label">Next</span><div title="${esc(`Next instruction: ${fallbackLineTitle(nxLine)}`)}">${fallbackLineHtml(nxLine)}</div>`;
     } else if ((settings?.bo_show_next ?? true) && step === stepIdx.length - 1) {
       nextEl.style.display = '';
       nextEl.classList.add('done');
