@@ -2409,13 +2409,17 @@ function timeForDisplay(value) {
   return fixed && isNormalizedTimeValue(fixed) ? fixed : '';
 }
 
+function ageLabelForDisplay(age) {
+  return { 1: 'Age I', 2: 'Age II', 3: 'Age III', 4: 'Age IV' }[age] || '';
+}
+
 function stepPreviewHtml(step) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
   const time = timeForDisplay(step.time);
   if (time) bits.push(`<span><img src="${RES_ICONS.time}">${esc(time)}</span>`);
   const age = ageForDisplay(step.age);
-  if (age !== null) bits.push(`<span><img src="${AGE_ICONS[age]}"></span>`);
+  if (age !== null) bits.push(`<span><img src="${AGE_ICONS[age]}">${esc(ageLabelForDisplay(age))}</span>`);
   const r = step.resources || {};
   for (const k of resourceKeysForDisplay(r)) {
     if ((r[k] ?? -1) >= 0) bits.push(`<span><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
@@ -2501,7 +2505,7 @@ function render() {
     const prevAge = ageForDisplay(prev.age);
     if (age !== null) {
       const ageUp = step > 0 && prevAge !== null && age > prevAge;
-      res.push(`<span class="res${ageUp ? ' age-up' : ''}"><img src="${AGE_ICONS[age]}">${ageUp ? 'Age up!' : ''}</span>`);
+      res.push(`<span class="res${ageUp ? ' age-up' : ''}"><img src="${AGE_ICONS[age]}">${esc(ageUp ? 'Age up!' : ageLabelForDisplay(age))}</span>`);
     }
     const time = timeForDisplay(s.time);
     if (time)
