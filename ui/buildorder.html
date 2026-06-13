@@ -2425,6 +2425,25 @@ function ageLabelForDisplay(age) {
   return { 1: 'Age I', 2: 'Age II', 3: 'Age III', 4: 'Age IV' }[age] || '';
 }
 
+function resourceLabelForDisplay(key) {
+  return {
+    food: 'Food villagers',
+    wood: 'Wood villagers',
+    gold: 'Gold villagers',
+    stone: 'Stone villagers',
+    builder: 'Builders',
+    villager: 'Villager count',
+    population: 'Population',
+    time: 'Step time',
+  }[key] || key;
+}
+
+function chipHtml(icon, value, label, className = 'res') {
+  const text = value === '' || value === null || value === undefined ? '' : String(value);
+  const title = text ? `${label}: ${text}` : label;
+  return `<span class="${esc(className)}" title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
+}
+
 function stepPreviewHtml(step) {
   if (!step || typeof step !== 'object') return '';
   const bits = [];
@@ -2523,25 +2542,25 @@ function render() {
     const res = [];
     for (const k of resourceKeysForDisplay(r)) {
       if ((r[k] ?? -1) >= 0)
-        res.push(`<span class="res ${k}${delta(r[k], pr[k])}"><img src="${RES_ICONS[k]}">${esc(r[k])}</span>`);
+        res.push(chipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `res ${k}${delta(r[k], pr[k])}`));
     }
     const villagers = countForDisplay(s.villager_count);
     const prevVillagers = countForDisplay(prev.villager_count);
     const population = countForDisplay(s.population_count);
     const prevPopulation = countForDisplay(prev.population_count);
     if (villagers !== null)
-      res.push(`<span class="res${delta(villagers, prevVillagers)}"><img src="${RES_ICONS.villager}">${esc(villagers)}</span>`);
+      res.push(chipHtml(RES_ICONS.villager, villagers, resourceLabelForDisplay('villager'), `res${delta(villagers, prevVillagers)}`));
     if (population !== null)
-      res.push(`<span class="res${delta(population, prevPopulation)}"><img src="${RES_ICONS.population}">${esc(population)}</span>`);
+      res.push(chipHtml(RES_ICONS.population, population, resourceLabelForDisplay('population'), `res${delta(population, prevPopulation)}`));
     const age = ageForDisplay(s.age);
     const prevAge = ageForDisplay(prev.age);
     if (age !== null) {
       const ageUp = step > 0 && prevAge !== null && age > prevAge;
-      res.push(`<span class="res${ageUp ? ' age-up' : ''}"><img src="${AGE_ICONS[age]}">${esc(ageUp ? 'Age up!' : ageLabelForDisplay(age))}</span>`);
+      res.push(chipHtml(AGE_ICONS[age], ageUp ? 'Age up!' : ageLabelForDisplay(age), 'Age', `res${ageUp ? ' age-up' : ''}`));
     }
     const time = timeForDisplay(s.time);
     if (time)
-      res.push(`<span class="res"><img src="${RES_ICONS.time}">${esc(time)}</span>`);
+      res.push(chipHtml(RES_ICONS.time, time, resourceLabelForDisplay('time')));
     resEl.innerHTML = res.join('');
     notesEl.innerHTML = stepNotesHtml(s);
     const nx = steps[step + 1];
