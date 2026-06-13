@@ -2561,6 +2561,7 @@ function render() {
   titleEl.innerHTML = ''; resEl.innerHTML = ''; notesEl.innerHTML = '';
   progEl.style.display = 'none'; nextEl.style.display = 'none';
   progEl.title = '';
+  resEl.title = '';
   nextEl.classList.remove('done');
   nextEl.title = '';
   if (!current) { titleEl.innerHTML = '<span class="t">No build order selected</span>'; return; }
