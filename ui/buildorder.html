@@ -2544,7 +2544,7 @@ function targetSummaryTitle(step) {
   const population = countForDisplay(step.population_count);
   if (villagers !== null) parts.push(`Villagers ${villagers}`);
   if (population !== null) parts.push(`Population ${population}`);
-  return parts.length ? `Current targets: ${parts.join(' | ')}` : '';
+  return parts.length ? `Current step targets: ${parts.join(' | ')}` : '';
 }
 
 function stepNotesHtml(step) {
