@@ -75,6 +75,11 @@
   .res.age   { box-shadow: inset 0 0 0 1px rgba(231,192,89,.5),  inset 0 1px 0 rgba(255,255,255,.1); }
   .res.villager, .res.population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.32), inset 0 1px 0 rgba(255,255,255,.08); }
   .res.builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.38), inset 0 1px 0 rgba(255,255,255,.08); }
+  .res.action { color: #ffe0a8; background: rgba(208,160,96,.1);
+         box-shadow: inset 0 0 0 1px rgba(208,160,96,.44), inset 0 1px 0 rgba(255,255,255,.1); }
+  .res.action-landmark { color: #ffe9a0;
+         box-shadow: inset 0 0 0 1px rgba(231,192,89,.62), 0 0 7px rgba(231,192,89,.24),
+                     inset 0 1px 0 rgba(255,255,255,.12); }
   .res.up::after, .res.down::after { content: attr(data-delta); font-size: .68em; font-weight: 800; margin-left: 3px;
          font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px rgba(0,0,0,.8); }
   .res.up::after   { color: #9fe39b; }
@@ -145,6 +150,10 @@
   #next .nx-gold { box-shadow: inset 0 0 0 1px rgba(231,192,89,.3); }
   #next .nx-stone { box-shadow: inset 0 0 0 1px rgba(170,178,189,.26); }
   #next .nx-builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.26); }
+  #next .nx-action { color: #ffe0a8; background: rgba(208,160,96,.08);
+          box-shadow: inset 0 0 0 1px rgba(208,160,96,.3); }
+  #next .nx-action-landmark { color: #ffe9a0; background: rgba(231,192,89,.12);
+          box-shadow: inset 0 0 0 1px rgba(231,192,89,.48), 0 0 5px rgba(231,192,89,.16); }
   #next .nx-villager, #next .nx-population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.2); }
   #next div { display: inline; background: none; box-shadow: none; padding: 0; }
   #next div.nx-note { color: rgba(255,255,255,.92); overflow-wrap: anywhere; }
@@ -2482,6 +2491,7 @@ function resourceLabelForDisplay(key) {
     villager: 'Assigned villagers',
     population: 'Population',
     time: 'Step time',
+    action: 'Build action',
   }[key] || key;
 }
 
@@ -2511,6 +2521,26 @@ function deltaTitle(value, previous) {
   const delta = numericDelta(value, previous);
   if (!delta) return '';
   return delta > 0 ? `Increased by ${delta} from ${previous}` : `Decreased by ${Math.abs(delta)} from ${previous}`;
+}
+
+function buildActionKind(step) {
+  for (const note of notesForDisplay(step)) {
+    const hasLandmark = /@landmark_[^@]+@/i.test(note);
+    const hasBuilding = /@building_[^@]+@/i.test(note);
+    if (!hasLandmark && !hasBuilding) continue;
+    const villagerToStructure = /(?:^|[^\d])\d{0,2}\s*@[^@]*(?:villager|worker|mounted-villager)[^@]*@\s*(?:[-=]*>|->|→|to\s+)?\s*@(landmark|building)_[^@]+@/i.test(note);
+    const verbNearStructure = /\b(build|construct|drop|place|make|add|constru\w*)\b[\s\S]{0,90}@(landmark|building)_[^@]+@|@(landmark|building)_[^@]+@[\s\S]{0,90}\b(build|construct|drop|place|make|add|constru\w*)\b/i.test(note);
+    const repairIntoStructure = /@abilities\/repair\.webp@[\s\S]{0,60}@(landmark|building)_[^@]+@/i.test(note);
+    const structureOnMap = /^@(landmark|building)_[^@]+@\s*(?:on|near|at|next to)\b/i.test(note);
+    if (villagerToStructure || verbNearStructure || repairIntoStructure || structureOnMap) {
+      return hasLandmark ? 'Landmark' : 'Build';
+    }
+  }
+  return '';
+}
+
+function shouldShowBuildActionChip(kind, resources) {
+  return !!kind && (kind === 'Landmark' || ((resources || {}).builder ?? -1) <= 0);
 }
 
 function previewResourceKeysForDisplay(resources, previousResources = {}) {
@@ -2629,6 +2659,10 @@ function stepPreviewHtml(step, previousStep = null) {
   if (age !== null) bits.push(nextAgeChipHtml(age, previousAge));
   const r = step.resources || {};
   const pr = previousStep?.resources || {};
+  const action = buildActionKind(step);
+  if (shouldShowBuildActionChip(action, r)) {
+    bits.push(previewChipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `nx-action nx-action-${action.toLowerCase()}`, 'Inferred from the next instruction text'));
+  }
   for (const k of previewResourceKeysForDisplay(r, pr)) {
     if ((r[k] ?? -1) >= 0) bits.push(previewChipHtml(RES_ICONS[k], r[k], resourceLabelForDisplay(k), `nx-${k}${deltaClass(r[k], pr[k])}`, previewDeltaTitle(r[k], pr[k]), deltaText(r[k], pr[k])));
   }
@@ -2827,6 +2861,10 @@ function render() {
     if (age !== null) {
       const ageUp = step > 0 && prevAge !== null && age > prevAge;
       res.push(chipHtml(AGE_ICONS[age], ageUp ? 'Age up!' : ageLabelForDisplay(age), 'Age', `res age${ageUp ? ' age-up' : ''}`, ageUp ? `Advanced from ${ageLabelForDisplay(prevAge)}` : ''));
+    }
+    const action = buildActionKind(s);
+    if (shouldShowBuildActionChip(action, r)) {
+      res.push(chipHtml(RES_ICONS.builder, action, resourceLabelForDisplay('action'), `res action action-${action.toLowerCase()}`, 'Inferred from the current instruction text'));
     }
     for (const k of resourceKeysForDisplay(r)) {
       if ((r[k] ?? -1) >= 0)

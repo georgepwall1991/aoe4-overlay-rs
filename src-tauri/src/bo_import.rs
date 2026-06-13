@@ -5529,6 +5529,38 @@ Link to the original Build Order: https://aoeivbuilds.com/build_orders/1296\n";
     }
 
     #[test]
+    fn ui_build_action_chips_surface_structure_steps() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .unwrap();
+        let buildorder = std::fs::read_to_string(root.join("ui/buildorder.html")).unwrap();
+        assert!(
+            buildorder.contains("function buildActionKind")
+                && buildorder.contains("@landmark_[^@]+@")
+                && buildorder.contains("@building_[^@]+@")
+                && buildorder.contains("villagerToStructure")
+                && buildorder.contains("structureOnMap"),
+            "overlay should infer structure-action intent from clear build-order note patterns"
+        );
+        assert!(
+            buildorder.contains("function shouldShowBuildActionChip")
+                && buildorder.contains("kind === 'Landmark'")
+                && buildorder.contains("builder ?? -1"),
+            "generic build chips should stay suppressed when an explicit builder allocation already exists"
+        );
+        assert!(
+            buildorder.contains("res action action-${action.toLowerCase()}")
+                && buildorder.contains("nx-action nx-action-${action.toLowerCase()}"),
+            "current and next-step rows should render the inferred build action chip"
+        );
+        assert!(
+            buildorder.contains("Inferred from the current instruction text")
+                && buildorder.contains("Inferred from the next instruction text"),
+            "build action chips should explain that they are display-only inference"
+        );
+    }
+
+    #[test]
     fn txt_without_steps_errors() {
         assert!(convert_aoeivbuilds_txt("Title only\n\nno bullets here", None, "x").is_err());
     }
