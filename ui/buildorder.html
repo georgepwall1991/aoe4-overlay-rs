@@ -93,6 +93,7 @@
   #notes { font-weight: 500; letter-spacing: .01em; flex: 1; min-height: 0; overflow: hidden;
            -webkit-mask-image: linear-gradient(#000 calc(100% - 12px), transparent); }
   #notes div { margin: 3px 0; display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+           overflow-wrap: anywhere;
            line-height: 1.4; padding: 3px 7px; border-radius: .4em;
            background: linear-gradient(to right, rgba(255,255,255,.05), rgba(255,255,255,0) 85%);
            box-shadow: inset 1.5px 0 0 rgba(222,186,88,.45); }
@@ -138,7 +139,7 @@
   #next .nx-builder { box-shadow: inset 0 0 0 1px rgba(208,160,96,.26); }
   #next .nx-villager, #next .nx-population { box-shadow: inset 0 0 0 1px rgba(122,182,255,.2); }
   #next div { display: inline; background: none; box-shadow: none; padding: 0; }
-  #next div.nx-note { color: rgba(255,255,255,.92); }
+  #next div.nx-note { color: rgba(255,255,255,.92); overflow-wrap: anywhere; }
   #next div.nx-more { color: #dcc77a; font-weight: 700; white-space: nowrap; }
   #next div.nx-done { color: #d9f3d2; font-weight: 700; }
   #next img { height: calc(var(--imgh, 24px) * .8); vertical-align: middle; border-radius: .25em; }
@@ -2493,9 +2494,49 @@ function previewChipHtml(icon, value, label, className = '') {
   return `<span class="${esc(['nx-chip', className].filter(Boolean).join(' '))}" title="${esc(title)}"><img src="${esc(icon)}">${esc(text)}</span>`;
 }
 
+function previewTextUnits(text) {
+  let units = 0;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '@') {
+      const close = text.indexOf('@', i + 1);
+      if (close > i) {
+        units += iconToken(text.slice(i + 1, close)) ? 2 : close - i - 1;
+        i = close;
+        continue;
+      }
+    }
+    units += 1;
+  }
+  return units;
+}
+
+function slicePreviewText(text, maxUnits) {
+  let units = 0;
+  let out = '';
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '@') {
+      const close = text.indexOf('@', i + 1);
+      if (close > i) {
+        const token = text.slice(i + 1, close);
+        const tokenUnits = iconToken(token) ? 2 : token.length;
+        if (units + tokenUnits > maxUnits) break;
+        out += text.slice(i, close + 1);
+        units += tokenUnits;
+        i = close;
+        continue;
+      }
+    }
+    if (units + 1 > maxUnits) break;
+    out += text[i];
+    units += 1;
+  }
+  return out;
+}
+
 function compactPreviewText(text, max = 90) {
   const oneLine = String(text || '').replace(/\s+/g, ' ').trim();
-  return oneLine.length > max ? oneLine.slice(0, max - 1).trimEnd() + '…' : oneLine;
+  if (previewTextUnits(oneLine) <= max) return oneLine;
+  return slicePreviewText(oneLine, max - 1).trimEnd() + '…';
 }
 
 function stepPreviewHtml(step) {
