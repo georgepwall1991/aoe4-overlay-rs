@@ -164,15 +164,28 @@ function escJsAttr(s) {
   return esc(String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r/g, '\\r').replace(/\n/g, '\\n'));
 }
 
+function colorSetting(value, fallback) {
+  return Array.isArray(value) && value.length >= 3 && value.slice(0, 3).every(v => Number.isFinite(Number(v)))
+    ? value.slice(0, 3).map(v => Math.max(0, Math.min(255, Math.round(Number(v)))))
+    : fallback;
+}
+
+function numberSetting(value, fallback, min, max) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.max(min, Math.min(max, n)) : fallback;
+}
+
 function applyStyle() {
   if (!settings) return;
   const p = document.getElementById('panel');
-  const [r, g, b] = settings.bo_color_background;
-  p.style.background = `rgba(${r},${g},${b},${Math.max(0, settings.bo_opacity - 0.04)})`;
-  p.style.color = rgb(settings.bo_text_color);
-  p.style.fontSize = settings.bo_font_size + 'pt';
-  document.body.style.setProperty('--imgh', Math.round(settings.bo_font_size * 2) + 'px');
-  document.getElementById('title').style.color = rgb(settings.bo_title_color);
+  const [r, g, b] = colorSetting(settings.bo_color_background, [30, 30, 30]);
+  const fontSize = numberSetting(settings.bo_font_size, 12, 6, 40);
+  const opacity = numberSetting(settings.bo_opacity, 0.75, 0, 1);
+  p.style.background = `rgba(${r},${g},${b},${Math.max(0, opacity - 0.04)})`;
+  p.style.color = rgb(colorSetting(settings.bo_text_color, [255, 255, 255]));
+  p.style.fontSize = fontSize + 'pt';
+  document.body.style.setProperty('--imgh', Math.round(fontSize * 2) + 'px');
+  document.getElementById('title').style.color = rgb(colorSetting(settings.bo_title_color, [255, 255, 255]));
   document.getElementById('title').style.display = settings.bo_show_title ? '' : 'none';
 }
 
