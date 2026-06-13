@@ -98,6 +98,7 @@
   #notes div.txt-dim { opacity: .45; background: none; box-shadow: none; }
   #notes div.txt-cur { background: linear-gradient(to right, rgba(231,192,89,.18), rgba(231,192,89,0) 85%);
            box-shadow: inset 2px 0 0 rgba(231,192,89,.85); font-weight: 600; }
+  #notes div.txt-more { opacity: .58; font-size: .9em; background: none; box-shadow: none; font-weight: 600; }
   #next { margin-top: 7px; padding: 5px 7px 4px; opacity: .6; font-size: .85em;
           border-top: 1px solid rgba(230,198,100,.25);
           background: linear-gradient(to right, rgba(255,255,255,.04), rgba(255,255,255,0) 80%);
@@ -2459,6 +2460,15 @@ function buildNameForDisplay(build) {
   return name || 'Build order';
 }
 
+function stepNotesHtml(step) {
+  const noteLines = notesForDisplay(step);
+  if (!noteLines.length) return '<div class="txt-cur">No note for this step</div>';
+  const visible = noteLines.slice(0, 4);
+  const more = noteLines.length - visible.length;
+  return visible.map((n, i) => `<div class="${i === 0 ? 'txt-cur' : ''}">${renderLine(n)}</div>`).join('') +
+    (more > 0 ? `<div class="txt-more">+${more} more detail${more === 1 ? '' : 's'}</div>` : '');
+}
+
 function render() {
   const titleEl = document.getElementById('title');
   const resEl = document.getElementById('resources');
@@ -2522,10 +2532,7 @@ function render() {
     if (time)
       res.push(`<span class="res"><img src="${RES_ICONS.time}">${esc(time)}</span>`);
     resEl.innerHTML = res.join('');
-    const noteLines = notesForDisplay(s);
-    notesEl.innerHTML = noteLines.length
-      ? noteLines.map((n, i) => `<div class="${i === 0 ? 'txt-cur' : ''}">${renderLine(n)}</div>`).join('')
-      : '<div class="txt-cur">No note for this step</div>';
+    notesEl.innerHTML = stepNotesHtml(s);
     const nx = steps[step + 1];
     const nxPreview = stepPreviewHtml(nx);
     if ((settings?.bo_show_next ?? true) && nxPreview) {
