@@ -2598,7 +2598,7 @@ function render() {
     const steps = bo.build_order.filter(hasStepSignal);
     if (!steps.length) {
       titleEl.innerHTML = buildTitleTextHtml(buildName);
-      notesEl.innerHTML = '<div class="txt-cur">No usable build steps found</div>';
+      notesEl.innerHTML = '<div class="txt-cur" title="The selected build has no parsed step targets or notes">No usable build steps found</div>';
       return;
     }
     const step = clampStepIndex(current.step, steps.length);
@@ -2674,7 +2674,7 @@ function render() {
     titleEl.innerHTML = buildTitleTextHtml(buildName) +
       (stepIdx.length ? `<span id="step-count" title="${esc(progress)}">${step + 1}/${stepIdx.length}</span>` : '');
     if (!stepIdx.length) {
-      notesEl.innerHTML = '<div class="txt-cur">No usable build steps found</div>';
+      notesEl.innerHTML = '<div class="txt-cur" title="The selected build has no non-empty text lines">No usable build steps found</div>';
       return;
     }
     progEl.style.display = '';
