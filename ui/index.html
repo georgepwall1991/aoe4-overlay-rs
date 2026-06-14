@@ -3446,6 +3446,8 @@ const PAL_COMMANDS = [
   { sect: 'Actions', name: 'Browse aoe4guides builds', icon: 'i-globe', run: () => { tabButtons[2].click(); $('bo-g-search').click(); } },
   { sect: 'Actions', name: 'Export all build orders', icon: 'i-library', run: () => $('bo-export-all').click() },
   { sect: 'Actions', name: 'Refresh games list', icon: 'i-swords', run: () => { tabButtons[1].click(); $('games-refresh').click(); } },
+  { sect: 'Actions', name: 'Toggle compact games rows', icon: 'i-swords', run: () => { tabButtons[1].click(); $('gf-density').click(); } },
+  { sect: 'Actions', name: 'Copy games summary', icon: 'i-swords', run: () => { tabButtons[1].click(); $('gf-copy').click(); } },
   { sect: 'Actions', name: 'Roll a random civilization', icon: 'i-dice', run: () => { tabButtons[4].click(); $('rand-civ').click(); } },
   { sect: 'Actions', name: 'Roll a random map', icon: 'i-map', run: () => { tabButtons[4].click(); $('rand-map').click(); } },
   { sect: 'Help', name: 'Keyboard shortcuts', icon: 'i-keyboard', key: 'Ctrl+/', run: () => scToggle(true) },
@@ -3579,6 +3581,18 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     $('palette').classList.contains('open') ? palClose() : palOpen();
   }
+});
+
+// quick single-key actions on the games tab (ignored while typing or in a dialog)
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
+  if (document.querySelector('.pal-wrap.open, #palette.open, #shortcuts.open')) return;
+  if (!$('tab-games')?.classList.contains('active')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'r') { e.preventDefault(); $('games-refresh').click(); }
+  else if (k === 'c') { e.preventDefault(); $('gf-density').click(); }
 });
 
 // ---------- about popover ----------
