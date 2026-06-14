@@ -1144,6 +1144,10 @@
     background: rgba(255,255,255,.055); }
   .gp .pinput, .gp .prand { flex: none; font-size: 10px; line-height: 1; opacity: .82; filter: saturate(.85); }
   .gp .prand { font-size: 11px; }
+  .gp .prating { flex: none; font-size: 10.5px; font-weight: 700; color: #7f8593;
+    font-variant-numeric: tabular-nums; margin-left: auto; }
+  .team-col.right .gp .prating { margin-left: 0; margin-right: auto; }
+  .gp.me .prating { color: #d8b65a; }
   .game-side { display: flex; flex-direction: column; align-items: stretch; justify-content: center;
                gap: 7px; padding: 12px 13px; min-width: 0; background: rgba(8,9,13,.32);
                border-left: 1px solid rgba(255,255,255,.07); }
@@ -4290,8 +4294,11 @@ function playerLine(p, pid, right) {
     ? `<span class="pdiff ${d >= 0 ? 'win' : 'loss'}">${d >= 0 ? '+' : ''}${d}</span>` : '';
   const dice = p.civilization_randomized
     ? `<span class="prand" title="Random civilization">🎲</span>` : '';
+  // each player's own rating for the match, distinct from the +/- diff
+  const rating = Number.isFinite(Number(p.rating))
+    ? `<span class="prating" title="Rating at match time">${Math.round(p.rating)}</span>` : '';
   return `<div class="gp ${me ? 'me' : ''}">${civFlag(p.civilization)}${dice}
-    <span class="pname" data-pfilter="${esc(p.name ?? '')}" title="${esc(p.name ?? '?')} — click to see all games with them">${esc(p.name ?? '?')}</span>${inputBadge(p)}${me ? diff : ''}</div>`;
+    <span class="pname" data-pfilter="${esc(p.name ?? '')}" title="${esc(p.name ?? '?')} — click to see all games with them">${esc(p.name ?? '?')}</span>${inputBadge(p)}${rating}${me ? diff : ''}</div>`;
 }
 
 function gameTeamBlock(team, pid, label, right = false) {
