@@ -1787,6 +1787,11 @@
     background: linear-gradient(110deg, #22222a 30%, #2b2b34 45%, #22222a 60%) 0 0 / 200% 100%;
     animation: skel 1.2s linear infinite; }
   @keyframes skel { to { background-position: -200% 0; } }
+  .skel-box, .skel-line, .skel-mode { background: linear-gradient(110deg, #22222a 30%, #2b2b34 45%, #22222a 60%) 0 0 / 200% 100%;
+    animation: skel 1.2s linear infinite; border-radius: 8px; }
+  .skel-line { height: 13px; border-radius: 5px; }
+  .skel-mode { min-width: 168px; height: 64px; flex: 1; border-radius: 13px; }
+  @media (prefers-reduced-motion: reduce) { .skel-box, .skel-line, .skel-mode { animation: none; } }
   #toasts { position: fixed; right: 18px; bottom: 44px; z-index: 50; display: flex; flex-direction: column;
     align-items: flex-end; gap: 8px; pointer-events: none; }
   .toast { position: relative; background: linear-gradient(180deg, #36719f, #2a587f);
@@ -4607,8 +4612,18 @@ function renderProfile() {
     <div class="prof-modes">${cards.join('')}</div>`;
 }
 
+function showProfileSkeleton() {
+  const el = $('games-profile');
+  if (!el || !settings.profile_id || playerProfile) return;
+  el.style.display = '';
+  el.innerHTML = `<div class="prof-id"><div class="prof-avatar skel-box"></div>
+      <div class="prof-id-text"><div class="skel-line" style="width:120px"></div><div class="skel-line" style="width:170px;height:9px;margin-top:7px"></div></div></div>
+    <div class="prof-modes">${'<div class="prof-mode skel-mode"></div>'.repeat(3)}</div>`;
+}
+
 async function loadPlayerProfile() {
   if (!settings.profile_id) { playerProfile = null; renderProfile(); return; }
+  showProfileSkeleton();
   try {
     playerProfile = await invoke('get_player_profile');
   } catch { playerProfile = null; }
