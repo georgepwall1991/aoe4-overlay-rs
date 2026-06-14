@@ -1213,6 +1213,7 @@
     box-shadow: 0 1px 2px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08); }
   .chip-group button.on[data-v=win] { color: #6fe04a; }
   .chip-group button.on[data-v=loss] { color: #ff7b66; }
+  .chip-group .chip-n { font-size: 10px; font-weight: 800; opacity: .65; margin-left: 1px; font-variant-numeric: tabular-nums; }
   #gf-clearbar { font-size: 11px; padding: 4px 10px; color: #ffd97a;
     border-color: rgba(255,200,69,.35); animation: tab-in .2s ease-out; }
   #gf-text.filter-on { border-color: rgba(224,186,94,.5); box-shadow: 0 0 0 2px rgba(224,186,94,.1); }
@@ -4598,7 +4599,7 @@ async function loadPlayerProfile() {
   renderProfile();
 }
 
-function applyGameFilters() {
+function applyGameFilters(ignoreResult = false) {
   const mode = $('gf-mode').value, res = $('gf-result').dataset.value;
   const text = $('gf-text').value.trim().toLowerCase();
   const pid = settings.profile_id;
@@ -4608,7 +4609,7 @@ function applyGameFilters() {
     if (mode === 'qm_' && !k.startsWith('qm_')) return false;
     if (mode === '1v1' && !k.endsWith('1v1')) return false;
     if (mode === 'team' && (k.endsWith('1v1') || !/^(rm|qm)_/.test(k))) return false;
-    if (res && gameResult(g, pid).result !== res) return false;
+    if (!ignoreResult && res && gameResult(g, pid).result !== res) return false;
     if (text) {
       const players = (g.teams || []).flat().map(m => m.player || m);
       const hay = [g.map, ...players.map(p => p.name), ...players.map(p => p.civilization)]
@@ -4906,6 +4907,25 @@ function gamesEmptyHtml(hasGames, filtered) {
   </div>`;
 }
 
+// Annotate the result filter chips with counts for the current mode/text scope.
+function updateResultCounts(pid) {
+  const scope = applyGameFilters(true);
+  let w = 0, l = 0;
+  for (const g of scope) {
+    const r = gameResult(g, pid).result;
+    if (r === 'win') w++; else if (r === 'loss') l++;
+  }
+  const grp = $('gf-result');
+  if (!grp) return;
+  const set = (v, base, n) => {
+    const b = grp.querySelector(`button[data-v="${v}"]`);
+    if (b) b.innerHTML = `${base}${n != null ? ` <span class="chip-n">${n}</span>` : ''}`;
+  };
+  set('', 'All', w + l);
+  set('win', 'Wins', w);
+  set('loss', 'Losses', l);
+}
+
 function sortGames(games, pid, mode) {
   if (mode === 'recent' || !mode) return games;
   const arr = [...games];
@@ -4928,6 +4948,7 @@ function renderGames() {
     ? (games.length === allGames.length ? `${games.length} games` : `${games.length}/${allGames.length} games`) : '';
   $('gf-clearbar').style.display = filtered && allGames.length ? '' : 'none';
   $('gf-text').classList.toggle('filter-on', !!$('gf-text').value.trim());
+  updateResultCounts(pid);
   renderGamesHero(games, pid, filtered);
   renderGameStats(games, pid);
   renderForm(games, pid);
