@@ -972,6 +972,29 @@
                transition: border-color .15s, transform .15s, box-shadow .15s;
                content-visibility: auto; contain-intrinsic-size: auto 136px; }
   #tab-games { max-width: 1240px; }
+  /* player profile banner — season standings from /players/{id} */
+  .games-profile { display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    margin: 0 0 14px; padding: 14px 16px; border: 1px solid rgba(255,255,255,.08); border-radius: 16px;
+    background: linear-gradient(135deg, rgba(34,36,46,.92), rgba(17,18,24,.92)); }
+  .prof-id { display: flex; align-items: center; gap: 12px; min-width: 180px; }
+  .prof-avatar { width: 46px; height: 46px; border-radius: 12px; object-fit: cover;
+    box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 6px 18px -8px #000; }
+  .prof-name { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 850; color: #fff; }
+  .prof-flag { width: 21px; height: 14px; border-radius: 3px; object-fit: cover; }
+  .prof-sub { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+  .prof-modes { display: flex; gap: 10px; flex: 1; flex-wrap: wrap; }
+  .prof-mode { position: relative; flex: 1; min-width: 168px; padding: 9px 12px 8px; border-radius: 13px;
+    background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.06);
+    border-top: 2px solid var(--tier); overflow: hidden; }
+  .prof-mode-head { display: flex; justify-content: space-between; align-items: baseline; }
+  .prof-tier { font-size: 11px; font-weight: 800; letter-spacing: .03em; color: var(--tier); }
+  .prof-mode-tag { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-muted); }
+  .prof-rating { font-size: 22px; font-weight: 850; color: #fff; line-height: 1.1; margin-top: 1px;
+    font-variant-numeric: tabular-nums; }
+  .prof-rank { font-size: 11px; font-weight: 700; color: var(--ink-muted); margin-left: 5px; }
+  .prof-line { display: flex; gap: 11px; margin-top: 3px; font-size: 11px; color: #aeb3bf; font-variant-numeric: tabular-nums; }
+  .prof-line .pos { color: #6fe04a; } .prof-line .neg { color: #ff7b66; }
+  .prof-spark { position: absolute; right: 8px; bottom: 6px; width: 86px; height: 26px; opacity: .9; pointer-events: none; }
   .games-hero { --hero-map: linear-gradient(135deg, #26262e, #16161c);
     position: relative; overflow: hidden; min-height: 232px; margin: 0 0 14px; padding: 18px;
     border: 1px solid rgba(224,186,94,.24); border-radius: 18px;
@@ -2317,6 +2340,7 @@
 
   <!-- ============ GAMES ============ -->
   <div class="tab" id="tab-games">
+    <section id="games-profile" class="games-profile" style="display:none" aria-live="polite"></section>
     <section id="games-hero" class="games-hero" style="display:none" aria-live="polite"></section>
     <div class="games-toolbar">
       <select id="gf-mode">
@@ -4383,6 +4407,92 @@ function renderGamesHero(games, pid, filtered) {
     </div>`;
 }
 
+// ---- player profile banner (rich standings from /players/{id}) ----
+let playerProfile = null;
+
+// Tier accent colours mirroring the in-game rank ladder.
+const RANK_TIERS = {
+  unranked: ['Unranked', '#6b7280'], bronze: ['Bronze', '#b07a4b'], silver: ['Silver', '#b9c2cf'],
+  gold: ['Gold', '#e7c14b'], platinum: ['Platinum', '#67d4d0'], diamond: ['Diamond', '#7aa8ff'],
+  conqueror: ['Conqueror', '#ff6f5e']
+};
+function rankInfo(level) {
+  const base = String(level ?? 'unranked').replace(/_\d+$/, '');
+  const [label, color] = RANK_TIERS[base] || RANK_TIERS.unranked;
+  const div = String(level ?? '').match(/_(\d+)$/)?.[1];
+  return { label: div ? `${label} ${div}` : label, color };
+}
+
+// Tiny inline-SVG sparkline for a rating-history series.
+function svgSpark(series, w = 132, h = 34) {
+  const v = (series || []).filter(n => Number.isFinite(n));
+  if (v.length < 2) return '';
+  const min = Math.min(...v), max = Math.max(...v), span = (max - min) || 1;
+  const x = i => 2 + i * (w - 4) / (v.length - 1);
+  const y = n => 2 + (max - n) * (h - 4) / span;
+  const up = v[v.length - 1] >= v[0];
+  const stroke = up ? '#6fe04a' : '#ff7b66';
+  const line = v.map((n, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(n).toFixed(1)}`).join(' ');
+  const area = `${line} L${x(v.length - 1).toFixed(1)} ${h} L2 ${h} Z`;
+  return `<svg class="prof-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+    <path d="${area}" fill="${stroke}" opacity=".14"/>
+    <path d="${line}" fill="none" stroke="${stroke}" stroke-width="1.6" stroke-linejoin="round"/>
+    <circle cx="${x(v.length - 1).toFixed(1)}" cy="${y(v[v.length - 1]).toFixed(1)}" r="2.1" fill="${stroke}"/>
+  </svg>`;
+}
+
+function profModeCard(key, m, label) {
+  if (!m || m.rating == null) return '';
+  const ranked = m.rank_level && m.rank_level !== 'unranked';
+  const r = ranked ? rankInfo(m.rank_level) : { label: '', color: '#7aa8ff' };
+  const wr = m.win_rate != null ? Math.round(m.win_rate) : null;
+  const streak = m.streak ?? 0;
+  const streakTxt = streak ? `${streak > 0 ? 'W' : 'L'}${Math.abs(streak)}` : '–';
+  return `<div class="prof-mode" style="--tier:${r.color}">
+    <div class="prof-mode-head"><span class="prof-tier">${esc(r.label || label)}</span>${r.label ? `<span class="prof-mode-tag">${esc(label)}</span>` : ''}</div>
+    <div class="prof-rating">${m.rating}${m.rank ? `<span class="prof-rank">#${m.rank}</span>` : ''}</div>
+    <div class="prof-line">
+      <span title="Win rate" class="${wr != null && wr >= 50 ? 'pos' : wr != null ? 'neg' : ''}">${wr != null ? wr + '%' : '–'}</span>
+      <span title="Games this season">${m.games_count ?? 0}g</span>
+      <span title="Current streak" class="${streak > 0 ? 'pos' : streak < 0 ? 'neg' : ''}">${streakTxt}</span>
+      ${m.max_rating ? `<span title="Season peak rating">▲${m.max_rating}</span>` : ''}
+    </div>
+    ${svgSpark(m.rating_history)}
+  </div>`;
+}
+
+function renderProfile() {
+  const el = $('games-profile');
+  if (!el) return;
+  const p = playerProfile;
+  if (!p || !p.modes) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const order = [['rm_solo', 'Ranked 1v1'], ['rm_team', 'Ranked Team'],
+    ['rm_1v1_elo', '1v1 ELO'], ['rm_2v2_elo', '2v2 ELO'], ['rm_3v3_elo', '3v3 ELO'], ['rm_4v4_elo', '4v4 ELO'],
+    ['qm_1v1', 'Quick 1v1'], ['qm_2v2', 'Quick 2v2'], ['qm_3v3', 'Quick 3v3'], ['qm_4v4', 'Quick 4v4']];
+  const cards = order.map(([k, lbl]) => profModeCard(k, p.modes[k], lbl)).filter(Boolean).slice(0, 4);
+  if (!cards.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const flag = p.country
+    ? `<img class="prof-flag" src="countries/${esc(String(p.country).toUpperCase())}.webp" onerror="this.style.display='none'">` : '';
+  el.style.display = '';
+  el.innerHTML = `
+    <div class="prof-id">
+      ${p.avatar ? `<img class="prof-avatar" src="${esc(p.avatar)}" onerror="this.style.display='none'">` : ''}
+      <div class="prof-id-text">
+        <div class="prof-name">${flag}${esc(p.name ?? 'Player')}</div>
+        <div class="prof-sub">${p.last_game_at ? `Last played ${esc(timeAgo(p.last_game_at))}` : 'Season standings'}</div>
+      </div>
+    </div>
+    <div class="prof-modes">${cards.join('')}</div>`;
+}
+
+async function loadPlayerProfile() {
+  if (!settings.profile_id) { playerProfile = null; renderProfile(); return; }
+  try {
+    playerProfile = await invoke('get_player_profile');
+  } catch { playerProfile = null; }
+  renderProfile();
+}
+
 function applyGameFilters() {
   const mode = $('gf-mode').value, res = $('gf-result').dataset.value;
   const text = $('gf-text').value.trim().toLowerCase();
@@ -4669,6 +4779,7 @@ async function loadGames() {
   list.innerHTML = '<div class="skel-card"></div>'.repeat(4);
   btn.disabled = true; btn.textContent = 'Refreshing…'; btn.classList.add('busy');
   const prevTop = allGames[0]?.game_id;
+  loadPlayerProfile();
   try {
     const data = await invoke('get_match_history');
     allGames = data.games || [];

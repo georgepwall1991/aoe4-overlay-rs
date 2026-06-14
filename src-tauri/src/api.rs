@@ -69,6 +69,76 @@ pub async fn get_last_game(client: &reqwest::Client, profile_id: u64) -> Result<
     get_json(client, &format!("{BASE}/players/{profile_id}/games/last")).await
 }
 
+/// Fetch a player's full profile and distil the per-leaderboard standings the
+/// match-history payload doesn't carry: current rank level, peak rating, win
+/// rate, streak and a season rating-history sparkline.
+pub async fn get_player_profile(
+    client: &reqwest::Client,
+    profile_id: u64,
+) -> Result<Value, String> {
+    let p = get_json(client, &format!("{BASE}/players/{profile_id}")).await?;
+    // The direct profile endpoint exposes standings under `modes` (the ranked
+    // ladder plus per-bracket ELO/quick-match ratings), not `leaderboards`.
+    let boards = [
+        "rm_solo",
+        "rm_team",
+        "rm_1v1_elo",
+        "rm_2v2_elo",
+        "rm_3v3_elo",
+        "rm_4v4_elo",
+        "qm_1v1",
+        "qm_2v2",
+        "qm_3v3",
+        "qm_4v4",
+    ];
+    let mut modes = serde_json::Map::new();
+    for key in boards {
+        let lb = &p["modes"][key];
+        // Skip brackets the player has no rating in this season.
+        if lb.is_null() || lb["rating"].is_null() {
+            continue;
+        }
+        // Compress rating_history (timestamp -> {rating}) into a chronological list
+        let mut hist: Vec<(u64, i64)> = lb["rating_history"]
+            .as_object()
+            .map(|h| {
+                h.iter()
+                    .filter_map(|(ts, v)| Some((ts.parse::<u64>().ok()?, v["rating"].as_i64()?)))
+                    .collect()
+            })
+            .unwrap_or_default();
+        hist.sort_by_key(|(ts, _)| *ts);
+        let skip = hist.len().saturating_sub(40);
+        let history: Vec<i64> = hist.into_iter().skip(skip).map(|(_, r)| r).collect();
+        modes.insert(
+            key.to_string(),
+            serde_json::json!({
+                "rating": lb["rating"],
+                "max_rating": lb["max_rating"],
+                "rank": lb["rank"],
+                "rank_level": lb["rank_level"],
+                "streak": lb["streak"],
+                "games_count": lb["games_count"],
+                "wins_count": lb["wins_count"],
+                "losses_count": lb["losses_count"],
+                "win_rate": lb["win_rate"],
+                "season": lb["season"],
+                "last_game_at": lb["last_game_at"],
+                "rating_history": history,
+            }),
+        );
+    }
+    Ok(serde_json::json!({
+        "profile_id": p["profile_id"],
+        "name": p["name"],
+        "country": p["country"],
+        "avatar": p["avatars"]["medium"],
+        "social": p["social"],
+        "last_game_at": p["last_game_at"],
+        "modes": Value::Object(modes),
+    }))
+}
+
 pub async fn get_match_history(
     client: &reqwest::Client,
     profile_id: u64,

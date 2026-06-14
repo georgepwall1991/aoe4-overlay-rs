@@ -72,6 +72,13 @@ async fn get_match_history(state: State<'_, AppState>) -> Result<Value, String> 
 }
 
 #[tauri::command]
+async fn get_player_profile(state: State<'_, AppState>) -> Result<Value, String> {
+    let pid = { state.settings.lock().unwrap().profile_id };
+    let pid = pid.ok_or("no profile selected")?;
+    api::get_player_profile(&state.http, pid).await
+}
+
+#[tauri::command]
 fn get_settings(state: State<'_, AppState>) -> Settings {
     state.settings.lock().unwrap().clone()
 }
@@ -2322,6 +2329,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             search_player,
             get_match_history,
+            get_player_profile,
             get_settings,
             save_settings,
             get_current_data,
