@@ -1107,6 +1107,8 @@
   .gp.me .pname { color: #ffd97a; font-weight: 700; }
   .gp .pdiff { flex: none; font-size: 11px; font-weight: 850; padding: 1px 6px; border-radius: 999px;
     background: rgba(255,255,255,.055); }
+  .gp .pinput, .gp .prand { flex: none; font-size: 10px; line-height: 1; opacity: .82; filter: saturate(.85); }
+  .gp .prand { font-size: 11px; }
   .game-side { display: flex; flex-direction: column; align-items: stretch; justify-content: center;
                gap: 7px; padding: 12px 13px; min-width: 0; background: rgba(8,9,13,.32);
                border-left: 1px solid rgba(255,255,255,.07); }
@@ -4222,13 +4224,23 @@ function timeAgo(iso) {
 const fmtDur = sec => sec ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : '';
 const fmtMode = k => (k ?? '').replace(/^rm_/, 'Ranked ').replace(/^qm_/, 'Quick ').replace(/^custom.*/, 'Custom');
 
+// Compact glyph for how a player controls the game (controller vs mouse/keyboard).
+function inputBadge(p) {
+  const t = (p.input_type ?? '').toLowerCase();
+  if (t === 'controller' || t === 'gamepad')
+    return `<span class="pinput" title="Playing on controller">🎮</span>`;
+  return '';
+}
+
 function playerLine(p, pid, right) {
   const me = p.profile_id === pid;
   const d = p.rating_diff;
   const diff = (d ?? null) !== null
     ? `<span class="pdiff ${d >= 0 ? 'win' : 'loss'}">${d >= 0 ? '+' : ''}${d}</span>` : '';
-  return `<div class="gp ${me ? 'me' : ''}">${civFlag(p.civilization)}
-    <span class="pname" data-pfilter="${esc(p.name ?? '')}" title="${esc(p.name ?? '?')} — click to see all games with them">${esc(p.name ?? '?')}</span>${me ? diff : ''}</div>`;
+  const dice = p.civilization_randomized
+    ? `<span class="prand" title="Random civilization">🎲</span>` : '';
+  return `<div class="gp ${me ? 'me' : ''}">${civFlag(p.civilization)}${dice}
+    <span class="pname" data-pfilter="${esc(p.name ?? '')}" title="${esc(p.name ?? '?')} — click to see all games with them">${esc(p.name ?? '?')}</span>${inputBadge(p)}${me ? diff : ''}</div>`;
 }
 
 function gameTeamBlock(team, pid, label, right = false) {
