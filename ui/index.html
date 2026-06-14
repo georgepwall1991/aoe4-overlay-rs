@@ -1005,6 +1005,7 @@
   .form-pip.w { background: linear-gradient(160deg, #6fe04a, #3a9c18); box-shadow: 0 0 6px -2px rgba(111,224,74,.7); }
   .form-pip.l { background: linear-gradient(160deg, #ff7b66, #c0341f); box-shadow: 0 0 6px -2px rgba(224,69,47,.6); }
   .form-hint { font-size: 10px; color: var(--ink-muted); flex: none; opacity: .7; }
+  .map-medal { font-size: 11px; margin-right: 3px; vertical-align: 1px; }
   .games-hero { --hero-map: linear-gradient(135deg, #26262e, #16161c);
     position: relative; overflow: hidden; min-height: 232px; margin: 0 0 14px; padding: 18px;
     border: 1px solid rgba(224,186,94,.24); border-radius: 18px;
@@ -4702,10 +4703,20 @@ function renderGameStats(games, pid) {
     byMap[m].n++;
     if (r.result === 'win') byMap[m].w++;
   });
+  // crown the best (fortress) and worst (bogey) maps among those with >=2 games
+  const rated = Object.entries(byMap).filter(([, v]) => v.n >= 2)
+    .map(([m, v]) => [m, Math.round(v.w / v.n * 100)]);
+  let bestMap, worstMap;
+  if (rated.length >= 2) {
+    const byWr = [...rated].sort((a, b) => b[1] - a[1]);
+    if (byWr[0][1] > byWr[byWr.length - 1][1]) { bestMap = byWr[0][0]; worstMap = byWr[byWr.length - 1][0]; }
+  }
   const topMaps = Object.entries(byMap).sort((a, b) => b[1].n - a[1].n).slice(0, 4);
   $('gs-maps').innerHTML = topMaps.map(([m, v]) => {
     const p = Math.round(v.w / v.n * 100);
-    return `<div class="civ-row" data-filter="${esc(m)}" title="Click to filter the list to ${esc(m)}"><span style="width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${esc(m)}</span>
+    const medal = m === bestMap ? '<span class="map-medal" title="Your best map">🏰</span>'
+      : m === worstMap ? '<span class="map-medal" title="Your weakest map">💀</span>' : '';
+    return `<div class="civ-row" data-filter="${esc(m)}" title="Click to filter the list to ${esc(m)}"><span style="width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${medal}${esc(m)}</span>
       <span class="bar"><i${barCls(p)} style="width:${p}%"></i></span><span class="pct">${p}% · ${v.n}g</span></div>`;
   }).join('') || '';
 }
