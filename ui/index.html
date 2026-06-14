@@ -1087,6 +1087,8 @@
   .badge.mode { background: rgba(122,182,255,.14); color: #9cc6ff; }
   .badge.mode.ranked { background: var(--gold-faint); color: var(--gold);
     box-shadow: inset 0 0 0 1px var(--gold-dim); }
+  .badge.meta { background: rgba(255,255,255,.05); color: #9097a4; font-weight: 650;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
   @keyframes pulse { 50% { opacity: .55; } }
   .game-teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 11px; }
   .team-col { min-width: 0; padding: 8px 9px; border-radius: 12px; background: rgba(9,10,15,.34);
@@ -4223,6 +4225,16 @@ function timeAgo(iso) {
 
 const fmtDur = sec => sec ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : '';
 const fmtMode = k => (k ?? '').replace(/^rm_/, 'Ranked ').replace(/^qm_/, 'Quick ').replace(/^custom.*/, 'Custom');
+// Normalise the assorted server codes aoe4world reports into tidy short labels.
+const SERVER_LABELS = { eu: 'EU', uk: 'UK', ukwest: 'UK', westeurope: 'EU', northeurope: 'EU',
+  westus: 'US W', eastus: 'US E', westus2: 'US W', centralus: 'US C', australiaeast: 'OCE',
+  southeastasia: 'SEA', eastasia: 'Asia', koreacentral: 'KR', japaneast: 'JP', brazilsouth: 'BR',
+  southafricanorth: 'ZA', southcentralus: 'US S', indiacentral: 'IN' };
+const fmtServer = s => {
+  if (!s) return '';
+  const k = String(s).toLowerCase().replace(/[\s_-]/g, '');
+  return SERVER_LABELS[k] || String(s).toUpperCase();
+};
 
 // Compact glyph for how a player controls the game (controller vs mouse/keyboard).
 function inputBadge(p) {
@@ -4596,6 +4608,8 @@ function renderGames() {
             <span class="map-name">${esc(g.map ?? '?')}</span>
             ${badge}
             <span class="badge mode${(g.kind ?? '').startsWith('rm_') ? ' ranked' : ''}">${fmtMode(g.kind)}</span>
+            ${g.server ? `<span class="badge meta" title="Match server">${esc(fmtServer(g.server))}</span>` : ''}
+            ${g.average_rating ? `<span class="badge meta" title="Average lobby rating">~${Math.round(g.average_rating)}</span>` : ''}
           </div>
           <div class="game-teams">
             ${gameTeamBlock(myTeam, pid, 'Your side')}
