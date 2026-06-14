@@ -1060,6 +1060,7 @@
   .hero-pill.win { color: #91f172; border-color: rgba(111,224,74,.34); background: rgba(72,189,33,.15); }
   .hero-pill.loss { color: #ff9a89; border-color: rgba(255,123,102,.34); background: rgba(224,69,47,.16); }
   .hero-pill.live { color: #ffd86a; border-color: rgba(255,200,69,.4); background: rgba(255,179,0,.16); }
+  .hero-pill.ghost { color: #9398a4; background: rgba(15,15,19,.32); border-color: rgba(255,255,255,.06); font-weight: 600; }
   .games-hero-teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: stretch; }
   .hero-team { min-width: 0; padding: 11px; border-radius: 13px; background: rgba(13,13,17,.58);
     border: 1px solid rgba(255,255,255,.09); box-shadow: 0 10px 28px -20px rgba(0,0,0,.85); }
@@ -4465,6 +4466,9 @@ function renderGamesHero(games, pid, filtered) {
             <span class="hero-pill">${esc(fmtMode(g.kind) || 'Unknown mode')}</span>
             <span class="hero-pill">${esc(g.started_at ? timeAgo(g.started_at) : 'Time unknown')}</span>
             ${fmtDur(g.duration) ? `<span class="hero-pill">${esc(fmtDur(g.duration))}</span>` : ''}
+            ${g.server ? `<span class="hero-pill ghost" title="Match server">${esc(fmtServer(g.server))}</span>` : ''}
+            ${g.season ? `<span class="hero-pill ghost" title="Ranked season">S${esc(String(g.season))}</span>` : ''}
+            ${g.patch ? `<span class="hero-pill ghost" title="Game patch">Patch ${esc(String(g.patch))}</span>` : ''}
           </div>
         </div>
         <div class="games-hero-teams">
