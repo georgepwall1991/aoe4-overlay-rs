@@ -1027,6 +1027,9 @@
   .ins-chip:nth-child(4) { animation-delay: .15s; }
   @keyframes chip-in { from { opacity: 0; transform: translateY(5px); } }
   @media (prefers-reduced-motion: reduce) { .ins-chip { animation: none; } }
+  .ins-chip.ins-link, .ins-chip.ins-filter { cursor: pointer; text-decoration: none; }
+  .ins-chip.ins-link:hover, .ins-chip.ins-filter:hover { border-color: rgba(255,217,122,.4); color: #ffe3a3; }
+  .ins-chip.ins-filter:focus-visible { outline: 2px solid rgba(255,217,122,.6); outline-offset: 2px; }
   /* compact density for long review sessions: drop the map poster, tighten rows */
   #games-list.compact .game-poster { display: none; }
   #games-list.compact .game-card { grid-template-columns: minmax(0, 1fr) 104px; }
@@ -4854,10 +4857,10 @@ function renderInsights(games, pid) {
     const opp = (gameTeams(g).find(t => !t.some(p => p.profile_id === pid)) || []);
     for (const p of opp) {
       const rt = Number(p.rating);
-      if (Number.isFinite(rt) && (!scalp || rt > scalp.rating)) scalp = { rating: rt, name: p.name, civ: p.civilization };
+      if (Number.isFinite(rt) && (!scalp || rt > scalp.rating)) scalp = { rating: rt, name: p.name, civ: p.civilization, gid: g.game_id };
     }
   }
-  if (scalp) chips.push(`<span class="ins-chip" title="Highest-rated opponent you beat in this set">🏆 Best win <b>${esc(scalp.name ?? '?')}</b> ${scalp.rating}</span>`);
+  if (scalp) chips.push(`<a class="ins-chip ins-link" target="_blank" href="https://aoe4world.com/players/${pid}/games/${scalp.gid}" title="Highest-rated opponent you beat in this set — open the game">🏆 Best win <b>${esc(scalp.name ?? '?')}</b> ${scalp.rating}</a>`);
 
   // best win streak within the set (chronological)
   const chrono = [...decided].reverse();
@@ -4871,7 +4874,7 @@ function renderInsights(games, pid) {
   const comfort = Object.entries(byCiv).sort((a, b) => b[1].n - a[1].n)[0];
   if (comfort && comfort[1].n >= 2) {
     const wr = Math.round(comfort[1].w / comfort[1].n * 100);
-    chips.push(`<span class="ins-chip" title="Your most-played civ in this set">🛡 Comfort <b>${esc(civTitle(comfort[0]))}</b> ${wr}%</span>`);
+    chips.push(`<span class="ins-chip ins-filter" role="button" tabindex="0" data-filter="${esc(civTitle(comfort[0]))}" title="Filter the list to your ${esc(civTitle(comfort[0]))} games">🛡 Comfort <b>${esc(civTitle(comfort[0]))}</b> ${wr}%</span>`);
   }
 
   // average opponent rating faced
@@ -5224,13 +5227,19 @@ $('gf-copy').onclick = async () => {
   } catch {}
 };
 // stat rows double as one-click filters: clicking a civ/map narrows the list to it
-['gs-civs', 'gs-maps'].forEach(id => $(id).addEventListener('click', e => {
+['gs-civs', 'gs-maps', 'games-insights'].forEach(id => $(id).addEventListener('click', e => {
   const row = e.target.closest('[data-filter]');
   if (!row) return;
   const f = row.dataset.filter;
   $('gf-text').value = $('gf-text').value.toLowerCase() === f.toLowerCase() ? '' : f;
   renderGames();
 }));
+// keyboard activation for the filter insight chip
+$('games-insights').addEventListener('keydown', e => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset?.filter) {
+    e.preventDefault(); e.target.click();
+  }
+});
 function setResultChip(v) {
   const grp = $('gf-result');
   grp.dataset.value = v;
