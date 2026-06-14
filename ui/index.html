@@ -4394,6 +4394,26 @@ function renderGamesHero(games, pid, filtered) {
     : result ? `<span class="hero-pill ${result}">${result}</span>` : '<span class="hero-pill">Result pending</span>';
   const mapUrl = encodeURI(gameMapAsset(g.map)).replace(/["\\]/g, '');
 
+  // toughest matchup across the loaded set: the opponent civ with the worst
+  // winrate (min 2 games) — your nemesis to scout against
+  const vsCiv = {};
+  for (const game of games) {
+    const r = gameResult(game, pid);
+    if (r.result !== 'win' && r.result !== 'loss') continue;
+    const gteams = gameTeams(game);
+    const mine = gteams.find(t => t.some(p => p.profile_id === pid)) || [];
+    const opp = gteams.filter(t => t !== mine).flat();
+    const civs = [...new Set(opp.map(p => p.civilization).filter(Boolean))];
+    for (const c of civs) {
+      vsCiv[c] = vsCiv[c] || { n: 0, w: 0 };
+      vsCiv[c].n++;
+      if (r.result === 'win') vsCiv[c].w++;
+    }
+  }
+  const nemesis = Object.entries(vsCiv).filter(([, v]) => v.n >= 2)
+    .map(([c, v]) => ({ c, n: v.n, wr: Math.round(v.w / v.n * 100) }))
+    .sort((a, b) => a.wr - b.wr || b.n - a.n)[0];
+
   hero.className = `games-hero hero-${tone}`;
   hero.style.display = '';
   hero.style.setProperty('--hero-map', `url("${mapUrl}")`);
@@ -4434,6 +4454,11 @@ function renderGamesHero(games, pid, filtered) {
           <div class="label">Record</div>
           <div class="value ${wr !== null && wr >= 50 ? 'pos' : wr !== null ? 'neg' : ''}">${finished.length ? `${wins}W ${losses}L` : '-'}</div>
           <div class="note">${wr !== null ? `${wr}% winrate` : 'No finished games'}</div>
+        </div>
+        <div class="hero-metric">
+          <div class="label">Toughest matchup</div>
+          <div class="value ${nemesis ? (nemesis.wr < 50 ? 'neg' : nemesis.wr > 50 ? 'pos' : '') : ''}">${nemesis ? esc(civTitle(nemesis.c)) : '–'}</div>
+          <div class="note">${nemesis ? `${nemesis.wr}% over ${nemesis.n} game${nemesis.n > 1 ? 's' : ''}` : 'Need more games'}</div>
         </div>
       </div>
     </div>`;
