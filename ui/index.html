@@ -4377,6 +4377,19 @@ function renderGamesHero(games, pid, filtered) {
   const ratingClass = !live && (d ?? null) !== null ? (d >= 0 ? 'pos' : 'neg') : '';
   const ratingValue = live ? 'Live now' : ((d ?? null) !== null ? `${d >= 0 ? '+' : ''}${d}` : 'Unrated');
   const opponentNames = opposition.map(p => p.name).filter(Boolean).slice(0, 2).join(', ') || 'Opposition';
+  // rating edge: my side's average rating vs the opposition's
+  const avgRating = side => {
+    const v = side.map(p => Number(p.rating)).filter(Number.isFinite);
+    return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+  };
+  const mineAvg = avgRating(myTeam), oppAvg = avgRating(opposition);
+  let edge = '';
+  if (mineAvg != null && oppAvg != null) {
+    const gap = Math.round(mineAvg - oppAvg);
+    const cls = gap >= 60 ? 'win' : gap <= -60 ? 'loss' : '';
+    const txt = gap >= 60 ? `Favored +${gap}` : gap <= -60 ? `Underdog ${gap}` : `Even ${gap >= 0 ? '+' : ''}${gap}`;
+    edge = `<span class="hero-pill ${cls}" title="Your side's average rating vs the opposition's">${txt}</span>`;
+  }
   const badge = live ? '<span class="hero-pill live">Live</span>'
     : result ? `<span class="hero-pill ${result}">${result}</span>` : '<span class="hero-pill">Result pending</span>';
   const mapUrl = encodeURI(gameMapAsset(g.map)).replace(/["\\]/g, '');
@@ -4392,6 +4405,7 @@ function renderGamesHero(games, pid, filtered) {
           <div class="games-hero-title">
             <span>${esc(g.map ?? 'Unknown map')}</span>
             ${badge}
+            ${edge}
           </div>
           <div class="games-hero-sub">
             <span class="hero-pill">${esc(fmtMode(g.kind) || 'Unknown mode')}</span>
