@@ -4318,6 +4318,20 @@ function renderMatch(d) {
 
 // ---------- games tab ----------
 const civTitle = c => (c ?? '').replace(/_/g, ' ').replace(/\b\w/g, m => m.toUpperCase());
+// Some games (notably quick match) carry only MMR, not rating — fall back so
+// ratings and diffs still surface everywhere instead of showing blanks.
+function pRating(p) {
+  const r = Number(p?.rating);
+  if (Number.isFinite(r)) return r;
+  const m = Number(p?.mmr);
+  return Number.isFinite(m) ? m : NaN;
+}
+function pDiff(p) {
+  const d = p?.rating_diff;
+  if ((d ?? null) !== null) return d;
+  const m = p?.mmr_diff;
+  return (m ?? null) !== null ? m : null;
+}
 
 function civFlag(civ) {
   const t = civTitle(civ);
@@ -4362,20 +4376,21 @@ function inputBadge(p) {
 
 function playerLine(p, pid, right) {
   const me = p.profile_id === pid;
-  const d = p.rating_diff;
+  const d = pDiff(p);
   const diff = (d ?? null) !== null
     ? `<span class="pdiff ${d >= 0 ? 'win' : 'loss'}">${d >= 0 ? '+' : ''}${d}</span>` : '';
   const dice = p.civilization_randomized
     ? `<span class="prand" title="Random civilization">🎲</span>` : '';
-  // each player's own rating for the match, distinct from the +/- diff
-  const rating = Number.isFinite(Number(p.rating))
-    ? `<span class="prating" title="Rating at match time">${Math.round(p.rating)}</span>` : '';
+  // each player's own rating (or MMR) for the match, distinct from the +/- diff
+  const pr = pRating(p);
+  const rating = Number.isFinite(pr)
+    ? `<span class="prating" title="${p.rating != null ? 'Rating' : 'MMR'} at match time">${Math.round(pr)}</span>` : '';
   return `<div class="gp ${me ? 'me' : ''}">${civFlag(p.civilization)}${dice}
     <span class="pname" data-pfilter="${esc(p.name ?? '')}" title="${esc(p.name ?? '?')} — click to see all games with them">${esc(p.name ?? '?')}</span>${inputBadge(p)}${rating}${me ? diff : ''}</div>`;
 }
 
 function gameTeamBlock(team, pid, label, right = false) {
-  const rating = team.map(p => Number(p.rating)).filter(Number.isFinite);
+  const rating = team.map(pRating).filter(Number.isFinite);
   const avg = rating.length ? Math.round(rating.reduce((a, b) => a + b, 0) / rating.length) : null;
   return `<div class="team-col ${right ? 'right' : ''}">
     <div class="team-label"><span>${label}</span><b>${avg ? `${avg} avg` : `${team.length || '?'}P`}</b></div>
@@ -4452,7 +4467,7 @@ function renderGamesHero(games, pid, filtered) {
   const opponentNames = opposition.map(p => p.name).filter(Boolean).slice(0, 2).join(', ') || 'Opposition';
   // rating edge: my side's average rating vs the opposition's
   const avgRating = side => {
-    const v = side.map(p => Number(p.rating)).filter(Number.isFinite);
+    const v = side.map(pRating).filter(Number.isFinite);
     return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
   };
   const mineAvg = avgRating(myTeam), oppAvg = avgRating(opposition);
@@ -4519,7 +4534,7 @@ function renderGamesHero(games, pid, filtered) {
         <div class="hero-metric primary">
           <div class="label">Rating move</div>
           <div class="value ${ratingClass}">${ratingValue}</div>
-          <div class="note">${esc(me?.rating ? `Now ${me.rating}` : opponentNames)}</div>
+          <div class="note">${esc(Number.isFinite(pRating(me)) ? `Now ${Math.round(pRating(me))}` : opponentNames)}</div>
         </div>
         <div class="hero-metric">
           <div class="label">Viewed set</div>
@@ -4753,9 +4768,9 @@ function renderGameStats(games, pid) {
   games.forEach(g => {
     const r = gameResult(g, pid);
     if (r.result !== 'win' && r.result !== 'loss') return;
-    const myR = Number(r.me?.rating);
+    const myR = pRating(r.me);
     const opp = (gameTeams(g).find(t => !t.some(p => p.profile_id === pid)) || []);
-    const oppR = opp.map(p => Number(p.rating)).filter(Number.isFinite);
+    const oppR = opp.map(pRating).filter(Number.isFinite);
     if (!Number.isFinite(myR) || !oppR.length) return;
     const oppAvg = oppR.reduce((a, b) => a + b, 0) / oppR.length;
     expSum += 1 / (1 + Math.pow(10, (oppAvg - myR) / 400));
@@ -4856,8 +4871,8 @@ function renderInsights(games, pid) {
     if (r.result !== 'win') continue;
     const opp = (gameTeams(g).find(t => !t.some(p => p.profile_id === pid)) || []);
     for (const p of opp) {
-      const rt = Number(p.rating);
-      if (Number.isFinite(rt) && (!scalp || rt > scalp.rating)) scalp = { rating: rt, name: p.name, civ: p.civilization, gid: g.game_id };
+      const rt = pRating(p);
+      if (Number.isFinite(rt) && (!scalp || rt > scalp.rating)) scalp = { rating: Math.round(rt), name: p.name, civ: p.civilization, gid: g.game_id };
     }
   }
   if (scalp) chips.push(`<a class="ins-chip ins-link" target="_blank" href="https://aoe4world.com/players/${pid}/games/${scalp.gid}" title="Highest-rated opponent you beat in this set — open the game">🏆 Best win <b>${esc(scalp.name ?? '?')}</b> ${scalp.rating}</a>`);
@@ -4881,7 +4896,7 @@ function renderInsights(games, pid) {
   const oppRatings = [];
   decided.forEach(({ g }) => {
     const opp = (gameTeams(g).find(t => !t.some(p => p.profile_id === pid)) || []);
-    opp.forEach(p => { const rt = Number(p.rating); if (Number.isFinite(rt)) oppRatings.push(rt); });
+    opp.forEach(p => { const rt = pRating(p); if (Number.isFinite(rt)) oppRatings.push(rt); });
   });
   if (oppRatings.length) {
     const avg = Math.round(oppRatings.reduce((a, b) => a + b, 0) / oppRatings.length);
@@ -5040,9 +5055,10 @@ function renderGames() {
       const live = !!g.ongoing;
       const result = live ? 'live' : (me?.result === 'win' ? 'win' : me?.result === 'loss' ? 'loss' : '');
       if (result === 'win') wins++; else if (result === 'loss') losses++;
-      const d = me?.rating_diff;
+      const d = pDiff(me);
+      const meR = pRating(me);
       const rdiff = live ? '' : (d ?? null) !== null
-        ? `<div class="rdiff ${d >= 0 ? 'pos' : 'neg'}" title="Rating ${d >= 0 ? 'gained' : 'lost'}${me?.rating ? ` — now ${me.rating}` : ''}">${d >= 0 ? '+' : ''}${d}</div>`
+        ? `<div class="rdiff ${d >= 0 ? 'pos' : 'neg'}" title="Rating ${d >= 0 ? 'gained' : 'lost'}${Number.isFinite(meR) ? ` — now ${Math.round(meR)}` : ''}">${d >= 0 ? '+' : ''}${d}</div>`
         : '<div class="rdiff na" title="Unrated game">—</div>';
       const mapImg = gameMapAsset(g.map);
       const badge = live ? '<span class="badge live">Live</span>'
@@ -5050,10 +5066,10 @@ function renderGames() {
       const myTeam = teams.find(t => t.some(p => p.profile_id === pid)) || teams[0] || [];
       const opposition = teams.filter(t => t !== myTeam).flat();
       // upset detector: beating a meaningfully higher-rated side, or losing to a lower-rated one
-      const oppR = opposition.map(p => Number(p.rating)).filter(Number.isFinite);
-      const myR = Number(me?.rating);
+      const oppR = opposition.map(pRating).filter(Number.isFinite);
+      const myR = pRating(me);
       // pre-game win probability from team rating averages (Elo expected score)
-      const myTeamR = myTeam.map(p => Number(p.rating)).filter(Number.isFinite);
+      const myTeamR = myTeam.map(pRating).filter(Number.isFinite);
       let winProb = '';
       if (myTeamR.length && oppR.length) {
         const a = myTeamR.reduce((x, y) => x + y, 0) / myTeamR.length;
