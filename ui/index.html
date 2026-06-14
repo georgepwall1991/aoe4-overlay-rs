@@ -2374,6 +2374,12 @@
         <button data-v="loss" aria-pressed="false">Losses</button>
       </div>
       <input id="gf-text" type="search" placeholder="Filter by map, civ or player…  ( / )" style="width:200px">
+      <select id="gf-sort" title="Sort the list">
+        <option value="recent">Most recent</option>
+        <option value="swing">Biggest swing</option>
+        <option value="longest">Longest</option>
+        <option value="shortest">Shortest</option>
+      </select>
       <select id="gf-limit" title="How many games to fetch">
         <option value="25">Last 25</option>
         <option value="50">Last 50</option>
@@ -4782,10 +4788,23 @@ function gamesEmptyHtml(hasGames, filtered) {
   </div>`;
 }
 
+function sortGames(games, pid, mode) {
+  if (mode === 'recent' || !mode) return games;
+  const arr = [...games];
+  if (mode === 'longest') arr.sort((a, b) => (b.duration || 0) - (a.duration || 0));
+  else if (mode === 'shortest') arr.sort((a, b) => (a.duration || Infinity) - (b.duration || Infinity));
+  else if (mode === 'swing') {
+    const sw = g => Math.abs(Number(gameResult(g, pid).me?.rating_diff) || 0);
+    arr.sort((a, b) => sw(b) - sw(a));
+  }
+  return arr;
+}
+
 function renderGames() {
   const list = $('games-list');
   const pid = settings.profile_id;
-  const games = applyGameFilters();
+  const sortMode = $('gf-sort')?.value || 'recent';
+  const games = sortGames(applyGameFilters(), pid, sortMode);
   const filtered = games.length !== allGames.length || $('gf-text').value.trim() !== '';
   $('gf-count').textContent = allGames.length
     ? (games.length === allGames.length ? `${games.length} games` : `${games.length}/${allGames.length} games`) : '';
@@ -4816,7 +4835,8 @@ function renderGames() {
     }
     let lastBucket = null;
     for (const g of games) {
-      const bucket = dayBucket(g.started_at);
+      // day headers only make sense in chronological order
+      const bucket = sortMode === 'recent' ? dayBucket(g.started_at) : '';
       if (bucket && bucket !== lastBucket) {
         const rec = bucketRec[bucket];
         html += `<div class="games-day">${bucket}${rec
@@ -4912,6 +4932,7 @@ async function loadGames() {
   } finally { btn.disabled = false; btn.textContent = 'Refresh'; btn.classList.remove('busy'); }
 }
 $('gf-mode').onchange = renderGames;
+$('gf-sort').onchange = renderGames;
 // hovering a card's map thumbnail floats a large preview of the map art
 const mapPeek = document.createElement('div');
 mapPeek.id = 'map-peek';
