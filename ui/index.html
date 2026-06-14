@@ -4965,13 +4965,16 @@ function renderGames() {
       if (days < 7) return 'This week';
       return 'Earlier';
     };
-    // per-bucket W–L so each day header doubles as a mini scoreboard
+    // per-bucket W–L and net rating so each day header doubles as a mini scoreboard
     const bucketRec = {};
     for (const g of games) {
-      const b = dayBucket(g.started_at), r = gameResult(g, pid).result;
+      const b = dayBucket(g.started_at), gr = gameResult(g, pid);
+      const r = gr.result;
       if (!b || (r !== 'win' && r !== 'loss')) continue;
-      bucketRec[b] = bucketRec[b] || { w: 0, l: 0 };
+      bucketRec[b] = bucketRec[b] || { w: 0, l: 0, net: 0 };
       bucketRec[b][r === 'win' ? 'w' : 'l']++;
+      const dd = Number(gr.me?.rating_diff);
+      if (Number.isFinite(dd)) bucketRec[b].net += dd;
     }
     let lastBucket = null;
     for (const g of games) {
@@ -4979,8 +4982,10 @@ function renderGames() {
       const bucket = sortMode === 'recent' ? dayBucket(g.started_at) : '';
       if (bucket && bucket !== lastBucket) {
         const rec = bucketRec[bucket];
+        const wr = rec && (rec.w + rec.l) ? Math.round(rec.w / (rec.w + rec.l) * 100) : null;
+        const netTxt = rec && rec.net ? `<b class="${rec.net >= 0 ? 'w' : 'l'}">${rec.net >= 0 ? '+' : ''}${rec.net}</b>` : '';
         html += `<div class="games-day">${bucket}${rec
-          ? ` <span class="day-rec"><b class="w">${rec.w}W</b>–<b class="l">${rec.l}L</b></span>` : ''}</div>`;
+          ? ` <span class="day-rec"><b class="w">${rec.w}W</b>–<b class="l">${rec.l}L</b>${wr !== null ? ` · ${wr}%` : ''}${netTxt ? ` · ${netTxt}` : ''}</span>` : ''}</div>`;
         lastBucket = bucket;
       }
       const teams = gameTeams(g);
