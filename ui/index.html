@@ -1144,9 +1144,6 @@
   .game-map { width: 100%; height: 100%; display: block; object-fit: cover; align-self: stretch;
               transition: transform .35s cubic-bezier(.22,1,.36,1); }
   .game-card:hover .game-map { transform: scale(1.06); }
-  .game-poster-label { position: absolute; left: 14px; right: 10px; bottom: 11px; z-index: 1;
-    color: #fff; font-size: 16px; font-weight: 850; line-height: 1.1; text-shadow: 0 2px 12px rgba(0,0,0,.9);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .game-main { min-width: 0; padding: 12px 14px; display: grid; align-content: center; gap: 10px; }
   .game-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 7px; flex-wrap: wrap; }
   .game-head .map-name { font-weight: 850; font-size: 16px; color: #fff; line-height: 1.15; }
@@ -1332,8 +1329,9 @@
   .civ-row[data-filter]:hover .pct { color: #fff; }
   .civ-row img { width: 20px; height: 13px; object-fit: cover; border-radius: 2px;
     box-shadow: 0 0 0 1px rgba(255,255,255,.1); }
+  .civ-row .civ-nm { width: 66px; flex: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #c7cad3; }
   .gp img { box-shadow: 0 0 0 1px rgba(255,255,255,.1); }
-  .civ-row .bar { flex: 1; height: 6px; background: #17171d; border-radius: 3px; overflow: hidden;
+  .civ-row .bar { flex: 1; min-width: 22px; height: 6px; background: #17171d; border-radius: 3px; overflow: hidden;
     box-shadow: inset 0 1px 1px rgba(0,0,0,.5); }
   .civ-row .bar i { display: block; height: 100%; border-radius: inherit;
     background: linear-gradient(to right, #2d5f8a, #6fb4e0);
@@ -1342,7 +1340,7 @@
   .civ-row .bar i.hi { background: linear-gradient(to right, #2f7a18, #6fe04a); box-shadow: 0 0 5px rgba(111,224,74,.35); }
   .civ-row .bar i.lo { background: linear-gradient(to right, #8a3527, #ff7b66); box-shadow: 0 0 5px rgba(255,123,102,.3); }
   @keyframes bar-grow { from { transform: scaleX(0); } }
-  .civ-row .pct { width: 64px; text-align: right; color: #aaa; }
+  .civ-row .pct { width: 54px; flex: none; text-align: right; color: #aaa; font-variant-numeric: tabular-nums; }
 
   /* ---- settings tab ---- */
   .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -4832,7 +4830,7 @@ function renderGameStats(games, pid) {
   const top = Object.entries(byCiv).sort((a, b) => b[1].n - a[1].n).slice(0, 4);
   $('gs-civs').innerHTML = top.map(([c, v]) => {
     const p = Math.round(v.w / v.n * 100);
-    return `<div class="civ-row" data-filter="${esc(civTitle(c))}" title="Click to filter the list to ${esc(civTitle(c))} games">${civFlag(c)}<span class="bar"><i${barCls(p)} style="width:${p}%"></i></span>
+    return `<div class="civ-row" data-filter="${esc(civTitle(c))}" title="Click to filter the list to ${esc(civTitle(c))} games">${civFlag(c)}<span class="civ-nm">${esc(civTitle(c))}</span><span class="bar"><i${barCls(p)} style="width:${p}%"></i></span>
       <span class="pct">${p}% · ${v.n}g</span></div>`;
   }).join('') || '';
   // winrate by map, most-played first
@@ -4858,7 +4856,7 @@ function renderGameStats(games, pid) {
     const p = Math.round(v.w / v.n * 100);
     const medal = m === bestMap ? '<span class="map-medal" title="Your best map">🏰</span>'
       : m === worstMap ? '<span class="map-medal" title="Your weakest map">💀</span>' : '';
-    return `<div class="civ-row" data-filter="${esc(m)}" title="Click to filter the list to ${esc(m)}"><span style="width:80px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">${medal}${esc(m)}</span>
+    return `<div class="civ-row" data-filter="${esc(m)}" title="Click to filter the list to ${esc(m)}"><span class="civ-nm">${medal}${esc(m)}</span>
       <span class="bar"><i${barCls(p)} style="width:${p}%"></i></span><span class="pct">${p}% · ${v.n}g</span></div>`;
   }).join('') || '';
 }
@@ -5095,7 +5093,6 @@ function renderGames() {
         <div class="ribbon"></div>
         <div class="game-poster">
           <img class="game-map" loading="lazy" src="${encodeURI(mapImg)}" onerror="mapPlaceholder(this, '${(g.map ?? '?').replace(/[^\w ]/g, '')}')">
-          <span class="game-poster-label">${esc(g.map ?? '?')}</span>
         </div>
         <div class="game-main">
           <div class="game-head">
