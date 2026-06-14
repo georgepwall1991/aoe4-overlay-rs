@@ -4618,6 +4618,21 @@ function drawSpark(diffs) {
   return net;
 }
 
+// Count a number element from 0 to its target with a quick ease-out.
+let statsShouldAnimate = false;
+function animateNum(el, to, suffix = '', ms = 480) {
+  if (!el) return;
+  if (!statsShouldAnimate || matchMedia('(prefers-reduced-motion: reduce)').matches) { el.textContent = to + suffix; return; }
+  const start = performance.now();
+  const step = now => {
+    const t = Math.min(1, (now - start) / ms);
+    const v = Math.round(to * (1 - Math.pow(1 - t, 3)));
+    el.textContent = v + suffix;
+    if (t < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+
 function renderGameStats(games, pid) {
   const finished = games.map(g => gameResult(g, pid)).filter(r => r.result === 'win' || r.result === 'loss');
   if (!finished.length) { $('games-stats').style.display = 'none'; return; }
@@ -4626,7 +4641,7 @@ function renderGameStats(games, pid) {
   const losses = finished.length - wins;
   $('gs-record').textContent = `${wins}W ${losses}L`;
   const wr = Math.round(wins / finished.length * 100);
-  $('gs-winrate').textContent = wr + '%';
+  animateNum($('gs-winrate'), wr, '%');
   $('gs-winrate').className = 'stat-big ' + (wr >= 50 ? 'pos' : 'neg');
   $('gs-ring').style.setProperty('--p', wr);
   $('gs-ring').style.setProperty('--rc', wr >= 50 ? '#6fe04a' : '#ff7b66');
@@ -4861,7 +4876,9 @@ async function loadGames() {
   try {
     const data = await invoke('get_match_history');
     allGames = data.games || [];
+    statsShouldAnimate = true;
     renderGames();
+    statsShouldAnimate = false;
     // a game that wasn't there last refresh gets a one-off golden flash
     if (prevTop && allGames[0] && allGames[0].game_id !== prevTop)
       list.querySelector('.game-card')?.classList.add('fresh');
