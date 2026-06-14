@@ -22,9 +22,28 @@ const MATCH = { avg_rating: 1221, duration: 1533, kind: 'rm_1v1', map: 'Dry Arab
 const mkGame = (i, win, map, kind) => ({
   game_id: 1000 + i, map, kind, ongoing: false, duration: 900 + i * 137,
   started_at: new Date(Date.now() - i * 9e6).toISOString(),
-  teams: [[{ player: { profile_id: 1, name: 'George', civilization: 'english', result: win ? 'win' : 'loss', rating_diff: win ? 9 + i : -(8 + i) } }],
-          [{ player: { profile_id: 2, name: 'Enemy' + i, civilization: ['mongols', 'french', 'rus', 'ottomans'][i % 4], result: win ? 'loss' : 'win' } }]],
+  server: ['Western Europe', 'UK', 'eastus'][i % 3], patch: 10604, season: 14,
+  average_rating: 1200 + i * 11,
+  teams: [[{ player: { profile_id: 1, name: 'George', civilization: 'english', result: win ? 'win' : 'loss',
+              rating: 1240 + (win ? i : -i), rating_diff: win ? 9 + i : -(8 + i),
+              input_type: 'keyboard', civilization_randomized: false } }],
+          [{ player: { profile_id: 2, name: 'Enemy' + i, civilization: ['mongols', 'french', 'rus', 'ottomans'][i % 4],
+              result: win ? 'loss' : 'win', rating: 1200 + (i % 4) * 60, input_type: i % 3 ? 'keyboard' : 'controller',
+              civilization_randomized: i % 4 === 0 } }]],
 });
+const PROFILE = {
+  profile_id: 1, name: 'George', country: 'gb', avatar: null, social: {}, last_game_at: new Date(Date.now() - 36e5).toISOString(),
+  modes: {
+    rm_solo: { rating: 1244, max_rating: 1310, rank: 1204, rank_level: 'diamond_2', streak: 3,
+      games_count: 221, wins_count: 120, losses_count: 101, win_rate: 54.3, season: 14,
+      rating_history: [1190, 1204, 1186, 1199, 1212, 1226, 1215, 1231, 1244] },
+    rm_2v2_elo: { rating: 1180, max_rating: 1205, rank: null, rank_level: null, streak: -1,
+      games_count: 64, wins_count: 33, losses_count: 31, win_rate: 51.6, season: 14,
+      rating_history: [1150, 1162, 1175, 1168, 1180] },
+    qm_1v1: { rating: 1090, max_rating: 1120, rank: null, rank_level: null, streak: 2,
+      games_count: 40, wins_count: 24, losses_count: 16, win_rate: 60.0, rating_history: [1070, 1085, 1090] },
+  },
+};
 const SETTINGS = {
   player_name: 'George', profile_id: 1, interval: 15, overlay_hotkey: 'Alt+O',
   show_overlay_on_new_game: true, font_scale: 100, overlay_scale: 100, websocket_port: 7307,
@@ -43,6 +62,7 @@ window.__TAURI__ = {
     if (cmd === 'get_settings') return SETTINGS;
     if (cmd === 'get_current_data') return MATCH;
     if (cmd === 'get_match_history') return { games: Array.from({ length: 8 }, (_, i) => mkGame(i, i % 3 !== 1, ['Dry Arabia', 'Black Forest', 'Four Lakes'][i % 3], i % 2 ? 'rm_1v1' : 'qm_2v2')) };
+    if (cmd === 'get_player_profile') return PROFILE;
     if (cmd === 'get_app_version') return '9.9.9-dev';
     if (cmd === 'get_bo') return { name: 'English longbow rush', content: SETTINGS.buildorders['English longbow rush'], step: 0 };
     return null;
