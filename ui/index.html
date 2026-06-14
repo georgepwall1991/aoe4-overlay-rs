@@ -2356,6 +2356,10 @@
         <div class="stat-big" id="gs-streak">—</div>
         <div class="stat-sub">streak</div>
       </div>
+      <div class="stat-block" id="gs-tempo-block" title="Average match length — and whether your wins come faster than your losses">
+        <div class="stat-big" id="gs-tempo">—</div>
+        <div class="stat-sub">avg length <span id="gs-tempo-split"></span></div>
+      </div>
       <div class="stat-block" style="flex:1.6" title="Cumulative rating change, oldest to newest">
         <canvas id="gs-spark" width="220" height="44"></canvas>
         <div class="stat-sub">rating trend <span id="gs-net"></span></div>
@@ -4465,6 +4469,26 @@ function renderGameStats(games, pid) {
   $('gs-streak').innerHTML = (finished[0].result === 'win' ? 'W' : 'L') + streak
     + (streak >= 3 ? `<span class="fire">${finished[0].result === 'win' ? '🔥' : '❄️'}</span>` : '');
   $('gs-streak').className = 'stat-big ' + (finished[0].result === 'win' ? 'pos' : 'neg');
+  // match tempo: average length overall, plus the win/loss split so a player
+  // can see at a glance whether they close games out fast or grind them out
+  const withDur = games.map(g => ({ r: gameResult(g, pid).result, d: g.duration }))
+    .filter(x => (x.r === 'win' || x.r === 'loss') && x.d > 0);
+  if (withDur.length) {
+    const avg = arr => Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+    const all = avg(withDur.map(x => x.d));
+    const wd = withDur.filter(x => x.r === 'win').map(x => x.d);
+    const ld = withDur.filter(x => x.r === 'loss').map(x => x.d);
+    $('gs-tempo').textContent = fmtDur(all);
+    let split = '';
+    if (wd.length && ld.length) {
+      const fast = avg(wd) < avg(ld);
+      split = `<span class="${fast ? 'pos' : 'neg'}">W ${fmtDur(avg(wd))} · L ${fmtDur(avg(ld))}</span>`;
+    }
+    $('gs-tempo-split').innerHTML = split;
+    $('gs-tempo-block').style.display = '';
+  } else {
+    $('gs-tempo-block').style.display = 'none';
+  }
   // rating trend, oldest -> newest
   const diffs = finished.map(r => r.me?.rating_diff).filter(d => (d ?? null) !== null).reverse();
   const net = drawSpark(diffs);
