@@ -987,7 +987,13 @@
   .prof-modes { display: flex; gap: 10px; flex: 1; flex-wrap: wrap; }
   .prof-mode { position: relative; flex: 1; min-width: 168px; padding: 9px 12px 8px; border-radius: 13px;
     background: rgba(255,255,255,.025); border: 1px solid rgba(255,255,255,.06);
-    border-top: 2px solid var(--tier); overflow: hidden; }
+    border-top: 2px solid var(--tier); overflow: hidden;
+    transition: transform .14s, box-shadow .14s, border-color .14s; }
+  .prof-mode:hover { transform: translateY(-2px);
+    box-shadow: 0 10px 24px -16px #000, 0 0 0 1px color-mix(in srgb, var(--tier) 40%, transparent);
+    border-top-color: var(--tier); }
+  .prof-mode::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(120px 60px at 90% 0, color-mix(in srgb, var(--tier) 16%, transparent), transparent 70%); }
   .prof-mode-head { display: flex; justify-content: space-between; align-items: baseline; }
   .prof-tier { font-size: 11px; font-weight: 800; letter-spacing: .03em; color: var(--tier); }
   .prof-mode-tag { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--ink-muted); }
@@ -1014,6 +1020,13 @@
   .ins-chip { font-size: 11.5px; color: #b8bcc6; padding: 5px 11px; border-radius: 999px;
     background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); }
   .ins-chip b { color: #fff; font-weight: 750; }
+  .ins-chip { animation: chip-in .3s ease-out backwards; transition: border-color .14s, background .14s; }
+  .ins-chip:hover { border-color: rgba(255,255,255,.16); background: rgba(255,255,255,.06); }
+  .ins-chip:nth-child(2) { animation-delay: .05s; }
+  .ins-chip:nth-child(3) { animation-delay: .1s; }
+  .ins-chip:nth-child(4) { animation-delay: .15s; }
+  @keyframes chip-in { from { opacity: 0; transform: translateY(5px); } }
+  @media (prefers-reduced-motion: reduce) { .ins-chip { animation: none; } }
   /* compact density for long review sessions: drop the map poster, tighten rows */
   #games-list.compact .game-poster { display: none; }
   #games-list.compact .game-card { grid-template-columns: minmax(0, 1fr) 104px; }
