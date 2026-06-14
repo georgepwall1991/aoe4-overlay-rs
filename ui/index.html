@@ -1000,8 +1000,8 @@
     border: 1px solid rgba(255,255,255,.06); border-radius: 12px; background: rgba(255,255,255,.02); }
   .form-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-muted); flex: none; }
   .form-pips { display: flex; gap: 3px; flex: 1; flex-wrap: wrap; }
-  .form-pip { width: 13px; height: 13px; border-radius: 4px; flex: none; transition: transform .12s; }
-  .form-pip:hover { transform: scale(1.35); }
+  .form-pip { display: block; width: 13px; height: 13px; border-radius: 4px; flex: none; transition: transform .12s; cursor: pointer; }
+  .form-pip:hover { transform: scale(1.4); box-shadow: 0 0 0 2px rgba(255,255,255,.18); }
   .form-pip.w { background: linear-gradient(160deg, #6fe04a, #3a9c18); box-shadow: 0 0 6px -2px rgba(111,224,74,.7); }
   .form-pip.l { background: linear-gradient(160deg, #ff7b66, #c0341f); box-shadow: 0 0 6px -2px rgba(224,69,47,.6); }
   .form-hint { font-size: 10px; color: var(--ink-muted); flex: none; opacity: .7; }
@@ -4773,8 +4773,11 @@ function renderForm(games, pid) {
   const pips = recent.map(({ r, g }) => {
     const win = r.result === 'win';
     const opp = (gameTeams(g).find(t => !t.some(p => p.profile_id === pid)) || []).map(p => p.name).filter(Boolean)[0];
-    const tip = `${win ? 'Win' : 'Loss'} · ${g.map ?? '?'}${opp ? ` vs ${opp}` : ''}`;
-    return `<i class="form-pip ${win ? 'w' : 'l'}" title="${esc(tip)}"></i>`;
+    const dd = r.me?.rating_diff;
+    const diffTxt = (dd ?? null) !== null ? ` (${dd >= 0 ? '+' : ''}${dd})` : '';
+    const tip = `${win ? 'Win' : 'Loss'} · ${g.map ?? '?'}${opp ? ` vs ${opp}` : ''}${diffTxt} — open`;
+    return `<a class="form-pip ${win ? 'w' : 'l'}" title="${esc(tip)}" target="_blank"
+      href="https://aoe4world.com/players/${pid}/games/${g.game_id}"></a>`;
   }).join('');
   el.style.display = '';
   el.innerHTML = `<span class="form-label">Recent form</span><span class="form-pips">${pips}</span>
