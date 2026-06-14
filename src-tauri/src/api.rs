@@ -77,6 +77,11 @@ pub async fn get_player_profile(
     profile_id: u64,
 ) -> Result<Value, String> {
     let p = get_json(client, &format!("{BASE}/players/{profile_id}")).await?;
+    Ok(distill_profile(&p))
+}
+
+/// Pure transform of a raw `/players/{id}` body into the profile-banner payload.
+fn distill_profile(p: &Value) -> Value {
     // The direct profile endpoint exposes standings under `modes` (the ranked
     // ladder plus per-bracket ELO/quick-match ratings), not `leaderboards`.
     let boards = [
@@ -128,7 +133,7 @@ pub async fn get_player_profile(
             }),
         );
     }
-    Ok(serde_json::json!({
+    serde_json::json!({
         "profile_id": p["profile_id"],
         "name": p["name"],
         "country": p["country"],
@@ -136,7 +141,7 @@ pub async fn get_player_profile(
         "social": p["social"],
         "last_game_at": p["last_game_at"],
         "modes": Value::Object(modes),
-    }))
+    })
 }
 
 pub async fn get_match_history(
@@ -453,6 +458,43 @@ mod tests {
     #[test]
     fn urlencode_escapes_specials() {
         assert_eq!(urlencode("a b+ü"), "a+b%2B%C3%BC");
+    }
+
+    #[test]
+    fn distill_profile_keeps_rated_brackets_and_sparkline() {
+        let raw = serde_json::json!({
+            "profile_id": 7, "name": "Rated", "country": "gb",
+            "avatars": { "medium": "https://example.com/a.jpg" },
+            "social": { "twitch": "x" }, "last_game_at": "2026-06-12T10:00:00.000Z",
+            "modes": {
+                "rm_solo": {
+                    "rating": 1234, "max_rating": 1300, "rank": 42, "rank_level": "diamond_2",
+                    "streak": 3, "games_count": 80, "wins_count": 45, "losses_count": 35,
+                    "win_rate": 56.25, "season": 13,
+                    "rating_history": {
+                        "1780500845": { "rating": 1220 },
+                        "1780498882": { "rating": 1210 },
+                        "1780579715": { "rating": 1234 }
+                    }
+                },
+                // No rating this season — must be dropped from the banner
+                "rm_team": { "rating": null, "rank_level": "unranked" },
+                "qm_1v1": { "rating": 1100, "win_rate": 50.0, "rating_history": {} }
+            }
+        });
+        let out = distill_profile(&raw);
+        assert_eq!(out["name"], "Rated");
+        assert_eq!(out["avatar"], "https://example.com/a.jpg");
+        let modes = out["modes"].as_object().unwrap();
+        assert!(modes.contains_key("rm_solo"), "rated ladder kept");
+        assert!(modes.contains_key("qm_1v1"), "rated quick-match kept");
+        assert!(!modes.contains_key("rm_team"), "unrated bracket dropped");
+        assert_eq!(out["modes"]["rm_solo"]["rank_level"], "diamond_2");
+        // history sorted oldest -> newest
+        assert_eq!(
+            out["modes"]["rm_solo"]["rating_history"],
+            serde_json::json!([1210, 1220, 1234])
+        );
     }
 
     #[tokio::test]
