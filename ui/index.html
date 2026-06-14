@@ -2404,6 +2404,10 @@
         <div class="stat-big" id="gs-streak">—</div>
         <div class="stat-sub">streak</div>
       </div>
+      <div class="stat-block" id="gs-exp-block" style="display:none" title="Wins above or below what your rating predicted, using the Elo expected-score formula across rated games">
+        <div class="stat-big" id="gs-exp">—</div>
+        <div class="stat-sub">vs expected</div>
+      </div>
       <div class="stat-block" id="gs-tempo-block" title="Average match length — and whether your wins come faster than your losses">
         <div class="stat-big" id="gs-tempo">—</div>
         <div class="stat-sub">avg length <span id="gs-tempo-split"></span></div>
@@ -4661,6 +4665,31 @@ function renderGameStats(games, pid) {
   $('gs-streak').innerHTML = (finished[0].result === 'win' ? 'W' : 'L') + streak
     + (streak >= 3 ? `<span class="fire">${finished[0].result === 'win' ? '🔥' : '❄️'}</span>` : '');
   $('gs-streak').className = 'stat-big ' + (finished[0].result === 'win' ? 'pos' : 'neg');
+  // performance vs Elo expectation: sum expected win probability from each
+  // rated game's rating gap and compare to actual wins
+  let expSum = 0, expN = 0, actualW = 0;
+  games.forEach(g => {
+    const r = gameResult(g, pid);
+    if (r.result !== 'win' && r.result !== 'loss') return;
+    const myR = Number(r.me?.rating);
+    const opp = (gameTeams(g).find(t => !t.some(p => p.profile_id === pid)) || []);
+    const oppR = opp.map(p => Number(p.rating)).filter(Number.isFinite);
+    if (!Number.isFinite(myR) || !oppR.length) return;
+    const oppAvg = oppR.reduce((a, b) => a + b, 0) / oppR.length;
+    expSum += 1 / (1 + Math.pow(10, (oppAvg - myR) / 400));
+    expN++;
+    if (r.result === 'win') actualW++;
+  });
+  if (expN >= 3) {
+    const delta = actualW - expSum;
+    const sign = delta >= 0 ? '+' : '';
+    $('gs-exp').textContent = `${sign}${delta.toFixed(1)}`;
+    $('gs-exp').className = 'stat-big ' + (delta >= 0 ? 'pos' : 'neg');
+    $('gs-exp-block').title = `Across ${expN} rated games your rating predicted ~${expSum.toFixed(1)} wins; you have ${actualW}.`;
+    $('gs-exp-block').style.display = '';
+  } else {
+    $('gs-exp-block').style.display = 'none';
+  }
   // match tempo: average length overall, plus the win/loss split so a player
   // can see at a glance whether they close games out fast or grind them out
   const withDur = games.map(g => ({ r: gameResult(g, pid).result, d: g.duration }))
