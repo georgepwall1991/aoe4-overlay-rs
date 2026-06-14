@@ -1158,6 +1158,8 @@
   .vs::before, .vs::after { content: ""; width: 1px; height: 9px;
     background: linear-gradient(180deg, transparent, var(--gold-faint)); }
   .vs::after { background: linear-gradient(0deg, transparent, var(--gold-faint)); }
+  .vs-prob { font-size: 9.5px; font-weight: 800; color: #8b8f9b; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+  .vs-prob.pos { color: #6fe04a; } .vs-prob.neg { color: #ff7b66; }
   .gp { display: flex; align-items: center; gap: 7px; margin: 4px 0; min-width: 0; font-size: 12.5px; white-space: nowrap; }
   .gp img { width: 24px; height: 16px; object-fit: cover; border-radius: 3px; flex: none; }
   .gp .pname { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
@@ -5019,6 +5021,15 @@ function renderGames() {
       // upset detector: beating a meaningfully higher-rated side, or losing to a lower-rated one
       const oppR = opposition.map(p => Number(p.rating)).filter(Number.isFinite);
       const myR = Number(me?.rating);
+      // pre-game win probability from team rating averages (Elo expected score)
+      const myTeamR = myTeam.map(p => Number(p.rating)).filter(Number.isFinite);
+      let winProb = '';
+      if (myTeamR.length && oppR.length) {
+        const a = myTeamR.reduce((x, y) => x + y, 0) / myTeamR.length;
+        const b = oppR.reduce((x, y) => x + y, 0) / oppR.length;
+        const p = Math.round(100 / (1 + Math.pow(10, (b - a) / 400)));
+        winProb = `<span class="vs-prob ${p >= 55 ? 'pos' : p <= 45 ? 'neg' : ''}" title="Pre-game win chance from team ratings">${p}%</span>`;
+      }
       let upset = '';
       if (oppR.length && Number.isFinite(myR) && (result === 'win' || result === 'loss')) {
         const gap = Math.round(oppR.reduce((a, b) => a + b, 0) / oppR.length - myR);
@@ -5043,7 +5054,7 @@ function renderGames() {
           </div>
           <div class="game-teams">
             ${gameTeamBlock(myTeam, pid, 'Your side')}
-            <span class="vs">VS</span>
+            <span class="vs">VS${winProb}</span>
             ${gameTeamBlock(opposition, pid, 'Opposition', true)}
           </div>
         </div>
