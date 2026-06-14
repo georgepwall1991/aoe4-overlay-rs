@@ -1006,6 +1006,7 @@
   .form-pip.l { background: linear-gradient(160deg, #ff7b66, #c0341f); box-shadow: 0 0 6px -2px rgba(224,69,47,.6); }
   .form-hint { font-size: 10px; color: var(--ink-muted); flex: none; opacity: .7; }
   .map-medal { font-size: 11px; margin-right: 3px; vertical-align: 1px; }
+  #gf-copy.ok { color: #6fe04a; border-color: rgba(111,224,74,.4); }
   .games-hero { --hero-map: linear-gradient(135deg, #26262e, #16161c);
     position: relative; overflow: hidden; min-height: 232px; margin: 0 0 14px; padding: 18px;
     border: 1px solid rgba(224,186,94,.24); border-radius: 18px;
@@ -2389,6 +2390,7 @@
       <span style="flex:1"></span>
       <button id="gf-clearbar" style="display:none" title="Reset all filters">✕ Clear filters</button>
       <span id="gf-count" class="muted"></span>
+      <button id="gf-copy" title="Copy a text summary of the games shown">⧉ Copy</button>
       <button id="games-refresh" class="primary">Refresh</button>
     </div>
     <div id="games-stats" style="display:none">
@@ -5018,6 +5020,34 @@ $('games-list').addEventListener('click', e => {
 $('gf-clearbar').onclick = () => {
   $('gf-mode').value = ''; setResultChip(''); $('gf-text').value = '';
   renderGames();
+};
+// build a shareable text recap of the games currently shown
+$('gf-copy').onclick = async () => {
+  const pid = settings.profile_id;
+  const games = sortGames(applyGameFilters(), pid, $('gf-sort')?.value || 'recent');
+  const finished = games.map(g => gameResult(g, pid)).filter(r => r.result === 'win' || r.result === 'loss');
+  if (!finished.length) return;
+  const w = finished.filter(r => r.result === 'win').length, l = finished.length - w;
+  const wr = Math.round(w / finished.length * 100);
+  let streak = 0;
+  for (const r of finished) { if (r.result === finished[0].result) streak++; else break; }
+  const byCiv = {};
+  finished.forEach(r => { const c = r.me?.civilization; if (c) { byCiv[c] = (byCiv[c] || 0) + 1; } });
+  const topCivs = Object.entries(byCiv).sort((a, b) => b[1] - a[1]).slice(0, 3)
+    .map(([c, n]) => `${civTitle(c)} (${n})`).join(', ');
+  const name = playerProfile?.name || settings.player_name || `#${pid}`;
+  const lines = [
+    `${name} — last ${finished.length} games`,
+    `Record ${w}W ${l}L · ${wr}% winrate · ${finished[0].result === 'win' ? 'W' : 'L'}${streak} streak`,
+    topCivs ? `Top civs: ${topCivs}` : '',
+    'via AoE4 Overlay'
+  ].filter(Boolean);
+  try {
+    await navigator.clipboard.writeText(lines.join('\n'));
+    const btn = $('gf-copy'); const t = btn.textContent;
+    btn.textContent = '✓ Copied'; btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = t; btn.classList.remove('ok'); }, 1400);
+  } catch {}
 };
 // stat rows double as one-click filters: clicking a civ/map narrows the list to it
 ['gs-civs', 'gs-maps'].forEach(id => $(id).addEventListener('click', e => {
