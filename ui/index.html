@@ -1123,6 +1123,9 @@
     box-shadow: inset 0 0 0 1px var(--gold-dim); }
   .badge.meta { background: rgba(255,255,255,.05); color: #9097a4; font-weight: 650;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+  .badge.upset { background: linear-gradient(135deg, rgba(255,200,69,.22), rgba(255,150,40,.18)); color: #ffcf5e;
+    box-shadow: inset 0 0 0 1px rgba(255,200,69,.4); }
+  .badge.dropped { background: rgba(224,69,47,.12); color: #ff9a86; box-shadow: inset 0 0 0 1px rgba(224,69,47,.22); }
   @keyframes pulse { 50% { opacity: .55; } }
   .game-teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: stretch; gap: 11px; }
   .team-col { min-width: 0; padding: 8px 9px; border-radius: 12px; background: rgba(9,10,15,.34);
@@ -4834,6 +4837,15 @@ function renderGames() {
         : result ? `<span class="badge ${result}">${result}</span>` : '';
       const myTeam = teams.find(t => t.some(p => p.profile_id === pid)) || teams[0] || [];
       const opposition = teams.filter(t => t !== myTeam).flat();
+      // upset detector: beating a meaningfully higher-rated side, or losing to a lower-rated one
+      const oppR = opposition.map(p => Number(p.rating)).filter(Number.isFinite);
+      const myR = Number(me?.rating);
+      let upset = '';
+      if (oppR.length && Number.isFinite(myR) && (result === 'win' || result === 'loss')) {
+        const gap = Math.round(oppR.reduce((a, b) => a + b, 0) / oppR.length - myR);
+        if (result === 'win' && gap >= 75) upset = `<span class="badge upset" title="Upset — beat a side rated +${gap} above you">⭐ Upset +${gap}</span>`;
+        else if (result === 'loss' && gap <= -75) upset = `<span class="badge dropped" title="Lost to a side rated ${gap} below you">▼ ${Math.abs(gap)}</span>`;
+      }
       html += `
       <div class="game-card res-${result}" data-url="https://aoe4world.com/players/${pid}/games/${g.game_id}">
         <div class="ribbon"></div>
@@ -4846,6 +4858,7 @@ function renderGames() {
             <span class="map-name">${esc(g.map ?? '?')}</span>
             ${badge}
             <span class="badge mode${(g.kind ?? '').startsWith('rm_') ? ' ranked' : ''}">${fmtMode(g.kind)}</span>
+            ${upset}
             ${g.server ? `<span class="badge meta" title="Match server">${esc(fmtServer(g.server))}</span>` : ''}
             ${g.average_rating ? `<span class="badge meta" title="Average lobby rating">~${Math.round(g.average_rating)}</span>` : ''}
           </div>
