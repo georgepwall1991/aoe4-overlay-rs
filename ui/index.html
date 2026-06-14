@@ -980,6 +980,8 @@
   .prof-avatar { width: 46px; height: 46px; border-radius: 12px; object-fit: cover;
     box-shadow: 0 0 0 1px rgba(255,255,255,.1), 0 6px 18px -8px #000; }
   .prof-name { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 850; color: #fff; }
+  .prof-name a { color: inherit; text-decoration: none; }
+  .prof-name a:hover { color: var(--gold, #ffd97a); }
   .prof-flag { width: 21px; height: 14px; border-radius: 3px; object-fit: cover; }
   .prof-sub { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
   .prof-modes { display: flex; gap: 10px; flex: 1; flex-wrap: wrap; }
@@ -4546,13 +4548,23 @@ function renderProfile() {
   if (!cards.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
   const flag = p.country
     ? `<img class="prof-flag" src="countries/${esc(String(p.country).toUpperCase())}.webp" onerror="this.style.display='none'">` : '';
+  // roll up totals across every rated bracket for the sub-line
+  const allModes = Object.values(p.modes);
+  const totalGames = allModes.reduce((a, m) => a + (Number(m.games_count) || 0), 0);
+  const peak = allModes.reduce((a, m) => Math.max(a, Number(m.max_rating) || 0), 0);
+  const bits = [
+    p.last_game_at ? `Last played ${timeAgo(p.last_game_at)}` : null,
+    totalGames ? `${totalGames.toLocaleString()} ranked games` : null,
+    peak ? `Peak ${peak}` : null
+  ].filter(Boolean).join(' · ') || 'Season standings';
+  const url = `https://aoe4world.com/players/${p.profile_id}`;
   el.style.display = '';
   el.innerHTML = `
     <div class="prof-id">
       ${p.avatar ? `<img class="prof-avatar" src="${esc(p.avatar)}" onerror="this.style.display='none'">` : ''}
       <div class="prof-id-text">
-        <div class="prof-name">${flag}${esc(p.name ?? 'Player')}</div>
-        <div class="prof-sub">${p.last_game_at ? `Last played ${esc(timeAgo(p.last_game_at))}` : 'Season standings'}</div>
+        <div class="prof-name">${flag}<a href="${url}" target="_blank" title="Open on aoe4world ↗">${esc(p.name ?? 'Player')}</a></div>
+        <div class="prof-sub">${esc(bits)}</div>
       </div>
     </div>
     <div class="prof-modes">${cards.join('')}</div>`;
