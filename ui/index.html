@@ -995,6 +995,16 @@
   .prof-line { display: flex; gap: 11px; margin-top: 3px; font-size: 11px; color: #aeb3bf; font-variant-numeric: tabular-nums; }
   .prof-line .pos { color: #6fe04a; } .prof-line .neg { color: #ff7b66; }
   .prof-spark { position: absolute; right: 8px; bottom: 6px; width: 86px; height: 26px; opacity: .9; pointer-events: none; }
+  /* recent-form pip strip */
+  .games-form { display: flex; align-items: center; gap: 10px; margin: 0 2px 14px; padding: 9px 13px;
+    border: 1px solid rgba(255,255,255,.06); border-radius: 12px; background: rgba(255,255,255,.02); }
+  .form-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-muted); flex: none; }
+  .form-pips { display: flex; gap: 3px; flex: 1; flex-wrap: wrap; }
+  .form-pip { width: 13px; height: 13px; border-radius: 4px; flex: none; transition: transform .12s; }
+  .form-pip:hover { transform: scale(1.35); }
+  .form-pip.w { background: linear-gradient(160deg, #6fe04a, #3a9c18); box-shadow: 0 0 6px -2px rgba(111,224,74,.7); }
+  .form-pip.l { background: linear-gradient(160deg, #ff7b66, #c0341f); box-shadow: 0 0 6px -2px rgba(224,69,47,.6); }
+  .form-hint { font-size: 10px; color: var(--ink-muted); flex: none; opacity: .7; }
   .games-hero { --hero-map: linear-gradient(135deg, #26262e, #16161c);
     position: relative; overflow: hidden; min-height: 232px; margin: 0 0 14px; padding: 18px;
     border: 1px solid rgba(224,186,94,.24); border-radius: 18px;
@@ -2391,6 +2401,7 @@
       <div class="stat-block civs" id="gs-civs" style="flex:2" title="Winrate with your most-played civilizations"></div>
       <div class="stat-block civs" id="gs-maps" style="flex:2" title="Winrate on your most-played maps"></div>
     </div>
+    <div id="games-form" class="games-form" style="display:none"></div>
     <div id="games-list"></div>
   </div>
 
@@ -4638,6 +4649,26 @@ function renderGameStats(games, pid) {
   }).join('') || '';
 }
 
+// Recent-results pip strip — newest on the right, capped so it stays compact.
+function renderForm(games, pid) {
+  const el = $('games-form');
+  if (!el) return;
+  const decided = games
+    .map(g => ({ r: gameResult(g, pid), g }))
+    .filter(x => x.r.result === 'win' || x.r.result === 'loss');
+  if (decided.length < 2) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  const recent = decided.slice(0, 30).reverse(); // oldest -> newest, newest sits at the right
+  const pips = recent.map(({ r, g }) => {
+    const win = r.result === 'win';
+    const opp = (gameTeams(g).find(t => !t.some(p => p.profile_id === pid)) || []).map(p => p.name).filter(Boolean)[0];
+    const tip = `${win ? 'Win' : 'Loss'} · ${g.map ?? '?'}${opp ? ` vs ${opp}` : ''}`;
+    return `<i class="form-pip ${win ? 'w' : 'l'}" title="${esc(tip)}"></i>`;
+  }).join('');
+  el.style.display = '';
+  el.innerHTML = `<span class="form-label">Recent form</span><span class="form-pips">${pips}</span>
+    <span class="form-hint">newest →</span>`;
+}
+
 function gamesEmptyHtml(hasGames, filtered) {
   const hasProfile = !!settings.profile_id;
   const limit = $('gf-limit').selectedOptions?.[0]?.textContent || 'Last 50';
@@ -4687,6 +4718,7 @@ function renderGames() {
   $('gf-text').classList.toggle('filter-on', !!$('gf-text').value.trim());
   renderGamesHero(games, pid, filtered);
   renderGameStats(games, pid);
+  renderForm(games, pid);
   let wins = 0, losses = 0, html = '';
   {
     // bucket games by recency so long lists keep a sense of time
