@@ -1014,6 +1014,15 @@
   .ins-chip { font-size: 11.5px; color: #b8bcc6; padding: 5px 11px; border-radius: 999px;
     background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.07); }
   .ins-chip b { color: #fff; font-weight: 750; }
+  /* compact density for long review sessions: drop the map poster, tighten rows */
+  #games-list.compact .game-poster { display: none; }
+  #games-list.compact .game-card { grid-template-columns: minmax(0, 1fr) 104px; }
+  #games-list.compact .game-main { padding: 8px 12px; }
+  #games-list.compact .game-teams { gap: 8px; }
+  #games-list.compact .gp { margin: 2px 0; font-size: 12px; }
+  #games-list.compact .game-side { padding: 8px 11px; gap: 4px; }
+  #games-list.compact .rdiff { font-size: 19px; }
+  #gf-density.on { color: var(--gold, #ffd97a); border-color: var(--gold-dim, rgba(224,186,94,.4)); }
   .games-hero { --hero-map: linear-gradient(135deg, #26262e, #16161c);
     position: relative; overflow: hidden; min-height: 232px; margin: 0 0 14px; padding: 18px;
     border: 1px solid rgba(224,186,94,.24); border-radius: 18px;
@@ -2397,6 +2406,7 @@
       <span style="flex:1"></span>
       <button id="gf-clearbar" style="display:none" title="Reset all filters">✕ Clear filters</button>
       <span id="gf-count" class="muted"></span>
+      <button id="gf-density" title="Toggle compact rows">⊟ Compact</button>
       <button id="gf-copy" title="Copy a text summary of the games shown">⧉ Copy</button>
       <button id="games-refresh" class="primary">Refresh</button>
     </div>
@@ -5043,7 +5053,8 @@ const GF_PREFS_KEY = 'aoe4.games.view';
 function saveGamePrefs() {
   try {
     localStorage.setItem(GF_PREFS_KEY, JSON.stringify({
-      mode: $('gf-mode').value, result: $('gf-result').dataset.value, sort: $('gf-sort').value
+      mode: $('gf-mode').value, result: $('gf-result').dataset.value, sort: $('gf-sort').value,
+      compact: $('games-list').classList.contains('compact')
     }));
   } catch {}
 }
@@ -5053,8 +5064,14 @@ function restoreGamePrefs() {
     if (p.mode != null) $('gf-mode').value = p.mode;
     if (p.sort != null) $('gf-sort').value = p.sort;
     if (p.result != null) setResultChip(p.result);
+    if (p.compact) { $('games-list').classList.add('compact'); $('gf-density').classList.add('on'); }
   } catch {}
 }
+$('gf-density').onclick = () => {
+  const on = $('games-list').classList.toggle('compact');
+  $('gf-density').classList.toggle('on', on);
+  saveGamePrefs();
+};
 $('gf-mode').onchange = () => { saveGamePrefs(); renderGames(); };
 $('gf-sort').onchange = () => { saveGamePrefs(); renderGames(); };
 // hovering a card's map thumbnail floats a large preview of the map art
