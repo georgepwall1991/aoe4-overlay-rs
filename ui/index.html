@@ -4911,7 +4911,9 @@ function renderGames() {
   if (settingsBtn) settingsBtn.onclick = () => { tabButtons[0].click(); $('search').focus(); };
 }
 
+let gamePrefsRestored = false;
 async function loadGames() {
+  if (!gamePrefsRestored) { restoreGamePrefs(); gamePrefsRestored = true; }
   const list = $('games-list'), btn = $('games-refresh');
   list.innerHTML = '<div class="skel-card"></div>'.repeat(4);
   btn.disabled = true; btn.textContent = 'Refreshing…'; btn.classList.add('busy');
@@ -4931,8 +4933,25 @@ async function loadGames() {
     $('gf-retry').onclick = loadGames;
   } finally { btn.disabled = false; btn.textContent = 'Refresh'; btn.classList.remove('busy'); }
 }
-$('gf-mode').onchange = renderGames;
-$('gf-sort').onchange = renderGames;
+// remember the chosen mode/result/sort view between sessions
+const GF_PREFS_KEY = 'aoe4.games.view';
+function saveGamePrefs() {
+  try {
+    localStorage.setItem(GF_PREFS_KEY, JSON.stringify({
+      mode: $('gf-mode').value, result: $('gf-result').dataset.value, sort: $('gf-sort').value
+    }));
+  } catch {}
+}
+function restoreGamePrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem(GF_PREFS_KEY) || '{}');
+    if (p.mode != null) $('gf-mode').value = p.mode;
+    if (p.sort != null) $('gf-sort').value = p.sort;
+    if (p.result != null) setResultChip(p.result);
+  } catch {}
+}
+$('gf-mode').onchange = () => { saveGamePrefs(); renderGames(); };
+$('gf-sort').onchange = () => { saveGamePrefs(); renderGames(); };
 // hovering a card's map thumbnail floats a large preview of the map art
 const mapPeek = document.createElement('div');
 mapPeek.id = 'map-peek';
@@ -4992,6 +5011,7 @@ $('gf-result').addEventListener('click', e => {
   const b = e.target.closest('button');
   if (!b) return;
   setResultChip(b.dataset.v);
+  saveGamePrefs();
   renderGames();
 });
 let gfTextTimer = null;
