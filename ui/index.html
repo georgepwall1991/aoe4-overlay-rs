@@ -1064,7 +1064,7 @@
   .games-hero.hero-loss { border-color: rgba(255,123,102,.26); }
   .games-hero.hero-live { border-color: rgba(255,200,69,.46); box-shadow: 0 0 28px -18px rgba(255,179,0,.9), 0 24px 60px -28px rgba(0,0,0,.9); }
   @keyframes hero-rise { from { opacity: 0; transform: translateY(9px) scale(.995); } }
-  .games-hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(260px, .75fr);
+  .games-hero-inner { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, .95fr) minmax(500px, 1.05fr);
     gap: 18px; min-height: inherit; align-items: stretch; }
   .games-hero-main { display: flex; flex-direction: column; justify-content: center; gap: 16px; min-width: 0; }
   .games-hero-kicker { display: inline-flex; align-items: center; gap: 8px; color: #f2d986;
@@ -1081,18 +1081,18 @@
   .hero-pill.loss { color: #ff9a89; border-color: rgba(255,123,102,.34); background: rgba(224,69,47,.16); }
   .hero-pill.live { color: #ffd86a; border-color: rgba(255,200,69,.4); background: rgba(255,179,0,.16); }
   .hero-pill.ghost { color: #9398a4; background: rgba(15,15,19,.32); border-color: rgba(255,255,255,.06); font-weight: 600; }
-  .games-hero-teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 12px; align-items: stretch; }
-  .hero-team { min-width: 0; padding: 11px; border-radius: 13px; background: rgba(13,13,17,.58);
+  .games-hero-teams { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 16px; align-items: stretch; }
+  .hero-team { min-width: 0; padding: 14px; border-radius: 13px; background: rgba(13,13,17,.58);
     border: 1px solid rgba(255,255,255,.09); box-shadow: 0 10px 28px -20px rgba(0,0,0,.85); }
   .hero-team.mine { border-color: rgba(224,186,94,.28); background: rgba(44,37,20,.5); }
   .hero-team-label { display: flex; align-items: center; justify-content: space-between; gap: 8px;
     color: #aeb1bc; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
-  .hero-player { display: flex; gap: 7px; align-items: center; min-width: 0; margin: 5px 0; }
+  .hero-player { display: flex; gap: 10px; align-items: center; min-width: 0; margin: 9px 0; padding: 2px 0; }
   .hero-player > div { flex: 1; min-width: 0; }
-  .hero-player img { width: 24px; height: 16px; object-fit: cover; border-radius: 3px;
+  .hero-player img { width: 30px; height: 20px; object-fit: cover; border-radius: 4px;
     box-shadow: 0 0 0 1px rgba(255,255,255,.13); }
-  .hero-player-name { color: #f4f5f8; font-size: 13px; font-weight: 750; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .hero-player-civ { color: #9da0ab; font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hero-player-name { color: #f4f5f8; font-size: 14px; font-weight: 780; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hero-player-civ { color: #9da0ab; font-size: 11px; line-height: 1.3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .hero-player-rt { flex: none; align-self: center; font-size: 13px; font-weight: 800; color: #d3d6df;
     font-variant-numeric: tabular-nums; }
   .hero-team.mine .hero-player-rt { color: #ffd97a; }
@@ -2187,6 +2187,201 @@
   .rk-platinum { background: rgba(94,207,202,.15); color: #74dcd7; }
   .rk-diamond { background: rgba(122,155,255,.16); color: #a3b7ff; }
   .rk-conqueror { background: linear-gradient(90deg, rgba(232,74,106,.25), rgba(255,179,0,.25)); color: #ff9d7e; }
+
+  /* settings command-center refresh */
+  #tab-settings { max-width: 1430px; }
+  #tab-settings .cards { gap: 14px; }
+  #tab-settings .settings-command { grid-column: 1 / -1; min-height: 0; grid-template-columns: minmax(320px, .86fr) minmax(350px, .9fr) minmax(430px, 1.05fr);
+    grid-template-areas: "search player summary"; align-items: stretch; gap: 14px; padding: 16px; border-radius: 18px;
+    background:
+      radial-gradient(740px 280px at 6% -12%, rgba(224,186,94,.17), transparent 62%),
+      radial-gradient(700px 320px at 72% -18%, rgba(122,182,255,.22), transparent 68%),
+      linear-gradient(135deg, rgba(22,26,34,.98), rgba(12,17,23,.98) 56%, rgba(8,26,31,.96));
+    border-color: rgba(122,182,255,.22); }
+  #tab-settings .settings-command::before { opacity: .16; background-size: 46px 46px;
+    mask-image: linear-gradient(90deg, #000 0 70%, transparent 100%); }
+  #tab-settings .settings-command::after { background: linear-gradient(90deg, transparent, rgba(224,186,94,.4), rgba(122,182,255,.34), transparent); }
+  .command-search, .command-player, .command-summary { position: relative; z-index: 1; min-width: 0; }
+  .command-search { grid-area: search; display: grid; align-content: start; gap: 12px; padding: 6px 2px 2px; }
+  .command-search .deck-state-kicker { color: #fff; font-size: 22px; font-weight: 850; text-transform: none; letter-spacing: 0;
+    line-height: 1.1; text-shadow: 0 2px 24px rgba(0,0,0,.75); }
+  .command-search .deck-state-title { display: inline-flex; width: fit-content; align-items: center; gap: 8px; padding: 2px 0 0;
+    color: #91f172; font-size: 14px; line-height: 1.4; font-weight: 800; text-shadow: none; }
+  .command-search .deck-state-title::before { content: ""; width: 10px; height: 10px; border-radius: 50%;
+    background: #48bd21; box-shadow: 0 0 0 5px rgba(72,189,33,.12), 0 0 14px rgba(111,224,74,.54); }
+  .command-search .deck-state-copy { max-width: 54ch; color: #aeb6c4; font-size: 12.5px; line-height: 1.5; }
+  .command-search .searchbar { margin-top: 2px; }
+  .command-search .searchbar input { min-height: 52px; border-radius: 10px; padding-left: 42px !important; font-size: 14px;
+    background-position: 16px center; background-color: rgba(5,8,12,.58);
+    border-color: rgba(255,255,255,.14); box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 18px 30px -26px #000; }
+  .command-search .searchbar input:focus { border-color: rgba(122,182,255,.62);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 0 0 3px rgba(61,127,176,.22); }
+  .command-search .searchbar button { min-width: 108px; min-height: 52px; border-radius: 10px; display: inline-flex;
+    align-items: center; justify-content: center; gap: 7px; font-weight: 800; }
+  .command-search .deck-actions { margin-top: 0; }
+  .command-search .deck-actions button { border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.045); }
+  .command-player { grid-area: player; display: grid; align-content: start; gap: 12px; padding: 8px 0 4px;
+    border-left: 1px solid rgba(255,255,255,.1); padding-left: 16px; }
+  .command-player .deck-head h3 { color: #f0f3f9; font-size: 13px; text-transform: none; }
+  .command-player .deck-source { color: #8fc9ff; }
+  .command-player .tracked { min-height: 126px; padding: 18px; display: grid; grid-template-columns: 64px minmax(0, 1fr);
+    align-items: center; gap: 10px 15px; border-radius: 16px;
+    background:
+      radial-gradient(180px 120px at 0 0, rgba(224,186,94,.13), transparent 72%),
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.13));
+    border-color: rgba(224,186,94,.18); }
+  .command-player .tracked-ava { width: 64px; height: 64px; border-radius: 50%; font-size: 24px;
+    color: var(--gold-bright); background: radial-gradient(circle at 50% 12%, rgba(255,233,160,.22), rgba(26,29,36,.98) 62%);
+    box-shadow: inset 0 0 0 2px rgba(224,186,94,.45), 0 0 26px -14px rgba(224,186,94,.9); }
+  .command-player .tracked-info { grid-column: 2; display: grid; gap: 5px; }
+  .command-player .tracked-name { font-size: 18px; line-height: 1.2; }
+  .command-player .tracked .muted { max-width: 32ch; font-size: 12px; line-height: 1.45; color: #aeb6c4; overflow-wrap: normal; }
+  .command-player .tracked-actions { grid-column: 2; justify-content: flex-start; margin: 0; }
+  .command-player .dot { position: absolute; right: 18px; top: 18px; width: 12px; height: 12px; }
+  .command-summary { grid-area: summary; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px;
+    overflow: hidden; align-self: stretch; border: 1px solid rgba(255,255,255,.12); border-radius: 16px;
+    background: rgba(255,255,255,.08); box-shadow: inset 0 1px 0 rgba(255,255,255,.045), 0 18px 32px -28px #000; }
+  .deck-summary.command-summary { grid-area: summary; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .command-summary .sum-item { min-height: 116px; display: grid; place-items: center; align-content: center; gap: 7px;
+    padding: 14px 10px 17px; text-align: center; background: linear-gradient(180deg, rgba(29,36,45,.9), rgba(14,18,24,.9)); }
+  .command-summary .sum-item::before, .command-summary .sum-item::after { display: none; }
+  .command-summary .sum-item .ic { width: 25px; height: 25px; margin-bottom: 2px; color: #c8d0dc; stroke-width: 1.8; }
+  .command-summary .sum-item span { margin: 0; color: #d5dae4; font-size: 12px; font-weight: 780; text-transform: none; letter-spacing: 0; }
+  .command-summary .sum-item b { max-width: 100%; color: #73c5ff; font-size: 13px; line-height: 1.28; font-weight: 820; white-space: normal; }
+  .command-summary .sum-item.good b { color: #8ff176; }
+  .command-summary .sum-item.dirty b { color: #ffd36d; }
+  .command-summary .sum-item.invalid b { color: #ff9c8d; }
+
+  #tab-settings .settings-panel { border-radius: 15px; padding: 0; overflow: hidden; background:
+      radial-gradient(440px 160px at 0 -20%, rgba(var(--panel-accent-rgb), .12), transparent 62%),
+      linear-gradient(180deg, rgba(31,36,44,.96), rgba(18,22,29,.97));
+    border-color: rgba(255,255,255,.1); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 38px -30px rgba(0,0,0,.98); }
+  #tab-settings .settings-panel h3 { margin: 0; min-height: 52px; box-sizing: border-box; align-items: center;
+    padding: 14px 16px; font-size: 21px; line-height: 1.15; text-transform: none; letter-spacing: 0;
+    color: #fff; border-bottom: 1px solid rgba(255,255,255,.1);
+    background: linear-gradient(90deg, rgba(var(--panel-accent-rgb), .14), rgba(255,255,255,.035), transparent); }
+  #tab-settings .settings-panel h3 .ic { width: 19px; height: 19px; padding: 0; border-radius: 0; color: var(--panel-accent);
+    background: transparent; box-shadow: none; }
+  #tab-settings .settings-panel > .muted { margin: 10px 16px 15px; }
+  .row-ic { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; color: #aeb8c6; }
+  #tab-settings .settings-panel .action-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+    margin: 14px 16px 10px; padding: 0; border: 0; background: transparent; box-shadow: none; }
+  #tab-settings .settings-panel .action-grid button,
+  #tab-settings .settings-panel .copy-row button { display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    min-height: 40px; border-radius: 10px; font-weight: 760; white-space: nowrap; }
+  #tab-settings .settings-panel .setting-row { margin: 0 16px; padding: 11px 12px; display: grid !important;
+    grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 12px;
+    border: 0; border-top: 1px solid rgba(255,255,255,.075); border-radius: 0; background: rgba(255,255,255,.018);
+    box-shadow: none; min-height: 46px; }
+  #tab-settings .settings-panel .setting-row:hover { background: rgba(255,255,255,.04); }
+  #tab-settings .settings-panel .setting-row:first-of-type { border-top: 0; }
+  #tab-settings .settings-panel .setting-row > label:not(.switch) { display: grid; gap: 2px; color: #f0f2f7; font-size: 13px;
+    font-weight: 740; line-height: 1.25; }
+  #tab-settings .settings-panel .setting-row > label:not(.switch) span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  #tab-settings .settings-panel .setting-row > label:not(.switch) em { color: #929ba9; font-style: normal; font-size: 11px; font-weight: 520; line-height: 1.35; }
+  #tab-settings .settings-panel .setting-row > label:not(.switch) b { min-width: auto; margin-left: 5px; padding: 1px 7px;
+    color: #dcefff; background: rgba(122,182,255,.11); box-shadow: inset 0 0 0 1px rgba(122,182,255,.18); }
+  #tab-settings .settings-panel .setting-row input[type=range] { width: clamp(160px, 22vw, 260px); max-width: none; }
+  #tab-settings .settings-panel .setting-row input[type=number],
+  #tab-settings .settings-panel .setting-row .hotkey-input { min-height: 34px; border-radius: 9px; background-color: rgba(0,0,0,.2); }
+  #tab-settings .settings-panel .preset-row.setting-row { grid-template-columns: 28px minmax(124px, .75fr) repeat(3, minmax(82px, 1fr));
+    padding-top: 11px; padding-bottom: 11px; }
+  #tab-settings .settings-panel .preset-row > span { margin: 0; color: #f0f2f7; font-size: 13px; font-weight: 740;
+    text-transform: none; letter-spacing: 0; }
+  #tab-settings .settings-panel .preset-row button { width: 100%; min-height: 34px; border-radius: 8px; font-size: 12px;
+    background: rgba(255,255,255,.045); }
+  #tab-settings .settings-panel .preset-row button[aria-pressed="true"] { color: #fff; border-color: rgba(122,182,255,.64);
+    background: linear-gradient(180deg, rgba(61,127,176,.95), rgba(38,91,132,.95));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.16), 0 0 0 1px rgba(122,182,255,.16), 0 8px 22px -18px rgba(122,182,255,.9); }
+  #tab-settings .settings-panel .copy-row.setting-row { grid-template-columns: 28px minmax(0, 1fr) auto; margin-top: 0; }
+  #tab-settings .settings-panel .copy-row code { min-height: 32px; display: flex; align-items: center; padding: 0 10px;
+    border: 1px solid rgba(255,255,255,.08); border-radius: 8px; background: rgba(0,0,0,.18); color: #cbd2df; }
+  #tab-settings .settings-panel .field-hint { margin: 8px 16px 10px; padding: 7px 10px; border-radius: 9px;
+    background: rgba(224,69,47,.1); border: 1px solid rgba(224,69,47,.26); }
+  #tab-settings .field.setting-changed { border-radius: 0; background: rgba(255,200,69,.08);
+    box-shadow: inset 3px 0 0 rgba(255,200,69,.74); }
+  #tab-settings .field.setting-changed .row-ic { color: var(--gold-bright); }
+
+  #tab-settings .appearance-panel { grid-column: 1 / -1 !important; }
+  #tab-settings .appearance-panel .appearance-grid { grid-template-columns: minmax(360px, .86fr) minmax(460px, 1.14fr);
+    gap: 0; align-items: stretch; }
+  #tab-settings .appearance-panel .appearance-grid > div:first-child { padding: 14px 0 16px; }
+  #tab-settings .appearance-panel .preview-wrap { margin: 14px 16px 16px 0; padding: 0; display: grid; grid-template-rows: auto minmax(0, 1fr);
+    border-radius: 15px; overflow: hidden; background:
+      radial-gradient(480px 220px at 22% 0, rgba(122,182,255,.15), transparent 62%),
+      linear-gradient(180deg, rgba(9,12,18,.94), rgba(5,7,11,.96));
+    border-color: rgba(224,186,94,.22); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 18px 36px -30px #000; }
+  .preview-head { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 12px 14px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .preview-head span { color: #fff; font-size: 15px; font-weight: 820; }
+  .preview-head b { color: #8fc9ff; font-size: 11px; text-transform: uppercase; letter-spacing: 0; }
+  #tab-settings .appearance-panel #ov-preview { min-height: 236px; padding: 14px; display: grid; align-items: stretch;
+    border-radius: 0; background:
+      linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.24)),
+      url("maps/Dry_Arabia.png") center/cover; }
+  .overlay-preview-frame { min-height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; align-content: end;
+    border: 1px solid rgba(224,186,94,.5); border-radius: 12px; overflow: hidden; background: rgba(5,7,10,.42);
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.5), 0 18px 34px -28px rgba(0,0,0,.95); }
+  .overlay-preview-map { display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    padding: 9px 12px; color: #fff; background: linear-gradient(90deg, rgba(3,6,10,.78), rgba(3,6,10,.44)); }
+  .overlay-preview-map span { padding: 3px 8px; border-radius: 7px; color: #fff2b3; background: rgba(0,0,0,.34);
+    border: 1px solid rgba(224,186,94,.28); font-size: 11px; font-weight: 800; }
+  .overlay-preview-map b { color: var(--gold-bright); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+  .overlay-preview-score { align-self: center; padding: 10px 14px; background: linear-gradient(90deg, transparent, rgba(4,7,12,.78) 20% 80%, transparent); }
+  .overlay-preview-score table { width: 100% !important; }
+  .overlay-preview-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid rgba(224,186,94,.28);
+    background: rgba(5,8,12,.72); }
+  .overlay-preview-stats span { display: grid; justify-items: center; gap: 2px; padding: 8px 6px; border-left: 1px solid rgba(255,255,255,.08); }
+  .overlay-preview-stats span:first-child { border-left: 0; }
+  .overlay-preview-stats b { color: #b7becb; font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+  .overlay-preview-stats em { color: #78c4ff; font-style: normal; font-size: 12px; font-weight: 820; }
+  .appearance-actions { margin: 13px 16px 0; }
+  .appearance-actions button { min-height: 38px; display: inline-flex; align-items: center; gap: 7px; border-radius: 10px; }
+  .color-set { gap: 9px; }
+  .color-control { gap: 7px; }
+  #tab-settings input[type=color] { width: 34px; height: 34px; border-radius: 10px; padding: 0; background: rgba(0,0,0,.24);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.1), 0 8px 16px -12px #000; }
+  #tab-settings input[type=color]::-webkit-color-swatch { border-radius: 8px; }
+  #tab-settings .color-value { min-width: 7.5ch; border-radius: 7px; }
+
+  #tab-settings .savebar { bottom: 68px; min-height: 54px; margin: 14px 0 8px; padding: 9px 13px;
+    border-radius: 12px; background: linear-gradient(180deg, rgba(22,26,34,.96), rgba(11,14,19,.94));
+    border-color: rgba(224,186,94,.22); }
+  #tab-settings .savebar.dirty { border-color: rgba(255,200,69,.48);
+    box-shadow: 0 14px 34px -18px rgba(0,0,0,.9), 0 0 22px -12px rgba(255,179,0,.65), inset 0 1px 0 rgba(255,255,255,.07); }
+  #tab-settings .dirty-meta { gap: 12px; }
+  #tab-settings .dirty-pill { color: #ffe08a; font-weight: 820; font-size: 13px; }
+  #tab-settings .savebar button { min-height: 36px; border-radius: 9px; }
+  #tab-settings #save-btn { min-width: 132px; font-weight: 820; background: linear-gradient(180deg, #e0ba5e, #b98527);
+    border-color: rgba(255,233,160,.54); color: #1b1304; text-shadow: none; }
+  body:has(#tab-settings.active) #status { width: min(760px, calc(100vw - 32px)); min-height: 34px; padding: 6px 9px;
+    bottom: 8px; border-radius: 12px; background: linear-gradient(180deg, rgba(19,27,33,.82), rgba(8,13,18,.78));
+    border-color: rgba(122,182,255,.22); box-shadow: 0 12px 30px -20px rgba(0,0,0,.94), inset 0 1px 0 rgba(255,255,255,.07); }
+  body:has(#tab-settings.active) #status .status-chip { line-height: 15px; padding: 2px 8px; }
+
+  @media (max-width: 1120px) {
+    #tab-settings .settings-command { grid-template-columns: minmax(0, 1fr); grid-template-areas: "search" "player" "summary"; }
+    .command-player { border-left: 0; border-top: 1px solid rgba(255,255,255,.1); padding-left: 0; padding-top: 16px; }
+    .command-summary, .deck-summary.command-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    #tab-settings .appearance-panel .appearance-grid { grid-template-columns: minmax(0, 1fr); }
+    #tab-settings .appearance-panel .preview-wrap { margin: 0 16px 16px; }
+  }
+  @media (max-width: 760px) {
+    .command-search .searchbar { grid-template-columns: 1fr; display: grid; }
+    .command-search .searchbar button { width: 100%; }
+    .command-summary, .deck-summary.command-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #tab-settings .settings-panel .action-grid { grid-template-columns: 1fr; }
+    #tab-settings .settings-panel .setting-row,
+    #tab-settings .settings-panel .preset-row.setting-row,
+    #tab-settings .settings-panel .copy-row.setting-row { grid-template-columns: 26px minmax(0, 1fr); }
+    #tab-settings .settings-panel .setting-row > :last-child:not(label):not(span),
+    #tab-settings .settings-panel .preset-row.setting-row button,
+    #tab-settings .settings-panel .copy-row.setting-row button,
+    #tab-settings .settings-panel .setting-row .color-set,
+    #tab-settings .settings-panel .setting-row .color-control { grid-column: 2; justify-self: stretch; }
+    #tab-settings .settings-panel .setting-row input[type=range] { width: 100%; }
+    .overlay-preview-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
 </style>
 </head>
 <body>
@@ -2222,40 +2417,28 @@
   <div class="tab active" id="tab-settings">
     <div class="cards">
 
-      <div class="control-deck">
-        <div class="deck-theater">
-          <div class="deck-radar" aria-hidden="true">
-            <span class="sweep"></span>
-            <span class="r1"></span>
-            <span class="r2"></span>
-            <span class="r3"></span>
-            <span class="pip one"></span>
-            <span class="pip two"></span>
-            <span class="pip three"></span>
-            <div class="deck-core"><svg class="ic"><use href="#i-swords"/></svg></div>
+      <div class="control-deck settings-command">
+        <div class="command-search">
+          <div class="deck-state-kicker">Desktop command center</div>
+          <div class="deck-state-title" id="deck-state-title">Ready to track</div>
+          <div class="deck-state-copy" id="deck-state-copy">Pick your aoe4world profile and the app will keep the desktop overlay in sync.</div>
+          <div class="searchbar">
+            <input id="search" type="search" placeholder="Search aoe4world by name or profile ID..." autocomplete="off" spellcheck="false"
+                   role="combobox" aria-label="Player search" aria-autocomplete="list" aria-controls="results" aria-expanded="false">
+            <button id="search-btn" class="primary"><svg class="ic"><use href="#i-globe"/></svg> Search</button>
           </div>
-          <div class="deck-state">
-            <div class="deck-state-kicker">Desktop command center</div>
-            <div class="deck-state-title" id="deck-state-title">Ready to track</div>
-            <div class="deck-state-copy" id="deck-state-copy">Pick your aoe4world profile and the app will keep the desktop overlay in sync.</div>
-            <div class="deck-actions">
-              <button id="deck-open-games" type="button"><svg class="ic"><use href="#i-swords"/></svg> Games</button>
-              <button id="deck-open-shortcuts" type="button"><svg class="ic"><use href="#i-keyboard"/></svg> Shortcuts</button>
-            </div>
+          <div id="results" aria-live="polite" aria-atomic="true" aria-busy="false"></div>
+          <div class="deck-actions">
+            <button id="deck-open-games" type="button"><svg class="ic"><use href="#i-swords"/></svg> Games</button>
+            <button id="deck-open-shortcuts" type="button"><svg class="ic"><use href="#i-keyboard"/></svg> Shortcuts</button>
           </div>
         </div>
 
-        <div class="deck-player">
+        <div class="deck-player command-player">
           <div class="deck-head">
             <h3><svg class="ic"><use href="#i-user"/></svg> Player command</h3>
             <span class="deck-source">aoe4world</span>
           </div>
-          <div class="searchbar">
-            <input id="search" type="search" placeholder="Search aoe4world by name or profile ID…" autocomplete="off" spellcheck="false"
-                   role="combobox" aria-label="Player search" aria-autocomplete="list" aria-controls="results" aria-expanded="false">
-            <button id="search-btn" class="primary">Search</button>
-          </div>
-          <div id="results" aria-live="polite" aria-atomic="true" aria-busy="false"></div>
           <div class="tracked" id="tracked-box">
             <span class="tracked-ava" id="tracked-ava" aria-hidden="true"><svg class="ic"><use href="#i-user"/></svg></span>
             <div class="tracked-info">
@@ -2270,20 +2453,24 @@
           </div>
         </div>
 
-        <div class="settings-summary deck-summary" aria-label="Current settings summary">
+        <div class="settings-summary deck-summary command-summary" aria-label="Current settings summary">
           <div class="sum-item">
+            <svg class="ic"><use href="#i-user"/></svg>
             <span>Tracking</span>
             <b id="sum-player">No profile</b>
           </div>
           <div class="sum-item">
+            <svg class="ic"><use href="#i-signal"/></svg>
             <span>Polling</span>
             <b id="sum-poll">15s</b>
           </div>
           <div class="sum-item">
+            <svg class="ic"><use href="#i-monitor"/></svg>
             <span>Display</span>
             <b id="sum-display">100% / 100%</b>
           </div>
           <button class="sum-item good" id="sum-save-box" type="button" aria-label="Settings saved" disabled>
+            <svg class="ic"><use href="#i-heart"/></svg>
             <span>State</span>
             <b id="sum-save">Saved</b>
           </button>
@@ -2292,27 +2479,31 @@
 
       <div class="card settings-panel overlay-panel">
         <h3><svg class="ic"><use href="#i-monitor"/></svg> Overlay</h3>
-        <div class="btn-row">
-          <button id="toggle-btn">Show / Hide</button>
-          <button id="edit-btn">Reposition</button>
-          <button id="refresh-btn">Refresh now</button>
+        <div class="btn-row action-grid">
+          <button id="toggle-btn"><svg class="ic"><use href="#i-eye"/></svg> Show / Hide</button>
+          <button id="edit-btn"><svg class="ic"><use href="#i-monitor"/></svg> Reposition</button>
+          <button id="refresh-btn"><svg class="ic"><use href="#i-signal"/></svg> Refresh now</button>
         </div>
-        <div class="preset-row" aria-label="Display presets">
+        <div class="preset-row setting-row" aria-label="Display presets">
+          <svg class="row-ic"><use href="#i-monitor"/></svg>
           <span>Display preset</span>
           <button type="button" data-display-preset="compact" aria-pressed="false" title="Smaller window and type">Compact</button>
           <button type="button" data-display-preset="default" aria-pressed="true" title="Selected: Default window and type">Default</button>
           <button type="button" data-display-preset="readable" aria-pressed="false" title="Larger type without oversizing the window">Readable</button>
         </div>
-        <div class="field">
-          <label>Show / hide hotkey</label>
+        <div class="field setting-row">
+          <svg class="row-ic"><use href="#i-keyboard"/></svg>
+          <label><span>Show / hide hotkey</span><em>Click the field, then press keys.</em></label>
           <input id="hotkey" class="hotkey-input" readonly placeholder="Click, then press keys">
         </div>
-        <div class="field">
-          <label>Show overlay on new game</label>
+        <div class="field setting-row">
+          <svg class="row-ic"><use href="#i-eye"/></svg>
+          <label><span>Show overlay on new game</span><em>Automatically surface the desktop overlay when a match starts.</em></label>
           <label class="switch"><input id="autoshow" type="checkbox"><span></span></label>
         </div>
-        <div class="field">
-          <label>Overlay size <b id="ovscale-val"></b></label>
+        <div class="field setting-row">
+          <svg class="row-ic"><use href="#i-monitor"/></svg>
+          <label><span>Overlay size</span><em>Window scale for the live match overlay. <b id="ovscale-val"></b></em></label>
           <input id="ovscale" type="range" min="60" max="200" step="5">
         </div>
         <div class="muted">You can also drag the overlay's edges while repositioning.</div>
@@ -2320,24 +2511,28 @@
 
       <div class="card settings-panel stream-panel">
         <h3><svg class="ic"><use href="#i-signal"/></svg> Polling & streaming</h3>
-        <div class="preset-row" aria-label="Polling interval presets">
+        <div class="preset-row setting-row" aria-label="Polling interval presets">
+          <svg class="row-ic"><use href="#i-signal"/></svg>
           <span>Polling preset</span>
           <button type="button" data-poll-preset="5" aria-pressed="false" title="Check as often as allowed">Live 5s</button>
           <button type="button" data-poll-preset="15" aria-pressed="true" title="Selected: Default polling interval">Default 15s</button>
           <button type="button" data-poll-preset="30" aria-pressed="false" title="Lower API and battery usage">Quiet 30s</button>
         </div>
-        <div class="field">
-          <label>Poll interval <b id="interval-val"></b></label>
+        <div class="field setting-row">
+          <svg class="row-ic"><use href="#i-signal"/></svg>
+          <label><span>Poll interval</span><em>How often the app checks aoe4world. <b id="interval-val"></b></em></label>
           <input id="interval" type="range" min="5" max="60" step="1">
         </div>
-        <div class="field">
-          <label>OBS websocket port</label>
+        <div class="field setting-row">
+          <svg class="row-ic"><use href="#i-monitor"/></svg>
+          <label><span>OBS websocket port</span><em>Used by the browser source bridge.</em></label>
           <input id="wsport" type="number" min="1024" max="65535" aria-describedby="wsport-hint" style="width:90px">
         </div>
         <div class="field-hint" id="wsport-hint" role="alert" aria-live="polite" hidden></div>
-        <div class="copy-row">
+        <div class="copy-row setting-row">
+          <svg class="row-ic"><use href="#i-scroll"/></svg>
           <code id="obs-source-path">obs-html\overlay.html</code>
-          <button id="copy-obs-path" type="button" title="Copy OBS browser source path">Copy OBS path</button>
+          <button id="copy-obs-path" type="button" title="Copy OBS browser source path"><svg class="ic"><use href="#i-scroll"/></svg> Copy OBS path</button>
         </div>
         <div class="muted">Add that path as an OBS browser source. Restart the app after changing the port.</div>
       </div>
@@ -2346,8 +2541,9 @@
         <h3><svg class="ic"><use href="#i-palette"/></svg> Appearance</h3>
         <div class="appearance-grid">
           <div>
-            <div class="field">
-              <label>Team colors</label>
+            <div class="field setting-row">
+              <svg class="row-ic"><use href="#i-swords"/></svg>
+              <label><span>Team colors</span><em>Primary lanes for overlay team highlighting.</em></label>
               <span class="color-set">
                 <span class="color-control">
                   <input id="tc1" type="color" aria-label="Team 1 color" title="Team 1 color">
@@ -2363,27 +2559,33 @@
                 </span>
               </span>
             </div>
-            <div class="field">
-              <label>Color opacity <b id="alpha-val"></b></label>
+            <div class="field setting-row">
+              <svg class="row-ic"><use href="#i-palette"/></svg>
+              <label><span>Color opacity</span><em>Team lane strength in the overlay. <b id="alpha-val"></b></em></label>
               <input id="tcalpha" type="range" min="0" max="100">
             </div>
-            <div class="field">
-              <label>Civ stats color</label>
+            <div class="field setting-row">
+              <svg class="row-ic"><use href="#i-palette"/></svg>
+              <label><span>Civ stats color</span><em>Accent used for civilization matchup stats.</em></label>
               <span class="color-control">
                 <input id="civstatcolor" type="color" aria-label="Civ stats color" title="Civ stats color">
                 <span class="color-value" id="civstatcolor-value" aria-hidden="true"></span>
               </span>
             </div>
-            <div class="field">
-              <label>Overlay font scale <b id="fontscale-val"></b></label>
+            <div class="field setting-row">
+              <svg class="row-ic"><use href="#i-keyboard"/></svg>
+              <label><span>Overlay font scale</span><em>Text size inside the match overlay. <b id="fontscale-val"></b></em></label>
               <input id="fontscale" type="range" min="50" max="200" step="5">
             </div>
             <div class="appearance-actions">
-              <button id="appearance-reset" type="button" title="Restore default team colors, opacity, civ stats color and font scale">Reset appearance</button>
+              <button id="appearance-reset" type="button" title="Restore default team colors, opacity, civ stats color and font scale"><svg class="ic"><use href="#i-palette"/></svg> Reset appearance</button>
             </div>
           </div>
           <div class="preview-wrap">
-            <div class="muted" style="margin-bottom:6px">Live preview</div>
+            <div class="preview-head">
+              <span>Live preview</span>
+              <b>Desktop overlay</b>
+            </div>
             <div id="ov-preview"></div>
           </div>
         </div>
@@ -3203,10 +3405,24 @@ function ensurePreviewTable() {
     if (dir === 'right') cells = cells.reverse();
     return `<tr data-dir="${dir}" data-team="${team}">${cells.join('')}</tr>`;
   };
-  wrap.innerHTML = `<table>
-    ${row('English', 'You', '1244', '54%', '120', '101', '61% (33)', 'right', '1')}
-    ${row('Mongols', 'Opponent', '1198', '51%', '98', '95', '48% (21)', 'left', '2')}
-  </table>`;
+  wrap.innerHTML = `<div class="overlay-preview-frame">
+    <div class="overlay-preview-map">
+      <span>22:14</span>
+      <b>Dry Arabia</b>
+    </div>
+    <div class="overlay-preview-score">
+      <table>
+        ${row('English', 'You', '1244', '54%', '120', '101', '61% (33)', 'right', '1')}
+        ${row('Mongols', 'Opponent', '1198', '51%', '98', '95', '48% (21)', 'left', '2')}
+      </table>
+    </div>
+    <div class="overlay-preview-stats">
+      <span><b>Eco rate</b><em>920/min</em></span>
+      <span><b>Army value</b><em>2450</em></span>
+      <span><b>Tech count</b><em>12</em></span>
+      <span><b>Civ stats</b><em class="preview-civstat">61%</em></span>
+    </div>
+  </div>`;
 }
 function updatePreview() {
   ensurePreviewTable();
