@@ -9441,7 +9441,6 @@ function makeRoller(btnId, nameId, imgId, histId, pool, srcFor) {
       if (hist.length > 3) hist.pop();
       $(histId).innerHTML = hist.map(h => `<span>${esc(h)}</span>`).join('');
     }
-    const prev = last;
     last = v;
     const nm = $(nameId);
     const settle = () => {
@@ -9459,7 +9458,7 @@ function makeRoller(btnId, nameId, imgId, histId, pool, srcFor) {
       img.style.animation = 'none'; void img.offsetWidth; img.style.animation = '';
     };
     // Brief slot-machine shuffle through other names before settling (skipped for reduced motion)
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches || !prev) { settle(); return; }
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { settle(); return; }
     spinning = true;
     nm.style.opacity = '.55';
     let ticks = 0;
