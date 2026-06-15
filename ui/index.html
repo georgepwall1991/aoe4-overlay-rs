@@ -935,8 +935,12 @@
     animation: rand-pop .3s cubic-bezier(.22,1,.36,1); }
   .rand-civ-card .rand-media img { object-fit: contain; padding: 24px; box-sizing: border-box;
     filter: drop-shadow(0 16px 24px rgba(0,0,0,.55)); }
-  .rand-placeholder { height: 100%; display: grid; place-items: center; color: rgba(255,233,160,.4);
-    font-size: 56px; font-weight: 900; text-shadow: 0 0 24px rgba(224,186,94,.24); }
+  .rand-placeholder { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    color: rgba(255,233,160,.4); font-size: 56px; font-weight: 900; text-shadow: 0 0 24px rgba(224,186,94,.24); }
+  .rand-placeholder .ic { width: 38px; height: 38px; opacity: .8; }
+  .rand-hint { font-size: 12px; font-weight: 650; letter-spacing: .02em; color: rgba(214,205,180,.62);
+    text-shadow: none; }
+  .rand-hint b { color: rgba(255,233,160,.85); font-weight: 800; font-variant-numeric: tabular-nums; }
   .rand-box.has-roll .rand-placeholder { display: none; }
   @keyframes rand-pop { from { opacity: 0; transform: scale(.94); } }
   .rand-name { font-size: 28px; font-weight: 850; letter-spacing: 0; min-height: 34px; line-height: 1.1;
@@ -1096,8 +1100,13 @@
   .games-hero-panel { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; align-content: end; }
   .hero-metric { min-height: 70px; padding: 11px 12px; border-radius: 13px; background: rgba(13,13,17,.63);
     border: 1px solid rgba(255,255,255,.1); box-shadow: 0 1px 0 rgba(255,255,255,.04) inset; }
+  .hero-metric:not(.span2) { display: flex; flex-direction: column; justify-content: center; }
   .hero-metric.primary { grid-column: span 2; min-height: 82px;
     background: linear-gradient(135deg, rgba(224,186,94,.18), rgba(13,13,17,.68) 52%); border-color: rgba(224,186,94,.26); }
+  .hero-metric.span2 { grid-column: span 2; display: grid; grid-template-columns: 1fr auto; align-items: baseline; column-gap: 12px; }
+  .hero-metric.span2 .label { grid-column: 1 / -1; }
+  .hero-metric.span2 .value { margin-top: 6px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hero-metric.span2 .note { margin-top: 6px; justify-self: end; text-align: right; }
   .hero-metric .label { color: #9ca0ac; font-size: 10px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
   .hero-metric .value { color: #fff; font-size: 24px; font-weight: 850; line-height: 1.08; margin-top: 8px; font-variant-numeric: tabular-nums; }
   .hero-metric .value.pos { color: #85ec65; } .hero-metric .value.neg { color: #ff8d79; }
@@ -2871,7 +2880,7 @@
           <h3><svg class="ic"><use href="#i-swords"/></svg> Civilization</h3>
           <div class="rand-media">
             <img id="rand-civ-img" style="display:none">
-            <div class="rand-placeholder"><svg class="ic"><use href="#i-swords"/></svg></div>
+            <div class="rand-placeholder"><svg class="ic"><use href="#i-swords"/></svg><span class="rand-hint">Roll to draw from <b id="rand-civ-pool">23</b> civs</span></div>
           </div>
           <div class="rand-name" id="rand-civ-name">—</div>
           <button class="primary" id="rand-civ">Roll civilization</button>
@@ -2881,7 +2890,7 @@
           <h3><svg class="ic"><use href="#i-map"/></svg> Map</h3>
           <div class="rand-media">
             <img id="rand-map-img" style="display:none">
-            <div class="rand-placeholder"><svg class="ic"><use href="#i-map"/></svg></div>
+            <div class="rand-placeholder"><svg class="ic"><use href="#i-map"/></svg><span class="rand-hint">Roll to draw from <b id="rand-map-pool">21</b> maps</span></div>
           </div>
           <div class="rand-name" id="rand-map-name">—</div>
           <button class="primary" id="rand-map">Roll map</button>
@@ -4551,7 +4560,7 @@ function renderGamesHero(games, pid, filtered) {
           <div class="value ${wr !== null && wr >= 50 ? 'pos' : wr !== null ? 'neg' : ''}">${finished.length ? `${wins}W ${losses}L` : '-'}</div>
           <div class="note">${wr !== null ? `${wr}% winrate` : 'No finished games'}</div>
         </div>
-        <div class="hero-metric">
+        <div class="hero-metric span2">
           <div class="label">Toughest matchup</div>
           <div class="value ${nemesis ? (nemesis.wr < 50 ? 'neg' : nemesis.wr > 50 ? 'pos' : '') : ''}">${nemesis ? esc(civTitle(nemesis.c)) : '–'}</div>
           <div class="note">${nemesis ? `${nemesis.wr}% over ${nemesis.n} game${nemesis.n > 1 ? 's' : ''}` : 'Need more games'}</div>
@@ -9021,7 +9030,7 @@ function buildOverrideGrid() {
     row.name = document.createElement('input');
     row.name.placeholder = `Player ${i + 1}`;
     row.civ = document.createElement('select');
-    row.civ.innerHTML = '<option value=""></option>' + CIVS.map(c => `<option>${c}</option>`).join('');
+    row.civ.innerHTML = '<option value="">No civ</option>' + CIVS.map(c => `<option>${c}</option>`).join('');
     row.team = document.createElement('select');
     row.team.innerHTML = '<option value="0">No team</option><option value="1">Team 1</option><option value="2">Team 2</option>';
     for (const k of ['rating', 'rank', 'winrate', 'wins', 'losses', 'civ_winrate', 'civ_win_length_median']) row[k] = document.createElement('input');
@@ -9246,6 +9255,8 @@ function makeRoller(btnId, nameId, imgId, histId, pool, srcFor) {
 }
 $('rand-civ-total').textContent = CIVS.length;
 $('rand-map-total').textContent = MAPS.length;
+$('rand-civ-pool').textContent = CIVS.length;
+$('rand-map-pool').textContent = MAPS.length;
 $('rand-both').onclick = () => {
   $('rand-civ').click();
   $('rand-map').click();
